@@ -1,0 +1,1938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calli Field Guide -- Encounter Roller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDE6D6;
+    --paper-deep:#E2D9C4;
+    --ink:#1F2E3D;
+    --redwood:#2F4538;
+    --rust:#C4572E;
+    --gold:#D9A441;
+    --sage:#8AA399;
+    --nogym-green:#5B8A4E;
+    --line: rgba(31,46,61,0.16);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(196,87,46,0.07), transparent 40%),
+      radial-gradient(circle at 85% 82%, rgba(47,69,56,0.08), transparent 45%),
+      repeating-linear-gradient(0deg, transparent, transparent 38px, var(--line) 39px),
+      repeating-linear-gradient(90deg, transparent, transparent 38px, var(--line) 39px);
+    color: var(--ink);
+    font-family: 'Work Sans', sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding: 40px 16px 80px;
+  }
+  .sheet{
+    width:100%;
+    max-width: 640px;
+  }
+  .masthead{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom: 3px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom: 22px;
+  }
+  .masthead .brand{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 30px;
+    letter-spacing: -0.01em;
+  }
+  .masthead .brand small{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:500;
+    letter-spacing: 0.14em;
+    text-transform:uppercase;
+    color: var(--rust);
+    margin-top:4px;
+  }
+  .masthead .tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-align:right;
+    color: var(--redwood);
+    line-height:1.5;
+  }
+
+  .card{
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 26px 26px 30px;
+    position:relative;
+    box-shadow: 0 1px 0 rgba(31,46,61,0.05);
+  }
+  .card + .card{ margin-top:18px; }
+  .card::before{
+    content:"";
+    position:absolute;
+    top:10px; left:10px; right:10px; bottom:10px;
+    border: 1px dashed rgba(31,46,61,0.14);
+    pointer-events:none;
+  }
+
+  .field{ margin-bottom:18px; }
+  .field:last-child{ margin-bottom:0; }
+  label.field-label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color: var(--redwood);
+    margin-bottom:8px;
+  }
+
+  select#location, select#gymSelect{
+    width:100%;
+    font-family:'Fraunces', serif;
+    font-size:19px;
+    font-weight:500;
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius:2px;
+    color: var(--ink);
+    appearance:none;
+    -webkit-appearance:none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+    background-position: calc(100% - 20px) 22px, calc(100% - 14px) 22px;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat:no-repeat;
+  }
+  select#location:focus-visible, select#gymSelect:focus-visible{ outline: 3px solid var(--gold); outline-offset:2px; }
+
+  .loc-meta{
+    margin-top:10px;
+    font-size:13.5px;
+    line-height:1.5;
+    color: var(--ink);
+  }
+  .loc-meta .subtitle{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color: var(--redwood);
+    margin-bottom:3px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .loc-meta .flavor{ font-style: italic; color:#3c4f45; }
+
+  .badge-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .pips{ display:flex; gap:6px; }
+  .pip{
+    width:26px; height:30px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    clip-path: polygon(50% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%);
+    cursor:pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .pip:hover{ transform: translateY(-2px); }
+  .pip.on{ background: var(--gold); }
+  .badge-count{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color: var(--ink);
+    margin-left:4px;
+  }
+  .threshold-line{
+    margin-top:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color: var(--redwood);
+  }
+  .threshold-line b{ color: var(--ink); }
+
+  .roll-btn{
+    width:100%;
+    margin-top:22px;
+    padding: 15px 18px;
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:18px;
+    letter-spacing:0.01em;
+    background: var(--rust);
+    color: var(--paper);
+    border:none;
+    border-radius:2px;
+    cursor:pointer;
+    transition: background .15s ease, transform .08s ease;
+  }
+  .roll-btn:hover:not(:disabled){ background:#a9481f; }
+  .roll-btn:active:not(:disabled){ transform: translateY(1px); }
+  .roll-btn:disabled{ opacity:0.55; cursor:default; }
+  .stat-roll-btn{
+    margin-top: 14px;
+    padding: 10px 14px;
+    font-size: 14px;
+    background: var(--sage);
+    color: var(--ink);
+  }
+  .stat-roll-btn:hover:not(:disabled){ background:#7a9389; }
+  .roll-btn:focus-visible{ outline: 3px solid var(--gold); outline-offset:2px; }
+
+  .dice-stage{
+    margin-top: 26px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 20px;
+  }
+  .die{
+    width:64px; height:64px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 28px;
+    font-weight:600;
+    position:relative;
+  }
+  .die.rolling{ animation: tumble .09s linear infinite; }
+  .die.reroll{ border-color: var(--rust); color: var(--rust); animation: shake .32s ease; }
+  @keyframes tumble{
+    0%{ transform: rotate(0deg) scale(1); }
+    50%{ transform: rotate(8deg) scale(1.04); }
+    100%{ transform: rotate(-6deg) scale(1); }
+  }
+  @keyframes shake{
+    0%,100%{ transform: translateX(0); }
+    25%{ transform: translateX(-4px); }
+    75%{ transform: translateX(4px); }
+  }
+  .plus, .equals{
+    font-family:'Fraunces', serif;
+    font-size:24px;
+    color: var(--ink);
+  }
+  .sum-badge{
+    width:74px; height:74px;
+    border-radius:50%;
+    border: 2.5px solid var(--ink);
+    background: var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:30px;
+    color: var(--ink);
+  }
+  .reroll-note{
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color: var(--rust);
+    height:16px;
+    margin-top:10px;
+  }
+
+  .level-stage{
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 20px;
+    flex-wrap:wrap;
+  }
+  .level-die-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+  .stage-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color: var(--sage);
+  }
+  .die.die-small{
+    width:46px; height:46px;
+    font-size:20px;
+    border-radius:6px;
+  }
+  .level-math{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color: var(--ink);
+    line-height:1.6;
+    min-width:180px;
+  }
+  .level-math .row{ display:block; }
+  .level-math .final{
+    font-weight:600;
+    color: var(--rust);
+    font-size:15px;
+  }
+  .level-line{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color: var(--redwood);
+    margin-bottom:14px;
+    margin-top:-6px;
+  }
+  .level-line b{ color: var(--rust); font-size:15px; }
+
+  .result{
+    margin-top: 24px;
+    padding-top:20px;
+    border-top: 1.5px dashed var(--ink);
+    display:none;
+  }
+  .result.show{ display:block; }
+  .result .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: var(--redwood);
+    margin-bottom:6px;
+  }
+  .result .mon-name{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 34px;
+    color: var(--ink);
+    margin-bottom: 14px;
+  }
+  .die-faces{
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap:8px;
+  }
+  .die-face{
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius:6px;
+    padding: 10px 4px 8px;
+    text-align:center;
+    transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
+    position:relative;
+  }
+  .die-face.highest{
+    box-shadow: 0 0 0 2px var(--sage) inset;
+  }
+  .die-face.highest::after{
+    content: "\2605";
+    position:absolute;
+    top:2px; right:4px;
+    font-size:9px;
+    color: var(--sage);
+  }
+  .die-face.hit{
+    background: var(--gold);
+    transform: scale(1.08);
+  }
+  .die-face .n{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:20px;
+    display:block;
+  }
+  .die-face .lbl{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    color: var(--sage);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    display:block;
+    margin-top:2px;
+  }
+  .die-face .adj{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    color: var(--rust);
+    display:block;
+    margin-top:4px;
+  }
+  .stat-total-line{
+    margin-top: 10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--redwood);
+    text-align:center;
+  }
+  .stat-total-line b{ color: var(--rust); font-size:14px; }
+
+  .atk-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+  .atk-sublabel{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    color: var(--sage);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  .type-pill{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    color:#fff;
+    padding: 7px 12px;
+    border-radius: 20px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    min-width:64px;
+    text-align:center;
+  }
+  .type-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 28px;
+    margin: 14px 0 18px;
+  }
+  .type-pill-group{
+    display:flex;
+    gap:6px;
+  }
+
+  .tab-row{
+    display:flex;
+    gap:8px;
+    margin-bottom: 16px;
+  }
+  .tab-btn{
+    flex:1;
+    padding: 10px 12px;
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 15px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    cursor:pointer;
+  }
+  .tab-btn.active{
+    background: var(--redwood);
+    color: var(--paper);
+    border-color: var(--redwood);
+  }
+
+  .map-legend{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .map-legend span{ display:flex; align-items:center; gap:5px; }
+  .legend-swatch{
+    display:inline-block;
+    width:12px; height:12px;
+  }
+  .legend-town{ background: var(--gold); border: 1.5px solid var(--ink); }
+  .legend-town-nogym{ background: var(--nogym-green); border: 1.5px solid var(--ink); }
+  .legend-dungeon{
+    width:0; height:0;
+    background: transparent;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 11px solid var(--rust);
+  }
+  .legend-route{ background: var(--sage); border: 1.5px solid var(--ink); border-radius:50%; }
+
+  .map-scroll{
+    overflow-x:auto;
+    overflow-y:hidden;
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    background: var(--paper);
+    -webkit-overflow-scrolling: touch;
+  }
+  #mapSvg{ display:block; }
+  .map-node{ cursor:pointer; }
+  .map-node-shape{
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    transition: stroke-width .12s ease, filter .12s ease;
+  }
+  .map-node:hover .map-node-shape, .map-node.selected .map-node-shape{
+    stroke-width: 3;
+    filter: drop-shadow(0 0 2px var(--gold));
+  }
+  .map-node.selected .map-node-shape{ stroke: var(--gold); }
+  .map-node-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    pointer-events:none;
+    fill: var(--ink);
+  }
+  .map-node-label-light{
+    fill: var(--paper);
+  }
+  .map-node-divider{
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    pointer-events:none;
+  }
+  .map-edge{
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    opacity: 0.35;
+  }
+
+  .map-info{
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--ink);
+    min-height: 60px;
+  }
+  .map-info-empty{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--sage);
+    text-align:center;
+  }
+  .map-info-name{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 20px;
+    margin-bottom:4px;
+  }
+  .map-info-kind{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color: var(--redwood);
+    margin-bottom: 10px;
+  }
+  .map-info-desc{
+    font-size: 13px;
+    line-height:1.5;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .map-go-btn{
+    padding: 9px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:600;
+    background: var(--rust);
+    color: var(--paper);
+    border:none;
+    border-radius: 4px;
+    cursor:pointer;
+  }
+  .map-go-btn:hover{ background:#a9481f; }
+
+  .map-encounter-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color: var(--redwood);
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+  .map-encounter-list{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
+  .map-encounter-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 5px 8px;
+  }
+  .map-encounter-sum{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size: 11px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 3px;
+    width: 18px;
+    height: 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .map-encounter-name{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 13px;
+    flex: 1;
+  }
+  .map-encounter-types{
+    display:flex;
+    gap:4px;
+  }
+
+  .dex-search{
+    width:100%;
+    font-family:'Work Sans', sans-serif;
+    font-size:15px;
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius:2px;
+    color: var(--ink);
+  }
+  .dex-count{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--sage);
+    margin: 10px 0 4px;
+  }
+  .dex-entry{
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .dex-entry-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:6px;
+  }
+  .dex-name{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 16px;
+  }
+  .dex-stats{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--redwood);
+    margin-bottom: 6px;
+  }
+  .dex-evo-line{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink);
+    line-height:1.5;
+  }
+  .dex-evo-line b{ color: var(--rust); }
+  .dex-loc-line{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--redwood);
+    line-height:1.5;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--line);
+  }
+  .dex-loc-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--rust);
+    background:none;
+    border:none;
+    padding:0;
+    text-decoration: underline;
+    cursor:pointer;
+  }
+  .dex-loc-btn:hover{ color: var(--redwood); }
+  .dex-no-results{
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--sage);
+    padding: 20px 0;
+  }
+
+
+  .footer-note{
+    margin-top: 22px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #5b6d63;
+    text-align:center;
+    line-height:1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .die.rolling, .die.reroll{ animation:none; }
+  }
+
+  .error-banner{
+    display:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    line-height:1.6;
+    background:#fff3f0;
+    border: 1.5px solid var(--rust);
+    border-radius:4px;
+    padding: 10px 14px;
+    color: var(--ink);
+    margin-bottom: 14px;
+  }
+  .error-banner.show{ display:block; }
+  .error-banner b{ color: var(--rust); }
+
+  .trainer-card{ margin-top: 0; }
+  .section-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 20px;
+    margin-bottom: 14px;
+    color: var(--ink);
+  }
+  .trainer-btn{ background: var(--redwood); }
+  .trainer-btn:hover:not(:disabled){ background:#233a2d; }
+  .trainer-class-roll{
+    margin-top: 16px;
+    text-align:center;
+  }
+  .trainer-result{
+    margin-top: 22px;
+    padding-top:18px;
+    border-top: 1.5px dashed var(--ink);
+    display:none;
+  }
+  .trainer-result.show{ display:block; }
+  .trainer-team{
+    margin-top: 14px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .trainer-mon-row{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: box-shadow .15s ease;
+  }
+  .trainer-mon-row:hover{ box-shadow: 0 0 0 2px var(--sage) inset; }
+  .trainer-mon-row:active{ box-shadow: 0 0 0 2px var(--gold) inset; }
+  .tap-hint{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--sage);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  .stat-mini-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .stat-mini-grid{
+    display:flex;
+    gap:5px;
+  }
+  .stat-mini-box{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight:600;
+    color: var(--ink);
+    background: var(--paper-deep);
+    border: 1.5px solid var(--ink);
+    border-radius:5px;
+    width: 24px;
+    height: 24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
+    position:relative;
+  }
+  .stat-mini-box.highest{
+    box-shadow: 0 0 0 2px var(--sage) inset;
+  }
+  .stat-mini-box.highest::after{
+    content: "\2605";
+    position:absolute;
+    top:-6px; right:-4px;
+    font-size:8px;
+    color: var(--sage);
+  }
+  .stat-mini-box.hit{
+    background: var(--gold);
+    transform: scale(1.15);
+  }
+  .stat-mini-total{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--redwood);
+  }
+  .stat-roll-note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--rust);
+    min-height:14px;
+  }
+  .trainer-mon-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .trainer-mon-name{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 15px;
+    margin-right:auto;
+  }
+  .trainer-mon-level{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:500;
+    font-size: 11px;
+    color: var(--redwood);
+  }
+  .trainer-mon-types{
+    display:flex;
+    gap:5px;
+  }
+  .trainer-type-block{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .trainer-type-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--sage);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .trainer-atk-paren{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--ink);
+  }
+  .trainer-type-pill{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight:600;
+    color:#fff;
+    padding: 3px 9px;
+    border-radius: 12px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+  }
+  .trainer-atk-pill, .atk-highlight{
+    box-shadow: 0 0 0 2px var(--gold);
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="masthead">
+    <div class="brand">Calli Field Guide<small>Wild Encounter Roller</small></div>
+    <div class="tag">2d6 - reroll above<br>threshold - postgame gated</div>
+  </div>
+
+  <div id="errorBanner" class="error-banner"></div>
+
+  <div class="tab-row">
+    <button class="tab-btn active" id="tabRollerBtn">Roller</button>
+    <button class="tab-btn" id="tabMapBtn">Region Map</button>
+    <button class="tab-btn" id="tabDexBtn">Pokemon Data</button>
+  </div>
+
+  <div id="rollerPanel">
+
+  <div class="card">
+    <div class="field">
+      <label class="field-label" for="location">Location</label>
+      <select id="location"></select>
+      <div class="loc-meta">
+        <div class="subtitle" id="locSubtitle"></div>
+        <div class="flavor" id="locFlavor"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Badges earned</label>
+      <div class="badge-row">
+        <div class="pips" id="pips"></div>
+        <span class="badge-count" id="badgeCount">0 / 8</span>
+      </div>
+      <div class="threshold-line" id="thresholdLine"></div>
+    </div>
+
+    <button class="roll-btn" id="rollBtn">Roll Encounter</button>
+
+    <div class="dice-stage">
+      <div class="die" id="die1">-</div>
+      <div class="plus">+</div>
+      <div class="die" id="die2">-</div>
+      <div class="equals">=</div>
+      <div class="sum-badge" id="sumBadge">-</div>
+    </div>
+    <div class="reroll-note" id="rerollNote"></div>
+
+    <div class="level-stage" id="levelStage">
+      <div class="level-die-wrap">
+        <span class="stage-label">Level die</span>
+        <div class="die die-small" id="levelDie">-</div>
+      </div>
+      <div class="level-math" id="levelMath"></div>
+    </div>
+
+    <div class="result" id="result">
+      <div class="eyebrow">Wild encounter</div>
+      <div class="mon-name" id="monName"></div>
+      <div class="level-line" id="levelLine"></div>
+      <div class="type-row">
+        <div class="atk-col">
+          <span class="atk-sublabel">True type</span>
+          <div class="type-pill-group" id="trueTypePills"></div>
+        </div>
+        <div class="atk-col">
+          <span class="atk-sublabel">Attack type</span>
+          <div class="type-pill atk-highlight" id="finalTypePill"></div>
+        </div>
+      </div>
+      <div class="die-faces" id="dieFaces"></div>
+      <div class="stat-total-line" id="statTotalLine"></div>
+      <button class="roll-btn stat-roll-btn" id="wildStatRollBtn">Roll a Stat (1-6)</button>
+      <div class="stat-roll-note" id="wildStatRollNote" style="text-align:center;margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div class="card trainer-card">
+    <div class="section-title">Trainer Battle</div>
+    <div class="field">
+      <button class="roll-btn trainer-btn" id="trainerBtn">Roll Trainer Encounter</button>
+    </div>
+
+    <div class="trainer-class-roll">
+      <span class="stage-label">Class die</span>
+      <div class="dice-stage" style="margin-top:6px;">
+        <div class="die die-small" id="classDie1">-</div>
+        <div class="plus">+</div>
+        <div class="die die-small" id="classDie2">-</div>
+        <div class="equals">=</div>
+        <div class="sum-badge" id="classSumBadge" style="width:56px;height:56px;font-size:22px;">-</div>
+      </div>
+    </div>
+
+    <div class="trainer-result" id="trainerResult">
+      <div class="eyebrow">Trainer</div>
+      <div class="mon-name" id="trainerClassName"></div>
+      <div class="level-line" id="trainerLevelLine"></div>
+      <div class="trainer-team" id="trainerTeam"></div>
+    </div>
+  </div>
+
+  <div class="card trainer-card">
+    <div class="section-title">Gym Leader</div>
+    <div class="field">
+      <label class="field-label" for="gymSelect">Leader</label>
+      <select id="gymSelect"></select>
+    </div>
+    <div class="field">
+      <button class="roll-btn trainer-btn" id="gymBtn">Show Gym Team</button>
+    </div>
+
+    <div class="trainer-result" id="gymResult">
+      <div class="eyebrow">Gym Leader</div>
+      <div class="mon-name" id="gymLeaderName"></div>
+      <div class="level-line" id="gymLevelLine"></div>
+      <div class="trainer-team" id="gymTeam"></div>
+    </div>
+  </div>
+
+  <div class="footer-note">Die faces = base stats (HP - Atk - Def - SpA - SpD - Spe) / 17.5, rounded. 0 is a legal face.</div>
+  </div>
+
+  <div id="mapPanel" style="display:none;">
+    <div class="card">
+      <div class="section-title">Calli Region Map</div>
+      <div class="map-legend">
+        <span><span class="legend-swatch legend-town"></span> Town w/ Gym</span>
+        <span><span class="legend-swatch legend-town-nogym"></span> Town, no Gym</span>
+        <span><span class="legend-swatch legend-dungeon"></span> Dungeon</span>
+        <span><span class="legend-swatch legend-route"></span> Route spot</span>
+      </div>
+      <div class="map-scroll" id="mapScroll">
+        <svg id="mapSvg" viewBox="0 0 0 0"></svg>
+      </div>
+      <div class="map-info" id="mapInfo">
+        <div class="map-info-empty">Tap a node to see what's there.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dexPanel" style="display:none;">
+    <div class="card">
+      <div class="section-title">Pokemon Data</div>
+      <div class="field">
+        <input type="text" id="dexSearch" class="dex-search" placeholder="Search by name...">
+      </div>
+      <div class="dex-count" id="dexCount"></div>
+      <div id="dexList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showError(msg){
+  const box = document.getElementById('errorBanner');
+  if(!box) return;
+  box.innerHTML = '<b>Something went wrong.</b><br>' + msg;
+  box.classList.add('show');
+}
+
+try {
+
+const DATA = {"locations":[{"id":"Route 1","name":"Route 1","kind":"route","subtitle":"Redwood Town \u2192 Route 2","flavor":"Old-growth redwood forest, shaded and misty","table":["Sentret","Weedle","Caterpie","Paras","Venonat","Metapod","Kakuna","Furret","Parasect","Butterfree","Beedrill"]},{"id":"Route 2","name":"Route 2","kind":"route","subtitle":"Route 1 \u2192 Tidepool Town","flavor":"Coastal descent down foggy bluffs","table":["Venonat","Krabby","Wingull","Krabby","Staryu","Chinchou","Pelipper","Kingler","Venomoth","Starmie","Lanturn"]},{"id":"Route 3","name":"Route 3","kind":"route","subtitle":"Tidepool Town \u2192 Vinehaven Town","flavor":"Coastal hills rolling into vineyard terraces","table":["Wingull","Oddish","Zigzagoon","Bellsprout","Linoone","Gloom","Weepinbell","Pelipper","Vileplume","Jumpluff","Bellossom"]},{"id":"Route 4","name":"Route 4","kind":"route","subtitle":"Route 3 \u2192 Baymist City","flavor":"Fog thickens as the trail turns toward the bay","table":["Meowth","Rattata","Pidgey","Zigzagoon","Gastly","Pidgeotto","Persian","Linoone","Raticate","Haunter","Pidgeot"]},{"id":"Route 5","name":"Route 5","kind":"route","subtitle":"Baymist City \u2192 Vinehaven Town","flavor":"Open farmland linking fog line to vineyards","table":["Rattata","Pidgey","Oddish","Meowth","Pikachu","Drifloon","Gloom","Persian","Raichu","Drifblim","Vileplume"]},{"id":"Route 6","name":"Route 6","kind":"route","subtitle":"Vinehaven Town \u2192 Capitol City","flavor":"Valley floor farmland into the river delta","table":["Zigzagoon","Bidoof","Psyduck","Machop","Magikarp","Linoone","Bibarel","Golduck","Machoke","Gyarados","Machamp"]},{"id":"Route 7","name":"Route 7","kind":"route","subtitle":"Baymist City \u2192 Vista Town","flavor":"Coastal highway hugging cliffs south of the bay","table":["Pidgey","Spearow","Doduo","Swablu","Pidgeotto","Fearow","Dodrio","Altaria","Pidgeot","Skarmory","Aerodactyl"]},{"id":"Route 8","name":"Route 8","kind":"route","subtitle":"Vinehaven Town \u2192 Route 9","flavor":"Backcountry vineyard trail climbing toward the coast","table":["Zigzagoon","Hoppip","Oddish","Miltank","Tauros","Skiploom","Linoone","Gloom","Victreebel","Vileplume","Bellossom"]},{"id":"Route 9","name":"Route 9","kind":"route","subtitle":"Vista Town \u2192 Route 10","flavor":"Windswept cliffside trail turning inland","table":["Doduo","Spearow","Swablu","Bagon","Dodrio","Fearow","Altaria","Shelgon","Skarmory","Salamence","Aerodactyl"]},{"id":"Route 10","name":"Route 10","kind":"route","subtitle":"Capitol City \u2192 Route 14","flavor":"Foothill trail leaving the capital south","table":["Machop","Bidoof","Psyduck","Drilbur","Onix","Machoke","Bibarel","Golduck","Excadrill","Steelix","Machamp"]},{"id":"Route 11","name":"Route 11","kind":"route","subtitle":"Capitol City \u2192 Alpine Town","flavor":"Mountain foothills climbing into the Sierra","table":["Bidoof","Machop","Onix","Drilbur","Swinub","Stantler","Bibarel","Machoke","Steelix","Piloswine","Machamp"]},{"id":"Route 12","name":"Route 12","kind":"route","subtitle":"Alpine Town \u2192 Crag Town","flavor":"High alpine pass into volcanic tablelands","table":["Sneasel","Swinub","Snorunt","Teddiursa","Snover","Piloswine","Weavile","Glalie","Froslass","Mamoswine","Golem"]},{"id":"Route 13","name":"Route 13","kind":"route","subtitle":"Crag Town \u2192 Route 14","flavor":"Dry tableland trail winding toward the valley","table":["Rhyhorn","Geodude","Larvitar","Onix","Graveler","Rhydon","Pupitar","Steelix","Golem","Rhyperior","Tyranitar"]},{"id":"Route 14","name":"Route 14","kind":"route","subtitle":"Route 10 \u2192 Basin Town","flavor":"Dusty valley floor, oil derricks on the horizon","table":["Diglett","Growlithe","Ponyta","Trapinch","Skorupi","Dugtrio","Arcanine","Rapidash","Vibrava","Drapion","Flygon"]},{"id":"Route 15","name":"Route 15","kind":"route","subtitle":"Basin Town \u2192 Canyon City","flavor":"Farmland fading into desert scrub","table":["Growlithe","Diglett","Zubat","Ponyta","Trapinch","Golbat","Vibrava","Houndoom","Sableye","Crobat","Absol"]},{"id":"Route 16","name":"Route 16","kind":"route","subtitle":"Canyon City \u2192 Route 17","flavor":"Boulder-strewn desert trail","table":["Houndour","Zubat","Nincada","Vullaby","Golbat","Houndoom","Ninjask","Mandibuzz","Crobat","Absol","Sableye"]},{"id":"Route 17","name":"Route 17","kind":"route","subtitle":"Route 15 \u2192 Dunebreak City","flavor":"Cracked earth leading into extreme desert","table":["Sandygast","Cacnea","Baltoy","Scraggy","Darumaka","Cacturne","Palossand","Claydol","Scrafty","Darmanitan","Salazzle"]},{"id":"Route 18","name":"Route 18","kind":"route","subtitle":"Dunebreak City \u2192 Crag Town","flavor":"Heat-shimmering desert climbing into rocky tablelands","table":["Geodude","Sandygast","Rhyhorn","Baltoy","Larvitar","Graveler","Palossand","Rhydon","Claydol","Tyranitar","Rhyperior"]},{"id":"Route 19","name":"Route 19","kind":"route","subtitle":"Basin Town \u2192 Mission Town","flavor":"Farmland giving way to mission orchards","table":["Sunkern","Growlithe","Igglybuff","Ponyta","Litleo","Clefairy","Jigglypuff","Sunflora","Pyroar","Clefable","Wigglytuff"]},{"id":"Route 20","name":"Route 20","kind":"route","subtitle":"Mission Town \u2192 Vista Town","flavor":"Coastal highway along cliffs and missions","table":["Sunkern","Ralts","Spearow","Doduo","Bagon","Kirlia","Sunflora","Fearow","Dodrio","Shelgon","Gardevoir"]},{"id":"Route 21","name":"Route 21","kind":"route","subtitle":"Mission Town \u2192 Skyline City","flavor":"Suburban sprawl approaching the city","table":["Abra","Igglybuff","Ralts","Drowzee","Jigglypuff","Kadabra","Kirlia","Wigglytuff","Alakazam","Gardevoir","Gallade"]},{"id":"Route 22","name":"Route 22","kind":"route","subtitle":"Skyline City \u2192 Route 23","flavor":"Freeway overpasses threading the city's edge","table":["Drowzee","Abra","Natu","Riolu","Elgyem","Kadabra","Hypno","Xatu","Lucario","Beheeyem","Alakazam"]},{"id":"Route 23","name":"Route 23","kind":"route","subtitle":"Route 22 \u2192 Route 19","flavor":"Backroads looping toward farmland","table":["Sunkern","Abra","Igglybuff","Drowzee","Natu","Swirlix","Elgyem","Jigglypuff","Xatu","Slurpuff","Beheeyem"]},{"id":"Route 24","name":"Route 24","kind":"route","subtitle":"Skyline City \u2192 Shoreline City","flavor":"Coastal freeway running south to the harbor city","table":["Abra","Horsea","Wailmer","Drowzee","Carvanha","Frillish","Seadra","Wailord","Sharpedo","Jellicent","Kingdra"]},{"id":"Redwood Grove Depths","name":"Redwood Grove Depths","kind":"dungeon","subtitle":"Route 1","flavor":"Hollowed sequoia trunks and root-cave tunnels beneath the forest floor","table":["Weedle","Caterpie","Paras","Venonat","Metapod","Kakuna","Parasect","Venomoth","Butterfree","Beedrill","Celebi"]},{"id":"Tidepool Sea Caves","name":"Tidepool Sea Caves","kind":"dungeon","subtitle":"near Tidepool Town","flavor":"Coastal caves only accessible at low tide","table":["Tentacool","Shellder","Staryu","Chinchou","Corsola","Pyukumuku","Cloyster","Tentacruel","Starmie","Lanturn","Kingler"]},{"id":"Cable Car Tunnels","name":"Cable Car Tunnels","kind":"dungeon","subtitle":"Baymist City","flavor":"Disused transit tunnels beneath the foggy hills","table":["Magnemite","Voltorb","Gastly","Litwick","Haunter","Electrode","Magneton","Lampent","Gengar","Magnezone","Chandelure"]},{"id":"Wine Cellar Catacombs","name":"Wine Cellar Catacombs","kind":"dungeon","subtitle":"Vinehaven Town","flavor":"Centuries-old aging cellars with a barrel-stack maze","table":["Venonat","Oddish","Paras","Hoppip","Gloom","Venomoth","Parasect","Skiploom","Vileplume","Jumpluff","Bellossom"]},{"id":"Delta Hydro Station","name":"Delta Hydro Station","kind":"dungeon","subtitle":"Route 6","flavor":"Abandoned hydroelectric plant in the river delta","table":["Bidoof","Magnemite","Chinchou","Voltorb","Bibarel","Magneton","Lanturn","Electrode","Gyarados","Magnezone","Thundurus"]},{"id":"Golden Vein Mine","name":"Golden Vein Mine","kind":"dungeon","subtitle":"Route 11","flavor":"Gold Rush-era mineshaft with cave-ins and minecarts","table":["Drilbur","Roggenrola","Onix","Geodude","Boldore","Excadrill","Steelix","Graveler","Gigalith","Golem","Landorus"]},{"id":"Alpine Ice Caverns","name":"Alpine Ice Caverns","kind":"dungeon","subtitle":"Route 12","flavor":"Glacial ice caves beneath the lake, slippery-floor puzzles","table":["Swinub","Snorunt","Sneasel","Spheal","Delibird","Piloswine","Abomasnow","Froslass","Ursaring","Sealeo","Walrein"]},{"id":"Bishop's Tablelands Labyrinth","name":"Bishop's Tablelands Labyrinth","kind":"dungeon","subtitle":"Route 18","flavor":"Pitch-dark volcanic rock maze carved by old lava flows","table":["Larvitar","Geodude","Rhyhorn","Onix","Graveler","Pupitar","Rhydon","Golem","Tyranitar","Rhyperior","Aerodactyl"]},{"id":"Salt Flat Ruins","name":"Salt Flat Ruins","kind":"dungeon","subtitle":"Route 17","flavor":"Sun-cracked dried lakebed with half-buried ruins","table":["Darumaka","Baltoy","Sandygast","Helioptile","Salandit","Claydol","Darmanitan","Palossand","Heliolisk","Salazzle","Heatran"]},{"id":"Sunken Oil Fields","name":"Sunken Oil Fields","kind":"dungeon","subtitle":"near Basin Town","flavor":"Abandoned oil derricks with toxic-gas tunnel hazards","table":["Growlithe","Trapinch","Skorupi","Diglett","Vibrava","Arcanine","Drapion","Rapidash","Dugtrio","Darmanitan","Flygon"]},{"id":"Boulder Maze","name":"Boulder Maze","kind":"dungeon","subtitle":"Route 15","flavor":"Rock-pile maze best explored at night under the stars","table":["Houndour","Nincada","Vullaby","Ninjask","Houndoom","Shedinja","Mandibuzz","Absol","Sableye","Crobat","Jirachi"]},{"id":"Cliffside Grotto","name":"Cliffside Grotto","kind":"dungeon","subtitle":"Route 20","flavor":"Sea-cliff caves and waterfalls, part climb, part dive","table":["Doduo","Spearow","Bagon","Fearow","Shelgon","Dodrio","Altaria","Aerodactyl","Skarmory","Salamence","Tornadus"]},{"id":"Studio Backlot Storm Drains","name":"Studio Backlot Storm Drains","kind":"dungeon","subtitle":"Skyline City","flavor":"Underground flood-control tunnels beneath old film sets","table":["Zubat","Drowzee","Bronzor","Deino","Hypno","Golbat","Zweilous","Bronzong","Absol","Crobat","Hydreigon"]},{"id":"Kelp Forest Trench / Victory Road","name":"Kelp Forest Trench / Victory Road","kind":"dungeon","subtitle":"Route 24","flavor":"Submerged kelp trench surfacing into a rocky coastal ridge \u2014 the region's final gauntlet","table":["Horsea","Kangaskhan","Tentacruel","Seadra","Sharpedo","Jellicent","Wailord","Gyarados","Kingdra","Tyranitar","Suicune"]}],"dice":{"Staryu":[2,3,3,4,3,5],"Starmie":[3,4,5,6,5,7],"Krabby":[2,6,5,1,1,3],"Kingler":[3,7,7,3,3,4],"Pyukumuku":[3,3,7,2,7,0],"Wingull":[2,2,2,3,2,5],"Pelipper":[3,3,6,5,4,4],"Horsea":[2,2,4,4,1,3],"Gastly":[2,2,2,6,2,5],"Haunter":[3,3,3,7,3,5],"Gengar":[3,4,3,7,4,6],"Drifloon":[5,3,2,3,3,4],"Drifblim":[9,5,3,5,3,5],"Litwick":[3,2,3,4,3,1],"Lampent":[3,2,3,5,3,3],"Chandelure":[3,3,5,8,5,5],"Snorunt":[3,3,3,3,3,3],"Froslass":[4,5,4,5,4,6],"Frillish":[3,2,3,4,5,2],"Drilbur":[3,5,2,2,3,4],"Excadrill":[6,8,3,3,4,5],"Onix":[2,3,9,2,3,4],"Steelix":[4,5,11,3,4,2],"Trapinch":[3,6,3,3,3,1],"Vibrava":[3,4,3,3,3,4],"Flygon":[5,6,5,5,5,6],"Rhyhorn":[5,5,5,2,2,1],"Rhydon":[6,7,7,3,3,2],"Baltoy":[2,2,3,2,4,3],"Swinub":[3,3,2,2,2,3],"Piloswine":[6,6,5,3,3,3],"Mamoswine":[6,7,5,4,3,5],"Sneasel":[3,5,3,2,4,7],"Weavile":[4,7,4,3,5,7],"Delibird":[3,3,3,4,3,4],"Spheal":[4,2,3,3,3,1],"Walrein":[6,5,5,5,5,4],"Snover":[3,4,3,4,3,2],"Houndour":[3,3,2,5,3,4],"Houndoom":[4,5,3,6,5,5],"Absol":[4,7,3,4,3,4],"Sableye":[3,4,4,4,4,3],"Vullaby":[4,3,4,3,4,3],"Mandibuzz":[6,4,6,3,5,5],"Cacnea":[3,5,2,5,2,2],"Darumaka":[4,5,3,1,3,3],"Darmanitan":[6,8,3,2,3,5],"Growlithe":[3,4,3,4,3,3],"Arcanine":[5,6,5,6,5,5],"Ponyta":[3,5,3,4,4,5],"Rapidash":[4,6,4,5,5,6],"Salandit":[3,3,2,4,2,4],"Salazzle":[4,4,3,6,3,7],"Litleo":[4,3,3,4,3,4],"Clefairy":[4,3,3,3,4,2],"Clefable":[5,4,4,5,5,3],"Ralts":[2,1,1,3,2,2],"Kirlia":[2,2,2,4,3,3],"Gardevoir":[4,4,4,7,7,5],"Igglybuff":[5,2,1,2,1,1],"Jigglypuff":[7,3,1,3,1,1],"Wigglytuff":[8,4,3,5,3,3],"Swirlix":[4,3,4,3,3,3],"Slurpuff":[5,5,5,5,4,4],"Sunkern":[2,2,2,2,2,2],"Abra":[1,1,1,6,3,5],"Kadabra":[2,2,2,7,4,6],"Alakazam":[3,3,3,8,5,7],"Drowzee":[3,3,3,2,5,2],"Hypno":[5,4,4,4,7,4],"Natu":[2,3,3,4,3,4],"Xatu":[4,4,4,5,4,5],"Elgyem":[3,3,3,5,3,2],"Beheeyem":[4,4,4,7,5,2],"Bronzor":[3,1,5,1,5,1],"Abomasnow":[5,5,4,5,5,3],"Aerodactyl":[5,6,4,3,4,7],"Altaria":[4,4,5,4,6,5],"Bagon":[3,4,3,2,2,3],"Beedrill":[4,5,2,3,5,4],"Bellossom":[4,5,5,5,6,3],"Bellsprout":[3,4,2,4,2,2],"Bibarel":[5,5,3,3,3,4],"Bidoof":[3,3,2,2,2,2],"Boldore":[4,6,6,3,2,1],"Braixen":[3,3,3,5,4,4],"Brionne":[3,4,4,5,5,3],"Bronzong":[4,5,7,5,7,2],"Butterfree":[3,3,3,5,5,4],"Cacturne":[4,7,3,7,3,3],"Carvanha":[3,5,1,4,1,4],"Caterpie":[3,2,2,1,1,3],"Celebi":[6,6,6,6,6,6],"Chinchou":[4,2,2,3,3,4],"Claydol":[3,4,6,4,7,4],"Cloyster":[3,5,10,5,3,4],"Corsola":[4,3,5,4,5,2],"Crobat":[5,5,5,4,5,7],"Deino":[3,4,3,3,3,2],"Delphox":[4,4,4,7,6,6],"Diglett":[1,3,1,2,3,5],"Dodrio":[3,6,4,3,3,6],"Doduo":[2,5,3,2,2,4],"Drapion":[4,5,6,3,4,5],"Dugtrio":[2,6,3,3,4,7],"Electrode":[3,3,4,5,5,9],"Fearow":[4,5,4,3,3,6],"Fennekin":[2,3,2,4,3,3],"Floragato":[3,5,4,3,4,5],"Furret":[5,4,4,3,3,5],"Gallade":[4,7,4,4,7,5],"Geodude":[2,5,6,2,2,1],"Gigalith":[5,8,7,3,5,1],"Glalie":[5,5,5,5,5,5],"Gloom":[3,4,4,5,4,2],"Golbat":[4,5,4,4,4,5],"Golduck":[5,5,4,5,5,5],"Golem":[5,7,7,3,4,3],"Graveler":[3,5,7,3,3,2],"Gyarados":[5,7,5,3,6,5],"Heatran":[5,5,6,7,6,4],"Heliolisk":[4,3,3,6,5,6],"Helioptile":[3,2,2,3,2,4],"Hoppip":[2,2,2,2,3,3],"Hydreigon":[5,6,5,7,5,6],"Jellicent":[6,3,4,5,6,3],"Jirachi":[6,6,6,6,6,6],"Jumpluff":[4,3,4,3,5,6],"Kakuna":[3,1,3,1,1,2],"Kangaskhan":[6,5,5,2,5,5],"Kingdra":[4,5,5,5,5,5],"Landorus":[5,7,5,7,5,6],"Lanturn":[7,3,3,4,4,4],"Larvitar":[3,4,3,3,3,2],"Linoone":[4,4,3,3,3,6],"Lucario":[4,6,4,7,4,5],"Machamp":[5,7,5,4,5,3],"Machoke":[5,6,4,3,3,3],"Machop":[4,5,3,2,2,2],"Magikarp":[1,1,3,1,1,5],"Magnemite":[1,2,4,5,3,3],"Magneton":[3,3,5,7,4,4],"Magnezone":[4,4,7,7,5,3],"Meowscarada":[4,6,4,5,4,7],"Meowth":[2,3,2,2,2,5],"Metapod":[3,1,3,1,1,2],"Miltank":[5,5,6,2,4,6],"Nincada":[2,3,5,2,2,2],"Ninjask":[3,5,3,3,3,9],"Oddish":[3,3,3,4,4,2],"Palossand":[5,4,6,6,4,2],"Paras":[2,4,3,3,3,1],"Parasect":[3,5,5,3,5,2],"Persian":[4,4,3,4,4,7],"Pidgeot":[5,5,4,4,4,6],"Pidgeotto":[4,3,3,3,3,4],"Pidgey":[2,3,2,2,2,3],"Pikachu":[2,3,2,3,3,5],"Popplio":[3,3,3,4,3,2],"Primarina":[5,4,4,7,7,3],"Psyduck":[3,3,3,4,3,3],"Pupitar":[4,5,4,4,4,3],"Pyroar":[5,4,4,6,4,6],"Raichu":[3,5,3,5,5,6],"Raticate":[3,5,3,3,4,6],"Rattata":[2,3,2,1,2,4],"Rhyperior":[7,8,7,3,3,2],"Riolu":[2,4,2,2,2,3],"Roggenrola":[3,4,5,1,1,1],"Salamence":[5,8,5,6,5,6],"Sandygast":[3,3,5,4,3,1],"Scrafty":[4,5,7,3,7,3],"Scraggy":[3,4,4,2,4,3],"Seadra":[3,4,5,5,3,5],"Sealeo":[5,3,4,4,4,3],"Sentret":[2,3,2,2,3,1],"Sharpedo":[4,7,2,5,2,5],"Shedinja":[0,5,3,2,2,2],"Shelgon":[4,5,6,3,3,3],"Shellder":[2,4,6,3,1,2],"Skarmory":[4,5,8,2,4,4],"Skiploom":[3,3,3,3,4,5],"Skorupi":[2,3,5,2,3,4],"Spearow":[2,3,2,2,2,4],"Sprigatito":[2,3,3,3,3,4],"Stantler":[4,5,4,5,4,5],"Suicune":[6,4,7,5,7,5],"Sunflora":[4,4,3,6,5,2],"Swablu":[3,2,3,2,4,3],"Tauros":[4,6,5,2,4,6],"Teddiursa":[3,5,3,3,3,2],"Tentacool":[2,2,2,3,6,4],"Tentacruel":[5,4,4,5,7,6],"Thundurus":[5,7,4,7,5,6],"Tornadus":[5,7,4,7,5,6],"Tyranitar":[6,8,6,5,6,3],"Ursaring":[5,7,4,4,4,3],"Venomoth":[4,4,3,5,4,5],"Venonat":[3,3,3,2,3,3],"Victreebel":[5,6,4,6,4,4],"Vileplume":[4,5,5,6,5,3],"Voltorb":[2,2,3,3,3,6],"Wailmer":[7,4,2,4,2,3],"Wailord":[10,5,3,5,3,3],"Weedle":[2,2,2,1,1,3],"Weepinbell":[4,5,3,5,3,3],"Zigzagoon":[2,2,2,2,2,3],"Zubat":[2,3,2,2,2,3],"Zweilous":[4,5,4,4,4,3]},"types":{"Sprigatito":["Grass",null],"Floragato":["Grass",null],"Meowscarada":["Grass","Dark"],"Fennekin":["Fire",null],"Braixen":["Fire",null],"Delphox":["Fire","Psychic"],"Popplio":["Water",null],"Brionne":["Water",null],"Primarina":["Water","Fairy"],"Caterpie":["Bug",null],"Metapod":["Bug",null],"Butterfree":["Bug","Flying"],"Weedle":["Bug","Poison"],"Kakuna":["Bug","Poison"],"Beedrill":["Bug","Poison"],"Bellsprout":["Grass","Poison"],"Weepinbell":["Grass","Poison"],"Victreebel":["Grass","Poison"],"Paras":["Bug","Grass"],"Parasect":["Bug","Grass"],"Sentret":["Normal",null],"Furret":["Normal",null],"Venonat":["Bug","Poison"],"Venomoth":["Bug","Poison"],"Krabby":["Water",null],"Kingler":["Water",null],"Shellder":["Water",null],"Cloyster":["Water","Ice"],"Staryu":["Water",null],"Starmie":["Water","Psychic"],"Wingull":["Water","Flying"],"Pelipper":["Water","Flying"],"Tentacool":["Water","Poison"],"Tentacruel":["Water","Poison"],"Chinchou":["Water","Electric"],"Lanturn":["Water","Electric"],"Corsola":["Water","Rock"],"Rattata":["Normal",null],"Raticate":["Normal",null],"Pidgey":["Normal","Flying"],"Pidgeotto":["Normal","Flying"],"Pidgeot":["Normal","Flying"],"Meowth":["Normal",null],"Persian":["Normal",null],"Gastly":["Ghost","Poison"],"Haunter":["Ghost","Poison"],"Gengar":["Ghost","Poison"],"Drifloon":["Ghost","Flying"],"Drifblim":["Ghost","Flying"],"Litwick":["Ghost","Fire"],"Lampent":["Ghost","Fire"],"Chandelure":["Ghost","Fire"],"Pikachu":["Electric",null],"Raichu":["Electric",null],"Voltorb":["Electric",null],"Electrode":["Electric",null],"Magnemite":["Electric","Steel"],"Magneton":["Electric","Steel"],"Magnezone":["Electric","Steel"],"Oddish":["Grass","Poison"],"Gloom":["Grass","Poison"],"Vileplume":["Grass","Poison"],"Bellossom":["Grass",null],"Hoppip":["Grass","Flying"],"Skiploom":["Grass","Flying"],"Jumpluff":["Grass","Flying"],"Zigzagoon":["Normal",null],"Linoone":["Normal",null],"Bidoof":["Normal",null],"Bibarel":["Normal","Water"],"Psyduck":["Water",null],"Golduck":["Water",null],"Magikarp":["Water",null],"Gyarados":["Water","Flying"],"Machop":["Fighting",null],"Machoke":["Fighting",null],"Machamp":["Fighting",null],"Onix":["Rock","Ground"],"Steelix":["Steel","Ground"],"Roggenrola":["Rock",null],"Boldore":["Rock",null],"Gigalith":["Rock",null],"Drilbur":["Ground",null],"Excadrill":["Ground","Steel"],"Swinub":["Ice","Ground"],"Piloswine":["Ice","Ground"],"Mamoswine":["Ice","Ground"],"Snover":["Grass","Ice"],"Abomasnow":["Grass","Ice"],"Snorunt":["Ice",null],"Glalie":["Ice",null],"Froslass":["Ice","Ghost"],"Sneasel":["Dark","Ice"],"Weavile":["Dark","Ice"],"Spheal":["Ice","Water"],"Sealeo":["Ice","Water"],"Walrein":["Ice","Water"],"Teddiursa":["Normal",null],"Ursaring":["Normal",null],"Geodude":["Rock","Ground"],"Graveler":["Rock","Ground"],"Golem":["Rock","Ground"],"Rhyhorn":["Ground","Rock"],"Rhydon":["Ground","Rock"],"Rhyperior":["Ground","Rock"],"Larvitar":["Rock","Ground"],"Pupitar":["Rock","Ground"],"Tyranitar":["Rock","Dark"],"Growlithe":["Fire",null],"Arcanine":["Fire",null],"Ponyta":["Fire",null],"Rapidash":["Fire",null],"Trapinch":["Ground",null],"Vibrava":["Ground","Dragon"],"Flygon":["Ground","Dragon"],"Skorupi":["Poison","Bug"],"Drapion":["Poison","Dark"],"Cacnea":["Grass",null],"Cacturne":["Grass","Dark"],"Sandygast":["Ghost","Ground"],"Palossand":["Ghost","Ground"],"Baltoy":["Ground","Psychic"],"Claydol":["Ground","Psychic"],"Darumaka":["Fire",null],"Darmanitan":["Fire",null],"Salandit":["Poison","Fire"],"Salazzle":["Poison","Fire"],"Helioptile":["Electric","Normal"],"Heliolisk":["Electric","Normal"],"Scraggy":["Dark","Fighting"],"Scrafty":["Dark","Fighting"],"Zubat":["Poison","Flying"],"Golbat":["Poison","Flying"],"Crobat":["Poison","Flying"],"Sableye":["Dark","Ghost"],"Absol":["Dark",null],"Houndour":["Dark","Fire"],"Houndoom":["Dark","Fire"],"Nincada":["Bug","Ground"],"Ninjask":["Bug","Flying"],"Shedinja":["Bug","Ghost"],"Vullaby":["Dark","Flying"],"Mandibuzz":["Dark","Flying"],"Spearow":["Normal","Flying"],"Fearow":["Normal","Flying"],"Doduo":["Normal","Flying"],"Dodrio":["Normal","Flying"],"Skarmory":["Steel","Flying"],"Aerodactyl":["Rock","Flying"],"Swablu":["Normal","Flying"],"Altaria":["Dragon","Flying"],"Bagon":["Dragon",null],"Shelgon":["Dragon",null],"Salamence":["Dragon","Flying"],"Igglybuff":["Normal","Fairy"],"Jigglypuff":["Normal","Fairy"],"Wigglytuff":["Normal","Fairy"],"Ralts":["Psychic","Fairy"],"Kirlia":["Psychic","Fairy"],"Gardevoir":["Psychic","Fairy"],"Gallade":["Psychic","Fighting"],"Bronzor":["Steel","Psychic"],"Bronzong":["Steel","Psychic"],"Litleo":["Fire","Normal"],"Pyroar":["Fire","Normal"],"Sunkern":["Grass",null],"Sunflora":["Grass",null],"Abra":["Psychic",null],"Kadabra":["Psychic",null],"Alakazam":["Psychic",null],"Drowzee":["Psychic",null],"Hypno":["Psychic",null],"Natu":["Psychic","Flying"],"Xatu":["Psychic","Flying"],"Riolu":["Fighting",null],"Lucario":["Fighting","Steel"],"Deino":["Dark","Dragon"],"Zweilous":["Dark","Dragon"],"Hydreigon":["Dark","Dragon"],"Horsea":["Water",null],"Seadra":["Water",null],"Kingdra":["Water","Dragon"],"Wailmer":["Water",null],"Wailord":["Water",null],"Carvanha":["Water","Dark"],"Sharpedo":["Water","Dark"],"Frillish":["Water","Ghost"],"Jellicent":["Water","Ghost"],"Kangaskhan":["Normal",null],"Landorus":["Ground","Flying"],"Thundurus":["Electric","Flying"],"Tornadus":["Flying",null],"Heatran":["Fire","Steel"],"Suicune":["Water",null],"Celebi":["Psychic","Grass"],"Jirachi":["Steel","Psychic"],"Miltank":["Normal",null],"Tauros":["Normal",null],"Pyukumuku":["Water",null],"Delibird":["Ice","Flying"],"Stantler":["Normal",null],"Clefairy":["Fairy",null],"Clefable":["Fairy",null],"Diglett":["Ground",null],"Dugtrio":["Ground",null],"Elgyem":["Psychic",null],"Beheeyem":["Psychic",null],"Swirlix":["Fairy",null],"Slurpuff":["Fairy",null]},"predecessor":{"Sprigatito":null,"Floragato":"Sprigatito","Meowscarada":"Floragato","Fennekin":null,"Braixen":"Fennekin","Delphox":"Braixen","Popplio":null,"Brionne":"Popplio","Primarina":"Brionne","Caterpie":null,"Metapod":"Caterpie","Butterfree":"Metapod","Weedle":null,"Kakuna":"Weedle","Beedrill":"Kakuna","Bellsprout":null,"Weepinbell":"Bellsprout","Victreebel":"Weepinbell","Paras":null,"Parasect":"Paras","Sentret":null,"Furret":"Sentret","Venonat":null,"Venomoth":"Venonat","Krabby":null,"Kingler":"Krabby","Shellder":null,"Cloyster":"Shellder","Staryu":null,"Starmie":"Staryu","Wingull":null,"Pelipper":"Wingull","Tentacool":null,"Tentacruel":"Tentacool","Chinchou":null,"Lanturn":"Chinchou","Corsola":null,"Pyukumuku":null,"Rattata":null,"Raticate":"Rattata","Pidgey":null,"Pidgeotto":"Pidgey","Pidgeot":"Pidgeotto","Meowth":null,"Persian":"Meowth","Gastly":null,"Haunter":"Gastly","Gengar":"Haunter","Drifloon":null,"Drifblim":"Drifloon","Litwick":null,"Lampent":"Litwick","Chandelure":"Lampent","Pikachu":null,"Raichu":"Pikachu","Voltorb":null,"Electrode":"Voltorb","Magnemite":null,"Magneton":"Magnemite","Magnezone":"Magneton","Oddish":null,"Gloom":"Oddish","Vileplume":"Gloom","Bellossom":"Gloom","Hoppip":null,"Skiploom":"Hoppip","Jumpluff":"Skiploom","Zigzagoon":null,"Linoone":"Zigzagoon","Miltank":null,"Tauros":null,"Bidoof":null,"Bibarel":"Bidoof","Psyduck":null,"Golduck":"Psyduck","Magikarp":null,"Gyarados":"Magikarp","Machop":null,"Machoke":"Machop","Machamp":"Machoke","Onix":null,"Steelix":"Onix","Roggenrola":null,"Boldore":"Roggenrola","Gigalith":"Boldore","Drilbur":null,"Excadrill":"Drilbur","Swinub":null,"Piloswine":"Swinub","Mamoswine":"Piloswine","Snover":null,"Abomasnow":"Snover","Snorunt":null,"Glalie":"Snorunt","Froslass":"Snorunt","Sneasel":null,"Weavile":"Sneasel","Spheal":null,"Sealeo":"Spheal","Walrein":"Sealeo","Teddiursa":null,"Ursaring":"Teddiursa","Delibird":null,"Stantler":null,"Geodude":null,"Graveler":"Geodude","Golem":"Graveler","Rhyhorn":null,"Rhydon":"Rhyhorn","Rhyperior":"Rhydon","Larvitar":null,"Pupitar":"Larvitar","Tyranitar":"Pupitar","Growlithe":null,"Arcanine":"Growlithe","Ponyta":null,"Rapidash":"Ponyta","Trapinch":null,"Vibrava":"Trapinch","Flygon":"Vibrava","Skorupi":null,"Drapion":"Skorupi","Diglett":null,"Dugtrio":"Diglett","Cacnea":null,"Cacturne":"Cacnea","Sandygast":null,"Palossand":"Sandygast","Baltoy":null,"Claydol":"Baltoy","Darumaka":null,"Darmanitan":"Darumaka","Salandit":null,"Salazzle":"Salandit","Helioptile":null,"Heliolisk":"Helioptile","Scraggy":null,"Scrafty":"Scraggy","Zubat":null,"Golbat":"Zubat","Crobat":"Golbat","Sableye":null,"Absol":null,"Houndour":null,"Houndoom":"Houndour","Nincada":null,"Ninjask":"Nincada","Shedinja":"Nincada","Vullaby":null,"Mandibuzz":"Vullaby","Spearow":null,"Fearow":"Spearow","Doduo":null,"Dodrio":"Doduo","Skarmory":null,"Aerodactyl":null,"Swablu":null,"Altaria":"Swablu","Bagon":null,"Shelgon":"Bagon","Salamence":"Shelgon","Igglybuff":null,"Jigglypuff":"Igglybuff","Wigglytuff":"Jigglypuff","Ralts":null,"Kirlia":"Ralts","Gardevoir":"Kirlia","Gallade":"Kirlia","Bronzor":null,"Bronzong":"Bronzor","Litleo":null,"Pyroar":"Litleo","Sunkern":null,"Sunflora":"Sunkern","Clefairy":null,"Clefable":"Clefairy","Swirlix":null,"Slurpuff":"Swirlix","Abra":null,"Kadabra":"Abra","Alakazam":"Kadabra","Drowzee":null,"Hypno":"Drowzee","Natu":null,"Xatu":"Natu","Riolu":null,"Lucario":"Riolu","Elgyem":null,"Beheeyem":"Elgyem","Horsea":null,"Seadra":"Horsea","Kingdra":"Seadra","Wailmer":null,"Wailord":"Wailmer","Carvanha":null,"Sharpedo":"Carvanha","Frillish":null,"Jellicent":"Frillish","Kangaskhan":null,"Landorus":null,"Thundurus":null,"Tornadus":null,"Heatran":null,"Suicune":null,"Celebi":null,"Jirachi":null,"Deino":null,"Zweilous":"Deino","Hydreigon":"Zweilous"},"minLevel":{"Sprigatito":1,"Floragato":5,"Meowscarada":10,"Fennekin":1,"Braixen":5,"Delphox":10,"Popplio":1,"Brionne":5,"Primarina":9,"Caterpie":1,"Metapod":3,"Butterfree":4,"Weedle":1,"Kakuna":3,"Beedrill":4,"Bellsprout":1,"Weepinbell":6,"Victreebel":6,"Paras":1,"Parasect":7,"Sentret":1,"Furret":5,"Venonat":1,"Venomoth":9,"Krabby":1,"Kingler":8,"Shellder":1,"Cloyster":1,"Staryu":1,"Starmie":1,"Wingull":1,"Pelipper":7,"Tentacool":1,"Tentacruel":8,"Chinchou":1,"Lanturn":8,"Corsola":1,"Pyukumuku":1,"Rattata":1,"Raticate":6,"Pidgey":1,"Pidgeotto":6,"Pidgeot":10,"Meowth":1,"Persian":8,"Gastly":1,"Haunter":7,"Gengar":7,"Drifloon":1,"Drifblim":8,"Litwick":1,"Lampent":11,"Chandelure":11,"Pikachu":1,"Raichu":1,"Voltorb":1,"Electrode":8,"Magnemite":1,"Magneton":8,"Magnezone":8,"Oddish":1,"Gloom":6,"Vileplume":6,"Bellossom":6,"Hoppip":1,"Skiploom":6,"Jumpluff":8,"Zigzagoon":1,"Linoone":6,"Miltank":1,"Tauros":1,"Bidoof":1,"Bibarel":5,"Psyduck":1,"Golduck":9,"Magikarp":1,"Gyarados":6,"Machop":1,"Machoke":8,"Machamp":8,"Onix":1,"Steelix":1,"Roggenrola":1,"Boldore":7,"Gigalith":7,"Drilbur":1,"Excadrill":9,"Swinub":1,"Piloswine":9,"Mamoswine":9,"Snover":1,"Abomasnow":10,"Snorunt":1,"Glalie":11,"Froslass":1,"Sneasel":1,"Weavile":1,"Spheal":1,"Sealeo":9,"Walrein":11,"Teddiursa":1,"Ursaring":8,"Delibird":1,"Stantler":1,"Geodude":1,"Graveler":7,"Golem":7,"Rhyhorn":1,"Rhydon":11,"Rhyperior":11,"Larvitar":1,"Pupitar":8,"Tyranitar":13,"Growlithe":1,"Arcanine":1,"Ponyta":1,"Rapidash":10,"Trapinch":1,"Vibrava":9,"Flygon":11,"Skorupi":1,"Drapion":10,"Diglett":1,"Dugtrio":8,"Cacnea":1,"Cacturne":9,"Sandygast":1,"Palossand":11,"Baltoy":1,"Claydol":10,"Darumaka":1,"Darmanitan":9,"Salandit":1,"Salazzle":9,"Helioptile":1,"Heliolisk":1,"Scraggy":1,"Scrafty":10,"Zubat":1,"Golbat":7,"Crobat":7,"Sableye":1,"Absol":1,"Houndour":1,"Houndoom":7,"Nincada":1,"Ninjask":6,"Shedinja":6,"Vullaby":1,"Mandibuzz":13,"Spearow":1,"Fearow":6,"Doduo":1,"Dodrio":9,"Skarmory":1,"Aerodactyl":1,"Swablu":1,"Altaria":9,"Bagon":1,"Shelgon":8,"Salamence":12,"Igglybuff":1,"Jigglypuff":1,"Wigglytuff":1,"Ralts":1,"Kirlia":6,"Gardevoir":8,"Gallade":6,"Bronzor":1,"Bronzong":9,"Litleo":1,"Pyroar":9,"Sunkern":1,"Sunflora":1,"Clefairy":1,"Clefable":1,"Swirlix":1,"Slurpuff":1,"Abra":1,"Kadabra":5,"Alakazam":5,"Drowzee":1,"Hypno":8,"Natu":1,"Xatu":7,"Riolu":1,"Lucario":1,"Elgyem":1,"Beheeyem":11,"Horsea":1,"Seadra":9,"Kingdra":9,"Wailmer":1,"Wailord":10,"Carvanha":1,"Sharpedo":8,"Frillish":1,"Jellicent":10,"Kangaskhan":1,"Landorus":1,"Thundurus":1,"Tornadus":1,"Heatran":1,"Suicune":1,"Celebi":1,"Jirachi":1,"Deino":1,"Zweilous":12,"Hydreigon":15},"trainerClassBySum":{"7":"Youngster","6":"Lass","8":"Camper","5":"Bug Catcher","9":"Bird Keeper","4":"Hiker","10":"Cyclist","3":"Backpacker","11":"Black Belt","2":"Ranger","12":"Ace Trainer"},"trainerTables":{"Youngster":["Doduo","Growlithe","Meowth","Zigzagoon","Pidgey","Rattata","Sentret","Bidoof","Spearow","Psyduck","Voltorb"],"Lass":["Teddiursa","Wingull","Swablu","Sunkern","Hoppip","Oddish","Clefairy","Igglybuff","Chinchou","Swirlix","Snover"],"Bug Catcher":["Sandygast","Skorupi","Zubat","Paras","Weedle","Caterpie","Venonat","Nincada","Diglett","Cacnea","Baltoy"],"Camper":["Carvanha","Tentacool","Spheal","Swinub","Bidoof","Sentret","Growlithe","Snorunt","Krabby","Wailmer","Frillish"],"Hiker":["Baltoy","Swinub","Larvitar","Rhyhorn","Onix","Geodude","Machop","Roggenrola","Diglett","Snorunt","Sandygast"],"Backpacker":["Sableye","Houndour","Scraggy","Drifloon","Doduo","Zigzagoon","Natu","Riolu","Litwick","Skorupi","Absol"],"Bird Keeper":["Aerodactyl","Skarmory","Zubat","Swablu","Spearow","Pidgey","Doduo","Wingull","Vullaby","Nincada","Bagon"],"Cyclist":["Sneasel","Riolu","Natu","Zubat","Doduo","Voltorb","Spearow","Ponyta","Diglett","Nincada","Growlithe"],"Black Belt":["Absol","Houndour","Scraggy","Sneasel","Riolu","Machop","Growlithe","Geodude","Teddiursa","Larvitar","Sableye"],"Ranger":["Vullaby","Snover","Spheal","Teddiursa","Bidoof","Growlithe","Wingull","Swablu","Zigzagoon","Absol","Stantler"],"Ace Trainer":["Larvitar","Roggenrola","Litwick","Magnemite","Ralts","Abra","Gastly","Horsea","Trapinch","Bagon","Deino"]},"trainerChain":{"Abra":["Abra","Kadabra","Alakazam"],"Absol":["Absol"],"Aerodactyl":["Aerodactyl"],"Bagon":["Bagon","Shelgon","Salamence"],"Baltoy":["Baltoy","Claydol"],"Bidoof":["Bidoof","Bibarel"],"Cacnea":["Cacnea","Cacturne"],"Carvanha":["Carvanha","Sharpedo"],"Caterpie":["Caterpie","Metapod","Butterfree"],"Chinchou":["Chinchou","Lanturn"],"Clefairy":["Clefairy","Clefable"],"Deino":["Deino","Zweilous","Hydreigon"],"Diglett":["Diglett","Dugtrio"],"Doduo":["Doduo","Dodrio"],"Drifloon":["Drifloon","Drifblim"],"Frillish":["Frillish","Jellicent"],"Gastly":["Gastly","Haunter","Gengar"],"Geodude":["Geodude","Graveler","Golem"],"Growlithe":["Growlithe","Arcanine"],"Hoppip":["Hoppip","Skiploom","Jumpluff"],"Horsea":["Horsea","Seadra","Kingdra"],"Houndour":["Houndour","Houndoom"],"Igglybuff":["Igglybuff","Jigglypuff","Wigglytuff"],"Krabby":["Krabby","Kingler"],"Larvitar":["Larvitar","Pupitar","Tyranitar"],"Litwick":["Litwick","Lampent","Chandelure"],"Machop":["Machop","Machoke","Machamp"],"Magnemite":["Magnemite","Magneton","Magnezone"],"Meowth":["Meowth","Persian"],"Natu":["Natu","Xatu"],"Nincada":["Nincada","Ninjask"],"Oddish":["Oddish","Gloom","Vileplume"],"Onix":["Onix","Steelix"],"Paras":["Paras","Parasect"],"Pidgey":["Pidgey","Pidgeotto","Pidgeot"],"Ponyta":["Ponyta","Rapidash"],"Psyduck":["Psyduck","Golduck"],"Ralts":["Ralts","Kirlia","Gardevoir"],"Rattata":["Rattata","Raticate"],"Rhyhorn":["Rhyhorn","Rhydon","Rhyperior"],"Riolu":["Riolu","Lucario"],"Roggenrola":["Roggenrola","Boldore","Gigalith"],"Sableye":["Sableye"],"Sandygast":["Sandygast","Palossand"],"Scraggy":["Scraggy","Scrafty"],"Sentret":["Sentret","Furret"],"Skarmory":["Skarmory"],"Skorupi":["Skorupi","Drapion"],"Sneasel":["Sneasel","Weavile"],"Snorunt":["Snorunt","Glalie"],"Snover":["Snover","Abomasnow"],"Spearow":["Spearow","Fearow"],"Spheal":["Spheal","Sealeo","Walrein"],"Stantler":["Stantler"],"Sunkern":["Sunkern","Sunflora"],"Swablu":["Swablu","Altaria"],"Swinub":["Swinub","Piloswine","Mamoswine"],"Swirlix":["Swirlix","Slurpuff"],"Teddiursa":["Teddiursa","Ursaring"],"Tentacool":["Tentacool","Tentacruel"],"Trapinch":["Trapinch","Vibrava","Flygon"],"Venonat":["Venonat","Venomoth"],"Voltorb":["Voltorb","Electrode"],"Vullaby":["Vullaby","Mandibuzz"],"Wailmer":["Wailmer","Wailord"],"Weedle":["Weedle","Kakuna","Beedrill"],"Wingull":["Wingull","Pelipper"],"Zigzagoon":["Zigzagoon","Linoone"],"Zubat":["Zubat","Golbat","Crobat"],"Staryu":["Staryu","Starmie"],"Pyukumuku":["Pyukumuku"],"Drilbur":["Drilbur","Excadrill"],"Delibird":["Delibird"],"Darumaka":["Darumaka","Darmanitan"],"Salandit":["Salandit","Salazzle"],"Litleo":["Litleo","Pyroar"],"Drowzee":["Drowzee","Hypno"],"Elgyem":["Elgyem","Beheeyem"],"Bronzor":["Bronzor","Bronzong"],"Bellsprout":["Bellsprout","Weepinbell","Victreebel"],"Tauros":["Tauros"],"Magikarp":["Magikarp","Gyarados"],"Ralts_M":["Ralts","Kirlia","Gallade"]},"trainerMinLevel":{"Sprigatito":1,"Floragato":5,"Meowscarada":10,"Fennekin":1,"Braixen":5,"Delphox":10,"Popplio":1,"Brionne":5,"Primarina":9,"Caterpie":1,"Metapod":3,"Butterfree":4,"Weedle":1,"Kakuna":3,"Beedrill":4,"Bellsprout":1,"Weepinbell":6,"Victreebel":9,"Paras":1,"Parasect":7,"Sentret":1,"Furret":5,"Venonat":1,"Venomoth":9,"Krabby":1,"Kingler":8,"Shellder":1,"Cloyster":7,"Staryu":1,"Starmie":7,"Wingull":1,"Pelipper":7,"Tentacool":1,"Tentacruel":8,"Chinchou":1,"Lanturn":8,"Corsola":1,"Pyukumuku":1,"Rattata":1,"Raticate":6,"Pidgey":1,"Pidgeotto":6,"Pidgeot":10,"Meowth":1,"Persian":8,"Gastly":1,"Haunter":7,"Gengar":10,"Drifloon":1,"Drifblim":8,"Litwick":1,"Lampent":11,"Chandelure":14,"Pikachu":1,"Raichu":7,"Voltorb":1,"Electrode":8,"Magnemite":1,"Magneton":8,"Magnezone":11,"Oddish":1,"Gloom":6,"Vileplume":9,"Bellossom":9,"Hoppip":1,"Skiploom":6,"Jumpluff":8,"Zigzagoon":1,"Linoone":6,"Miltank":1,"Tauros":1,"Bidoof":1,"Bibarel":5,"Psyduck":1,"Golduck":9,"Magikarp":1,"Gyarados":6,"Machop":1,"Machoke":8,"Machamp":11,"Onix":1,"Steelix":7,"Roggenrola":1,"Boldore":7,"Gigalith":10,"Drilbur":1,"Excadrill":9,"Swinub":1,"Piloswine":9,"Mamoswine":12,"Snover":1,"Abomasnow":10,"Snorunt":1,"Glalie":11,"Froslass":7,"Sneasel":1,"Weavile":7,"Spheal":1,"Sealeo":9,"Walrein":11,"Teddiursa":1,"Ursaring":8,"Delibird":1,"Stantler":1,"Geodude":1,"Graveler":7,"Golem":10,"Rhyhorn":1,"Rhydon":11,"Rhyperior":14,"Larvitar":1,"Pupitar":8,"Tyranitar":13,"Growlithe":1,"Arcanine":7,"Ponyta":1,"Rapidash":10,"Trapinch":1,"Vibrava":9,"Flygon":11,"Skorupi":1,"Drapion":10,"Diglett":1,"Dugtrio":8,"Cacnea":1,"Cacturne":9,"Sandygast":1,"Palossand":11,"Baltoy":1,"Claydol":10,"Darumaka":1,"Darmanitan":9,"Salandit":1,"Salazzle":9,"Helioptile":1,"Heliolisk":7,"Scraggy":1,"Scrafty":10,"Zubat":1,"Golbat":7,"Crobat":10,"Sableye":1,"Absol":1,"Houndour":1,"Houndoom":7,"Nincada":1,"Ninjask":6,"Shedinja":6,"Vullaby":1,"Mandibuzz":13,"Spearow":1,"Fearow":6,"Doduo":1,"Dodrio":9,"Skarmory":1,"Aerodactyl":1,"Swablu":1,"Altaria":9,"Bagon":1,"Shelgon":8,"Salamence":12,"Igglybuff":1,"Jigglypuff":7,"Wigglytuff":10,"Ralts":1,"Kirlia":6,"Gardevoir":8,"Gallade":9,"Bronzor":1,"Bronzong":9,"Litleo":1,"Pyroar":9,"Sunkern":1,"Sunflora":7,"Clefairy":1,"Clefable":7,"Swirlix":1,"Slurpuff":7,"Abra":1,"Kadabra":5,"Alakazam":8,"Drowzee":1,"Hypno":8,"Natu":1,"Xatu":7,"Riolu":1,"Lucario":7,"Elgyem":1,"Beheeyem":11,"Horsea":1,"Seadra":9,"Kingdra":12,"Wailmer":1,"Wailord":10,"Carvanha":1,"Sharpedo":8,"Frillish":1,"Jellicent":10,"Kangaskhan":1,"Landorus":1,"Thundurus":1,"Tornadus":1,"Heatran":1,"Suicune":1,"Celebi":1,"Jirachi":1,"Deino":1,"Zweilous":12,"Hydreigon":15},"gymLeaders":{"Marina":{"town":"Tidepool Town","type":"Water","slots":{"1":"Staryu","2":"Krabby","3":"Pyukumuku","4":"Wingull","5":"Horsea"}},"Raven":{"town":"Baymist City","type":"Ghost","slots":{"1":"Gastly","2":"Drifloon","3":"Litwick","4":"Snorunt","5":"Frillish"}},"Dustin":{"town":"Capitol City","type":"Ground","slots":{"1":"Drilbur","2":"Onix","3":"Trapinch","4":"Rhyhorn","5":"Baltoy"}},"Crystal":{"town":"Alpine Town","type":"Ice","slots":{"1":"Swinub","2":"Sneasel","3":"Delibird","4":"Spheal","5":"Snover"}},"Cruz":{"town":"Canyon City","type":"Dark","slots":{"1":"Houndour","2":"Absol","3":"Sableye","4":"Vullaby","5":"Cacnea"}},"Solana":{"town":"Dunebreak City","type":"Fire","slots":{"1":"Darumaka","2":"Growlithe","3":"Ponyta","4":"Salandit","5":"Litleo"}},"Grace":{"town":"Mission Town","type":"Fairy","slots":{"1":"Clefairy","2":"Ralts","3":"Igglybuff","4":"Swirlix","5":"Sunkern"}},"Luna":{"town":"Skyline City","type":"Psychic","slots":{"1":"Abra","2":"Drowzee","3":"Natu","4":"Elgyem","5":"Bronzor"}}},"eliteFour":[{"id":"E4_1","name":"Wren","type":"Bug","slots":{"1":"Caterpie","2":"Venonat","3":"Paras","4":"Nincada","ace":"Weedle"},"levels":{"1":11,"2":12,"3":12,"4":13,"ace":13}},{"id":"E4_2","name":"Ivy","type":"Grass","slots":{"1":"Hoppip","2":"Bellsprout","3":"Cacnea","4":"Sunkern","ace":"Oddish"},"levels":{"1":12,"2":12,"3":13,"4":13,"ace":14}},{"id":"E4_3","name":"Marcus","type":"Rock","slots":{"1":"Geodude","2":"Roggenrola","3":"Aerodactyl","4":"Skarmory","ace":"Larvitar"},"levels":{"1":12,"2":13,"3":13,"4":14,"ace":14}},{"id":"E4_4","name":"Cortez","type":"Fighting","slots":{"1":"Riolu","2":"Ralts_M","3":"Scraggy","4":"Skorupi","ace":"Machop"},"levels":{"1":13,"2":13,"3":14,"4":14,"ace":15}}],"champion":{"id":"CHAMPION","name":"Sierra","type":"Mixed","slots":{"1":"Tauros","2":"Magnemite","3":"Wailmer","4":"Zubat","5":"Magikarp","ace":"Bagon"},"levels":{"1":13,"2":13,"3":14,"4":14,"5":15,"ace":15}},"mapNodes":[{"id":"ALP","kind":"town","row":1,"col":5,"name":"Alpine Town","gymLeader":"Crystal","locationId":null},{"id":"AI","kind":"dungeon","row":1,"col":6,"name":"Alpine Ice Caverns","locationId":"Alpine Ice Caverns"},{"id":"12a","kind":"route","row":1,"col":7,"name":"Route 12","locationId":"Route 12"},{"id":"12b","kind":"route","row":1,"col":8,"name":"Route 12","locationId":"Route 12"},{"id":"11b","kind":"route","row":2,"col":5,"name":"Route 11","locationId":"Route 11"},{"id":"CRA","kind":"town","row":2,"col":8,"name":"Crag Town","gymLeader":null,"locationId":null},{"id":"BT","kind":"dungeon","row":2,"col":9,"name":"Bishop's Tablelands Labyrinth","locationId":"Bishop's Tablelands Labyrinth"},{"id":"18","kind":"route","row":2,"col":10,"name":"Route 18","locationId":"Route 18"},{"id":"DUN","kind":"town","row":2,"col":11,"name":"Dunebreak City","gymLeader":"Solana","locationId":null},{"id":"GV","kind":"dungeon","row":3,"col":5,"name":"Golden Vein Mine","locationId":"Golden Vein Mine"},{"id":"13a","kind":"route","row":3,"col":8,"name":"Route 13","locationId":"Route 13"},{"id":"SF","kind":"dungeon","row":3,"col":11,"name":"Salt Flat Ruins","locationId":"Salt Flat Ruins"},{"id":"16","kind":"route","row":3,"col":12,"name":"Route 16","locationId":"Route 16"},{"id":"CAN","kind":"town","row":3,"col":13,"name":"Canyon City","gymLeader":"Cruz","locationId":null},{"id":"11a","kind":"route","row":4,"col":5,"name":"Route 11","locationId":"Route 11"},{"id":"13b","kind":"route","row":4,"col":8,"name":"Route 13","locationId":"Route 13"},{"id":"SO","kind":"dungeon","row":4,"col":10,"name":"Sunken Oil Fields","locationId":"Sunken Oil Fields"},{"id":"17","kind":"route","row":4,"col":11,"name":"Route 17","locationId":"Route 17"},{"id":"BM","kind":"dungeon","row":4,"col":13,"name":"Boulder Maze","locationId":"Boulder Maze"},{"id":"CAP","kind":"town","row":5,"col":5,"name":"Capitol City","gymLeader":"Dustin","locationId":null},{"id":"10a","kind":"route","row":5,"col":6,"name":"Route 10","locationId":"Route 10"},{"id":"10b","kind":"route","row":5,"col":7,"name":"Route 10","locationId":"Route 10"},{"id":"14a","kind":"route","row":5,"col":8,"name":"Route 14","locationId":"Route 14"},{"id":"14b","kind":"route","row":5,"col":9,"name":"Route 14","locationId":"Route 14"},{"id":"BAS","kind":"town","row":5,"col":10,"name":"Basin Town","gymLeader":null,"locationId":null},{"id":"15a","kind":"route","row":5,"col":11,"name":"Route 15","locationId":"Route 15"},{"id":"15b","kind":"route","row":5,"col":12,"name":"Route 15","locationId":"Route 15"},{"id":"15c","kind":"route","row":5,"col":13,"name":"Route 15","locationId":"Route 15"},{"id":"RED","kind":"town","row":6,"col":1,"name":"Redwood Town","gymLeader":null,"locationId":null},{"id":"RG","kind":"dungeon","row":6,"col":2,"name":"Redwood Grove Depths","locationId":"Redwood Grove Depths"},{"id":"1","kind":"route","row":6,"col":3,"name":"Route 1","locationId":"Route 1"},{"id":"DH","kind":"dungeon","row":6,"col":5,"name":"Delta Hydro Station","locationId":"Delta Hydro Station"},{"id":"9d","kind":"route","row":6,"col":7,"name":"Route 9","locationId":"Route 9"},{"id":"19a","kind":"route","row":6,"col":10,"name":"Route 19","locationId":"Route 19"},{"id":"2","kind":"route","row":7,"col":3,"name":"Route 2","locationId":"Route 2"},{"id":"6","kind":"route","row":7,"col":5,"name":"Route 6","locationId":"Route 6"},{"id":"9c","kind":"route","row":7,"col":7,"name":"Route 9","locationId":"Route 9"},{"id":"19b","kind":"route","row":7,"col":10,"name":"Route 19","locationId":"Route 19"},{"id":"TS","kind":"dungeon","row":8,"col":2,"name":"Tidepool Sea Caves","locationId":"Tidepool Sea Caves"},{"id":"TID","kind":"town","row":8,"col":3,"name":"Tidepool Town","gymLeader":"Marina","locationId":null},{"id":"3","kind":"route","row":8,"col":4,"name":"Route 3","locationId":"Route 3"},{"id":"VIN","kind":"combo","row":8,"col":5,"townId":"VIN","townName":"Vinehaven Town","gymLeader":null,"dungeonId":"WC","dungeonName":"Wine Cellar Catacombs","dungeonLocationId":"Wine Cellar Catacombs"},{"id":"8","kind":"route","row":8,"col":6,"name":"Route 8","locationId":"Route 8"},{"id":"9b","kind":"route","row":8,"col":7,"name":"Route 9","locationId":"Route 9"},{"id":"19c","kind":"route","row":8,"col":10,"name":"Route 19","locationId":"Route 19"},{"id":"23","kind":"route","row":8,"col":11,"name":"Route 23","locationId":"Route 23"},{"id":"22b","kind":"route","row":8,"col":12,"name":"Route 22","locationId":"Route 22"},{"id":"4a","kind":"route","row":9,"col":4,"name":"Route 4","locationId":"Route 4"},{"id":"5","kind":"route","row":9,"col":5,"name":"Route 5","locationId":"Route 5"},{"id":"9a","kind":"route","row":9,"col":7,"name":"Route 9","locationId":"Route 9"},{"id":"19d","kind":"route","row":9,"col":10,"name":"Route 19","locationId":"Route 19"},{"id":"22a","kind":"route","row":9,"col":12,"name":"Route 22","locationId":"Route 22"},{"id":"4b","kind":"route","row":10,"col":4,"name":"Route 4","locationId":"Route 4"},{"id":"BAY","kind":"combo","row":10,"col":5,"townId":"BAY","townName":"Baymist City","gymLeader":"Raven","dungeonId":"CC","dungeonName":"Cable Car Tunnels","dungeonLocationId":"Cable Car Tunnels"},{"id":"7","kind":"route","row":10,"col":6,"name":"Route 7","locationId":"Route 7"},{"id":"VIS","kind":"town","row":10,"col":7,"name":"Vista Town","gymLeader":null,"locationId":null},{"id":"CG","kind":"dungeon","row":10,"col":8,"name":"Cliffside Grotto","locationId":"Cliffside Grotto"},{"id":"20","kind":"route","row":10,"col":9,"name":"Route 20","locationId":"Route 20"},{"id":"MIS","kind":"town","row":10,"col":10,"name":"Mission Town","gymLeader":"Grace","locationId":null},{"id":"21","kind":"route","row":10,"col":11,"name":"Route 21","locationId":"Route 21"},{"id":"SKY","kind":"combo","row":10,"col":12,"townId":"SKY","townName":"Skyline City","gymLeader":"Luna","dungeonId":"SB","dungeonName":"Studio Backlot Storm Drains","dungeonLocationId":"Studio Backlot Storm Drains"},{"id":"24","kind":"route","row":10,"col":13,"name":"Route 24","locationId":"Route 24"},{"id":"KF","kind":"dungeon","row":10,"col":14,"name":"Kelp Forest Trench / Victory Road","locationId":"Kelp Forest Trench / Victory Road"},{"id":"SHO","kind":"town","row":10,"col":15,"name":"Shoreline City","gymLeader":null,"locationId":null}],"mapEdges":[["ALP","AI"],["ALP","11b"],["AI","12a"],["12a","12b"],["12b","CRA"],["11b","GV"],["CRA","BT"],["CRA","13a"],["BT","18"],["18","DUN"],["DUN","SF"],["GV","11a"],["13a","13b"],["SF","16"],["SF","17"],["16","CAN"],["CAN","BM"],["11a","CAP"],["13b","14a"],["SO","BAS"],["17","15a"],["BM","15c"],["CAP","10a"],["CAP","DH"],["10a","10b"],["10b","14a"],["10b","9d"],["14a","14b"],["14b","BAS"],["BAS","15a"],["BAS","19a"],["15a","15b"],["15b","15c"],["RED","RG"],["RG","1"],["1","2"],["DH","6"],["9d","9c"],["19a","19b"],["2","TID"],["6","VIN"],["9c","9b"],["19b","19c"],["TS","TID"],["TID","3"],["3","VIN"],["3","4a"],["VIN","8"],["VIN","5"],["8","9b"],["9b","9a"],["19c","23"],["19c","19d"],["23","22b"],["22b","22a"],["4a","4b"],["5","BAY"],["9a","VIS"],["19d","MIS"],["22a","SKY"],["4b","BAY"],["BAY","7"],["7","VIS"],["VIS","CG"],["CG","20"],["20","MIS"],["MIS","21"],["21","SKY"],["SKY","24"],["24","KF"],["KF","SHO"]],"evoInfo":{"Sprigatito":{"evolvesFrom":null,"evolvesInto":[{"species":"Floragato","method":"Level 5"}]},"Floragato":{"evolvesFrom":"Sprigatito","evolvesInto":[{"species":"Meowscarada","method":"Level 10"}]},"Meowscarada":{"evolvesFrom":"Floragato","evolvesInto":[]},"Fennekin":{"evolvesFrom":null,"evolvesInto":[{"species":"Braixen","method":"Level 5"}]},"Braixen":{"evolvesFrom":"Fennekin","evolvesInto":[{"species":"Delphox","method":"Level 10"}]},"Delphox":{"evolvesFrom":"Braixen","evolvesInto":[]},"Popplio":{"evolvesFrom":null,"evolvesInto":[{"species":"Brionne","method":"Level 5"}]},"Brionne":{"evolvesFrom":"Popplio","evolvesInto":[{"species":"Primarina","method":"Level 9"}]},"Primarina":{"evolvesFrom":"Brionne","evolvesInto":[]},"Caterpie":{"evolvesFrom":null,"evolvesInto":[{"species":"Metapod","method":"Level 3"}]},"Metapod":{"evolvesFrom":"Caterpie","evolvesInto":[{"species":"Butterfree","method":"Level 4"}]},"Butterfree":{"evolvesFrom":"Metapod","evolvesInto":[]},"Weedle":{"evolvesFrom":null,"evolvesInto":[{"species":"Kakuna","method":"Level 3"}]},"Kakuna":{"evolvesFrom":"Weedle","evolvesInto":[{"species":"Beedrill","method":"Level 4"}]},"Beedrill":{"evolvesFrom":"Kakuna","evolvesInto":[]},"Bellsprout":{"evolvesFrom":null,"evolvesInto":[{"species":"Weepinbell","method":"Level 6"}]},"Weepinbell":{"evolvesFrom":"Bellsprout","evolvesInto":[{"species":"Victreebel","method":"Leaf Stone"}]},"Victreebel":{"evolvesFrom":"Weepinbell","evolvesInto":[]},"Paras":{"evolvesFrom":null,"evolvesInto":[{"species":"Parasect","method":"Level 7"}]},"Parasect":{"evolvesFrom":"Paras","evolvesInto":[]},"Sentret":{"evolvesFrom":null,"evolvesInto":[{"species":"Furret","method":"Level 5"}]},"Furret":{"evolvesFrom":"Sentret","evolvesInto":[]},"Venonat":{"evolvesFrom":null,"evolvesInto":[{"species":"Venomoth","method":"Level 9"}]},"Venomoth":{"evolvesFrom":"Venonat","evolvesInto":[]},"Krabby":{"evolvesFrom":null,"evolvesInto":[{"species":"Kingler","method":"Level 8"}]},"Kingler":{"evolvesFrom":"Krabby","evolvesInto":[]},"Shellder":{"evolvesFrom":null,"evolvesInto":[{"species":"Cloyster","method":"Water Stone"}]},"Cloyster":{"evolvesFrom":"Shellder","evolvesInto":[]},"Staryu":{"evolvesFrom":null,"evolvesInto":[{"species":"Starmie","method":"Water Stone"}]},"Starmie":{"evolvesFrom":"Staryu","evolvesInto":[]},"Wingull":{"evolvesFrom":null,"evolvesInto":[{"species":"Pelipper","method":"Level 7"}]},"Pelipper":{"evolvesFrom":"Wingull","evolvesInto":[]},"Tentacool":{"evolvesFrom":null,"evolvesInto":[{"species":"Tentacruel","method":"Level 8"}]},"Tentacruel":{"evolvesFrom":"Tentacool","evolvesInto":[]},"Chinchou":{"evolvesFrom":null,"evolvesInto":[{"species":"Lanturn","method":"Level 8"}]},"Lanturn":{"evolvesFrom":"Chinchou","evolvesInto":[]},"Corsola":{"evolvesFrom":null,"evolvesInto":[]},"Pyukumuku":{"evolvesFrom":null,"evolvesInto":[]},"Rattata":{"evolvesFrom":null,"evolvesInto":[{"species":"Raticate","method":"Level 6"}]},"Raticate":{"evolvesFrom":"Rattata","evolvesInto":[]},"Pidgey":{"evolvesFrom":null,"evolvesInto":[{"species":"Pidgeotto","method":"Level 6"}]},"Pidgeotto":{"evolvesFrom":"Pidgey","evolvesInto":[{"species":"Pidgeot","method":"Level 10"}]},"Pidgeot":{"evolvesFrom":"Pidgeotto","evolvesInto":[]},"Meowth":{"evolvesFrom":null,"evolvesInto":[{"species":"Persian","method":"Level 8"}]},"Persian":{"evolvesFrom":"Meowth","evolvesInto":[]},"Gastly":{"evolvesFrom":null,"evolvesInto":[{"species":"Haunter","method":"Level 7"}]},"Haunter":{"evolvesFrom":"Gastly","evolvesInto":[{"species":"Gengar","method":"Trade"}]},"Gengar":{"evolvesFrom":"Haunter","evolvesInto":[]},"Drifloon":{"evolvesFrom":null,"evolvesInto":[{"species":"Drifblim","method":"Level 8"}]},"Drifblim":{"evolvesFrom":"Drifloon","evolvesInto":[]},"Litwick":{"evolvesFrom":null,"evolvesInto":[{"species":"Lampent","method":"Level 11"}]},"Lampent":{"evolvesFrom":"Litwick","evolvesInto":[{"species":"Chandelure","method":"Dusk Stone"}]},"Chandelure":{"evolvesFrom":"Lampent","evolvesInto":[]},"Pikachu":{"evolvesFrom":null,"evolvesInto":[{"species":"Raichu","method":"Thunder Stone"}]},"Raichu":{"evolvesFrom":"Pikachu","evolvesInto":[]},"Voltorb":{"evolvesFrom":null,"evolvesInto":[{"species":"Electrode","method":"Level 8"}]},"Electrode":{"evolvesFrom":"Voltorb","evolvesInto":[]},"Magnemite":{"evolvesFrom":null,"evolvesInto":[{"species":"Magneton","method":"Level 8"}]},"Magneton":{"evolvesFrom":"Magnemite","evolvesInto":[{"species":"Magnezone","method":"Special location"}]},"Magnezone":{"evolvesFrom":"Magneton","evolvesInto":[]},"Oddish":{"evolvesFrom":null,"evolvesInto":[{"species":"Gloom","method":"Level 6"}]},"Gloom":{"evolvesFrom":"Oddish","evolvesInto":[{"species":"Vileplume","method":"Leaf Stone"},{"species":"Bellossom","method":"Sun Stone (female)"}]},"Vileplume":{"evolvesFrom":"Gloom","evolvesInto":[]},"Bellossom":{"evolvesFrom":"Gloom","evolvesInto":[]},"Hoppip":{"evolvesFrom":null,"evolvesInto":[{"species":"Skiploom","method":"Level 6"}]},"Skiploom":{"evolvesFrom":"Hoppip","evolvesInto":[{"species":"Jumpluff","method":"Level 8"}]},"Jumpluff":{"evolvesFrom":"Skiploom","evolvesInto":[]},"Zigzagoon":{"evolvesFrom":null,"evolvesInto":[{"species":"Linoone","method":"Level 6"}]},"Linoone":{"evolvesFrom":"Zigzagoon","evolvesInto":[]},"Miltank":{"evolvesFrom":null,"evolvesInto":[]},"Tauros":{"evolvesFrom":null,"evolvesInto":[]},"Bidoof":{"evolvesFrom":null,"evolvesInto":[{"species":"Bibarel","method":"Level 5"}]},"Bibarel":{"evolvesFrom":"Bidoof","evolvesInto":[]},"Psyduck":{"evolvesFrom":null,"evolvesInto":[{"species":"Golduck","method":"Level 9"}]},"Golduck":{"evolvesFrom":"Psyduck","evolvesInto":[]},"Magikarp":{"evolvesFrom":null,"evolvesInto":[{"species":"Gyarados","method":"Level 6"}]},"Gyarados":{"evolvesFrom":"Magikarp","evolvesInto":[]},"Machop":{"evolvesFrom":null,"evolvesInto":[{"species":"Machoke","method":"Level 8"}]},"Machoke":{"evolvesFrom":"Machop","evolvesInto":[{"species":"Machamp","method":"Trade"}]},"Machamp":{"evolvesFrom":"Machoke","evolvesInto":[]},"Onix":{"evolvesFrom":null,"evolvesInto":[{"species":"Steelix","method":"Trade + Metal Coat"}]},"Steelix":{"evolvesFrom":"Onix","evolvesInto":[]},"Roggenrola":{"evolvesFrom":null,"evolvesInto":[{"species":"Boldore","method":"Level 7"}]},"Boldore":{"evolvesFrom":"Roggenrola","evolvesInto":[{"species":"Gigalith","method":"Trade"}]},"Gigalith":{"evolvesFrom":"Boldore","evolvesInto":[]},"Drilbur":{"evolvesFrom":null,"evolvesInto":[{"species":"Excadrill","method":"Level 9"}]},"Excadrill":{"evolvesFrom":"Drilbur","evolvesInto":[]},"Swinub":{"evolvesFrom":null,"evolvesInto":[{"species":"Piloswine","method":"Level 9"}]},"Piloswine":{"evolvesFrom":"Swinub","evolvesInto":[{"species":"Mamoswine","method":"Knows Ancient Power"}]},"Mamoswine":{"evolvesFrom":"Piloswine","evolvesInto":[]},"Snover":{"evolvesFrom":null,"evolvesInto":[{"species":"Abomasnow","method":"Level 10"}]},"Abomasnow":{"evolvesFrom":"Snover","evolvesInto":[]},"Snorunt":{"evolvesFrom":null,"evolvesInto":[{"species":"Glalie","method":"Level 11"},{"species":"Froslass","method":"Dawn Stone (female)"}]},"Glalie":{"evolvesFrom":"Snorunt","evolvesInto":[]},"Froslass":{"evolvesFrom":"Snorunt","evolvesInto":[]},"Sneasel":{"evolvesFrom":null,"evolvesInto":[{"species":"Weavile","method":"Trade + Razor Claw"}]},"Weavile":{"evolvesFrom":"Sneasel","evolvesInto":[]},"Spheal":{"evolvesFrom":null,"evolvesInto":[{"species":"Sealeo","method":"Level 9"}]},"Sealeo":{"evolvesFrom":"Spheal","evolvesInto":[{"species":"Walrein","method":"Level 11"}]},"Walrein":{"evolvesFrom":"Sealeo","evolvesInto":[]},"Teddiursa":{"evolvesFrom":null,"evolvesInto":[{"species":"Ursaring","method":"Level 8"}]},"Ursaring":{"evolvesFrom":"Teddiursa","evolvesInto":[]},"Delibird":{"evolvesFrom":null,"evolvesInto":[]},"Stantler":{"evolvesFrom":null,"evolvesInto":[]},"Geodude":{"evolvesFrom":null,"evolvesInto":[{"species":"Graveler","method":"Level 7"}]},"Graveler":{"evolvesFrom":"Geodude","evolvesInto":[{"species":"Golem","method":"Trade"}]},"Golem":{"evolvesFrom":"Graveler","evolvesInto":[]},"Rhyhorn":{"evolvesFrom":null,"evolvesInto":[{"species":"Rhydon","method":"Level 11"}]},"Rhydon":{"evolvesFrom":"Rhyhorn","evolvesInto":[{"species":"Rhyperior","method":"Trade + Protector"}]},"Rhyperior":{"evolvesFrom":"Rhydon","evolvesInto":[]},"Larvitar":{"evolvesFrom":null,"evolvesInto":[{"species":"Pupitar","method":"Level 8"}]},"Pupitar":{"evolvesFrom":"Larvitar","evolvesInto":[{"species":"Tyranitar","method":"Level 13"}]},"Tyranitar":{"evolvesFrom":"Pupitar","evolvesInto":[]},"Growlithe":{"evolvesFrom":null,"evolvesInto":[{"species":"Arcanine","method":"Fire Stone"}]},"Arcanine":{"evolvesFrom":"Growlithe","evolvesInto":[]},"Ponyta":{"evolvesFrom":null,"evolvesInto":[{"species":"Rapidash","method":"Level 10"}]},"Rapidash":{"evolvesFrom":"Ponyta","evolvesInto":[]},"Trapinch":{"evolvesFrom":null,"evolvesInto":[{"species":"Vibrava","method":"Level 9"}]},"Vibrava":{"evolvesFrom":"Trapinch","evolvesInto":[{"species":"Flygon","method":"Level 11"}]},"Flygon":{"evolvesFrom":"Vibrava","evolvesInto":[]},"Skorupi":{"evolvesFrom":null,"evolvesInto":[{"species":"Drapion","method":"Level 10"}]},"Drapion":{"evolvesFrom":"Skorupi","evolvesInto":[]},"Diglett":{"evolvesFrom":null,"evolvesInto":[{"species":"Dugtrio","method":"Level 8"}]},"Dugtrio":{"evolvesFrom":"Diglett","evolvesInto":[]},"Cacnea":{"evolvesFrom":null,"evolvesInto":[{"species":"Cacturne","method":"Level 9"}]},"Cacturne":{"evolvesFrom":"Cacnea","evolvesInto":[]},"Sandygast":{"evolvesFrom":null,"evolvesInto":[{"species":"Palossand","method":"Level 11"}]},"Palossand":{"evolvesFrom":"Sandygast","evolvesInto":[]},"Baltoy":{"evolvesFrom":null,"evolvesInto":[{"species":"Claydol","method":"Level 10"}]},"Claydol":{"evolvesFrom":"Baltoy","evolvesInto":[]},"Darumaka":{"evolvesFrom":null,"evolvesInto":[{"species":"Darmanitan","method":"Level 9"}]},"Darmanitan":{"evolvesFrom":"Darumaka","evolvesInto":[]},"Salandit":{"evolvesFrom":null,"evolvesInto":[{"species":"Salazzle","method":"Level (female)"}]},"Salazzle":{"evolvesFrom":"Salandit","evolvesInto":[]},"Helioptile":{"evolvesFrom":null,"evolvesInto":[{"species":"Heliolisk","method":"Sun Stone"}]},"Heliolisk":{"evolvesFrom":"Helioptile","evolvesInto":[]},"Scraggy":{"evolvesFrom":null,"evolvesInto":[{"species":"Scrafty","method":"Level 10"}]},"Scrafty":{"evolvesFrom":"Scraggy","evolvesInto":[]},"Zubat":{"evolvesFrom":null,"evolvesInto":[{"species":"Golbat","method":"Level 7"}]},"Golbat":{"evolvesFrom":"Zubat","evolvesInto":[{"species":"Crobat","method":"Friendship"}]},"Crobat":{"evolvesFrom":"Golbat","evolvesInto":[]},"Sableye":{"evolvesFrom":null,"evolvesInto":[]},"Absol":{"evolvesFrom":null,"evolvesInto":[]},"Houndour":{"evolvesFrom":null,"evolvesInto":[{"species":"Houndoom","method":"Level 7"}]},"Houndoom":{"evolvesFrom":"Houndour","evolvesInto":[]},"Nincada":{"evolvesFrom":null,"evolvesInto":[{"species":"Ninjask","method":"Level 6"},{"species":"Shedinja","method":"Level (bonus)"}]},"Ninjask":{"evolvesFrom":"Nincada","evolvesInto":[]},"Shedinja":{"evolvesFrom":"Nincada","evolvesInto":[]},"Vullaby":{"evolvesFrom":null,"evolvesInto":[{"species":"Mandibuzz","method":"Level 13"}]},"Mandibuzz":{"evolvesFrom":"Vullaby","evolvesInto":[]},"Spearow":{"evolvesFrom":null,"evolvesInto":[{"species":"Fearow","method":"Level 6"}]},"Fearow":{"evolvesFrom":"Spearow","evolvesInto":[]},"Doduo":{"evolvesFrom":null,"evolvesInto":[{"species":"Dodrio","method":"Level 9"}]},"Dodrio":{"evolvesFrom":"Doduo","evolvesInto":[]},"Skarmory":{"evolvesFrom":null,"evolvesInto":[]},"Aerodactyl":{"evolvesFrom":null,"evolvesInto":[]},"Swablu":{"evolvesFrom":null,"evolvesInto":[{"species":"Altaria","method":"Level 9"}]},"Altaria":{"evolvesFrom":"Swablu","evolvesInto":[]},"Bagon":{"evolvesFrom":null,"evolvesInto":[{"species":"Shelgon","method":"Level 8"}]},"Shelgon":{"evolvesFrom":"Bagon","evolvesInto":[{"species":"Salamence","method":"Level 12"}]},"Salamence":{"evolvesFrom":"Shelgon","evolvesInto":[]},"Igglybuff":{"evolvesFrom":null,"evolvesInto":[{"species":"Jigglypuff","method":"Friendship"}]},"Jigglypuff":{"evolvesFrom":"Igglybuff","evolvesInto":[{"species":"Wigglytuff","method":"Moon Stone"}]},"Wigglytuff":{"evolvesFrom":"Jigglypuff","evolvesInto":[]},"Ralts":{"evolvesFrom":null,"evolvesInto":[{"species":"Kirlia","method":"Level 6"}]},"Kirlia":{"evolvesFrom":"Ralts","evolvesInto":[{"species":"Gardevoir","method":"Level 8"},{"species":"Gallade","method":"Dawn Stone (male)"}]},"Gardevoir":{"evolvesFrom":"Kirlia","evolvesInto":[]},"Gallade":{"evolvesFrom":"Kirlia","evolvesInto":[]},"Bronzor":{"evolvesFrom":null,"evolvesInto":[{"species":"Bronzong","method":"Level 9"}]},"Bronzong":{"evolvesFrom":"Bronzor","evolvesInto":[]},"Litleo":{"evolvesFrom":null,"evolvesInto":[{"species":"Pyroar","method":"Level 9"}]},"Pyroar":{"evolvesFrom":"Litleo","evolvesInto":[]},"Sunkern":{"evolvesFrom":null,"evolvesInto":[{"species":"Sunflora","method":"Sun Stone"}]},"Sunflora":{"evolvesFrom":"Sunkern","evolvesInto":[]},"Clefairy":{"evolvesFrom":null,"evolvesInto":[{"species":"Clefable","method":"Moon Stone"}]},"Clefable":{"evolvesFrom":"Clefairy","evolvesInto":[]},"Swirlix":{"evolvesFrom":null,"evolvesInto":[{"species":"Slurpuff","method":"Trade + Whipped Dream"}]},"Slurpuff":{"evolvesFrom":"Swirlix","evolvesInto":[]},"Abra":{"evolvesFrom":null,"evolvesInto":[{"species":"Kadabra","method":"Level 5"}]},"Kadabra":{"evolvesFrom":"Abra","evolvesInto":[{"species":"Alakazam","method":"Trade"}]},"Alakazam":{"evolvesFrom":"Kadabra","evolvesInto":[]},"Drowzee":{"evolvesFrom":null,"evolvesInto":[{"species":"Hypno","method":"Level 8"}]},"Hypno":{"evolvesFrom":"Drowzee","evolvesInto":[]},"Natu":{"evolvesFrom":null,"evolvesInto":[{"species":"Xatu","method":"Level 7"}]},"Xatu":{"evolvesFrom":"Natu","evolvesInto":[]},"Riolu":{"evolvesFrom":null,"evolvesInto":[{"species":"Lucario","method":"Friendship"}]},"Lucario":{"evolvesFrom":"Riolu","evolvesInto":[]},"Elgyem":{"evolvesFrom":null,"evolvesInto":[{"species":"Beheeyem","method":"Level 11"}]},"Beheeyem":{"evolvesFrom":"Elgyem","evolvesInto":[]},"Horsea":{"evolvesFrom":null,"evolvesInto":[{"species":"Seadra","method":"Level 9"}]},"Seadra":{"evolvesFrom":"Horsea","evolvesInto":[{"species":"Kingdra","method":"Trade + Dragon Scale"}]},"Kingdra":{"evolvesFrom":"Seadra","evolvesInto":[]},"Wailmer":{"evolvesFrom":null,"evolvesInto":[{"species":"Wailord","method":"Level 10"}]},"Wailord":{"evolvesFrom":"Wailmer","evolvesInto":[]},"Carvanha":{"evolvesFrom":null,"evolvesInto":[{"species":"Sharpedo","method":"Level 8"}]},"Sharpedo":{"evolvesFrom":"Carvanha","evolvesInto":[]},"Frillish":{"evolvesFrom":null,"evolvesInto":[{"species":"Jellicent","method":"Level 10"}]},"Jellicent":{"evolvesFrom":"Frillish","evolvesInto":[]},"Kangaskhan":{"evolvesFrom":null,"evolvesInto":[]},"Landorus":{"evolvesFrom":null,"evolvesInto":[]},"Thundurus":{"evolvesFrom":null,"evolvesInto":[]},"Tornadus":{"evolvesFrom":null,"evolvesInto":[]},"Heatran":{"evolvesFrom":null,"evolvesInto":[]},"Suicune":{"evolvesFrom":null,"evolvesInto":[]},"Celebi":{"evolvesFrom":null,"evolvesInto":[]},"Jirachi":{"evolvesFrom":null,"evolvesInto":[]},"Deino":{"evolvesFrom":null,"evolvesInto":[{"species":"Zweilous","method":"Level 12"}]},"Zweilous":{"evolvesFrom":"Deino","evolvesInto":[{"species":"Hydreigon","method":"Level 15"}]},"Hydreigon":{"evolvesFrom":"Zweilous","evolvesInto":[]}},"dexSections":{"Starters||Given by the Professor in Redwood Town":["Sprigatito","Floragato","Meowscarada","Fennekin","Braixen","Delphox","Popplio","Brionne","Primarina"],"Redwood Town \u2014 Ancient Forest||Route 1\u20132 \u00b7 Old-growth canopy, ferns, undergrowth":["Caterpie","Metapod","Butterfree","Weedle","Kakuna","Beedrill","Bellsprout","Weepinbell","Victreebel","Paras","Parasect","Sentret","Furret","Venonat","Venomoth"],"Tidepool Town \u2014 Rocky Coast & Tide Pools||Route 2\u20133 \u00b7 Mendocino headlands, lighthouse, kelp beds":["Krabby","Kingler","Shellder","Cloyster","Staryu","Starmie","Wingull","Pelipper","Tentacool","Tentacruel","Chinchou","Lanturn","Corsola","Pyukumuku"],"Baymist City \u2014 Foggy Urban Bay||Route 3 \u00b7 San Francisco: cable cars, fog, brick alleys":["Rattata","Raticate","Pidgey","Pidgeotto","Pidgeot","Meowth","Persian","Gastly","Haunter","Gengar","Drifloon","Drifblim","Litwick","Lampent","Chandelure","Pikachu","Raichu","Voltorb","Electrode","Magnemite","Magneton","Magnezone"],"Vinehaven Town \u2014 Wine Country||Route 3\u20134 \u00b7 Napa terraces, orchards, farmland":["Oddish","Gloom","Vileplume","Bellossom","Hoppip","Skiploom","Jumpluff","Zigzagoon","Linoone","Miltank","Tauros"],"Capitol City \u2014 River Delta & Gold Country||Route 4\u20136 \u00b7 Sacramento: rivers, capitol, old mineshafts":["Bidoof","Bibarel","Psyduck","Golduck","Magikarp","Gyarados","Machop","Machoke","Machamp","Onix","Steelix","Roggenrola","Boldore","Gigalith","Drilbur","Excadrill"],"Alpine Town \u2014 High Sierra Lake||Route 6\u20137 \u00b7 Lake Tahoe: snowfields, pine forest, alpine lake":["Swinub","Piloswine","Mamoswine","Snover","Abomasnow","Snorunt","Glalie","Froslass","Sneasel","Weavile","Spheal","Sealeo","Walrein","Teddiursa","Ursaring","Delibird","Stantler"],"Crag Town \u2014 Volcanic Tablelands||Route 7\u20138, 10 \u00b7 Bishop: eastern Sierra, 395 corridor":["Geodude","Graveler","Golem","Rhyhorn","Rhydon","Rhyperior","Larvitar","Pupitar","Tyranitar"],"Basin Town \u2014 Farmland & Oil Fields||Route 10\u201311, 14, 18 \u00b7 Bakersfield: derricks, dusty flats":["Growlithe","Arcanine","Ponyta","Rapidash","Trapinch","Vibrava","Flygon","Skorupi","Drapion","Diglett","Dugtrio"],"Dunebreak City \u2014 Extreme Desert||Route 8\u20139 \u00b7 Death Valley: salt flats, dunes, brutal heat":["Cacnea","Cacturne","Sandygast","Palossand","Baltoy","Claydol","Darumaka","Darmanitan","Salandit","Salazzle","Helioptile","Heliolisk","Scraggy","Scrafty"],"Canyon City \u2014 Boulder Desert||Route 9, 11, 16 \u00b7 Joshua Tree: rock piles, night skies":["Zubat","Golbat","Crobat","Sableye","Absol","Houndour","Houndoom","Nincada","Ninjask","Shedinja","Vullaby","Mandibuzz"],"Vista Town \u2014 Coastal Cliffs||Route 12\u201313 \u00b7 Big Sur: sea cliffs, wind, fossil bluffs":["Spearow","Fearow","Doduo","Dodrio","Skarmory","Aerodactyl","Swablu","Altaria","Bagon","Shelgon","Salamence"],"Mission Town \u2014 Historic Mission Grounds||Route 13\u201315 \u00b7 San Luis Obispo: adobe missions, gardens":["Igglybuff","Jigglypuff","Wigglytuff","Ralts","Kirlia","Gardevoir","Gallade","Bronzor","Bronzong","Litleo","Pyroar","Sunkern","Sunflora","Clefairy","Clefable","Swirlix","Slurpuff"],"Skyline City \u2014 Studio Metropolis||Route 15\u201318 \u00b7 Los Angeles: backlots, freeways, pier lights":["Abra","Kadabra","Alakazam","Drowzee","Hypno","Natu","Xatu","Riolu","Lucario","Deino","Zweilous","Hydreigon","Elgyem","Beheeyem"],"Shoreline City \u2014 Naval Harbor & Zoo Coast||Route 17 \u00b7 San Diego: harbor, kelp forest, zoo imports":["Horsea","Seadra","Kingdra","Wailmer","Wailord","Carvanha","Sharpedo","Frillish","Jellicent","Kangaskhan"],"Legendary & Mythical Pok\u00e9mon||Scattered across the region":["Landorus","Thundurus","Tornadus","Heatran","Suicune","Celebi","Jirachi"]}};
+
+const thresholds = [
+  {min:0, max:0, T:2},
+  {min:1, max:2, T:3},
+  {min:3, max:4, T:4},
+  {min:5, max:6, T:5},
+  {min:7, max:8, T:6},
+];
+function thresholdFor(badges){
+  for(const t of thresholds){ if(badges>=t.min && badges<=t.max) return t.T; }
+  return 6;
+}
+function badgeRangeLabel(badges){
+  for(const t of thresholds){ if(badges>=t.min && badges<=t.max) return (t.min===t.max? (''+t.min) : (t.min+'-'+t.max)); }
+  return '';
+}
+
+let badges = 0;
+let rolling = false;
+let wildCurrentStats = null;
+
+const locSelect = document.getElementById('location');
+const routes = DATA.locations.filter(l=>l.kind==='route');
+const dungeons = DATA.locations.filter(l=>l.kind==='dungeon');
+
+function buildOptgroup(label, items){
+  const og = document.createElement('optgroup');
+  og.label = label;
+  items.forEach(loc=>{
+    const opt = document.createElement('option');
+    opt.value = loc.id;
+    opt.textContent = loc.name;
+    og.appendChild(opt);
+  });
+  return og;
+}
+locSelect.appendChild(buildOptgroup('Routes', routes));
+locSelect.appendChild(buildOptgroup('Dungeons', dungeons));
+locSelect.value = routes[0].id;
+
+function currentLocation(){
+  return DATA.locations.find(l=>l.id===locSelect.value);
+}
+
+function renderLocMeta(){
+  const loc = currentLocation();
+  document.getElementById('locSubtitle').textContent = loc.subtitle;
+  document.getElementById('locFlavor').textContent = loc.flavor;
+}
+locSelect.addEventListener('change', ()=>{ renderLocMeta(); resetDice(); });
+renderLocMeta();
+
+const pipsEl = document.getElementById('pips');
+for(let i=1;i<=8;i++){
+  const p = document.createElement('div');
+  p.className='pip';
+  p.dataset.val = i;
+  p.title = i + ' badge' + (i>1?'s':'');
+  p.addEventListener('click', ()=>{
+    badges = (badges===i) ? i-1 : i;
+    renderBadges();
+    if(typeof refreshGymOptions === 'function') refreshGymOptions();
+  });
+  pipsEl.appendChild(p);
+}
+function renderBadges(){
+  document.querySelectorAll('.pip').forEach(p=>{
+    p.classList.toggle('on', parseInt(p.dataset.val) <= badges);
+  });
+  document.getElementById('badgeCount').textContent = badges + ' / 8';
+  const T = thresholdFor(badges);
+  const label = badgeRangeLabel(badges);
+  document.getElementById('thresholdLine').innerHTML =
+    'Dice show <b>1-'+T+'</b> - possible sums <b>2-'+(2*T)+'</b>';
+}
+renderBadges();
+
+const levelMap = {1:1, 2:2, 3:2, 4:3, 5:3, 6:4};
+
+const WHEEL = ['dragon','flying','normal','fighting','dark','fire','ghost','psychic','fairy',
+               'grass','poison','bug','electric','steel','rock','ground','ice','water'];
+const TYPE_COLOR = {
+  dragon:'#7B4FE0', flying:'#8FA8DE', normal:'#B0A890', fighting:'#C1443C', dark:'#4A4038',
+  fire:'#E0713C', ghost:'#6E5A9E', psychic:'#E0637F', fairy:'#E8A0C4', grass:'#6C9A4B',
+  poison:'#9B59B6', bug:'#9AAE3A', electric:'#D9A441', steel:'#8C97A3', rock:'#B7A05A',
+  ground:'#C9A66B', ice:'#6FB8C2', water:'#4E86C6'
+};
+function wheelShift(sum){
+  if(sum===2) return -2;
+  if(sum===3||sum===4) return -1;
+  if(sum>=5 && sum<=9) return 0;
+  if(sum===10||sum===11) return 1;
+  if(sum===12) return 2;
+  return 0;
+}
+function shiftLabel(n){
+  if(n===0) return 'stays';
+  const dir = n<0 ? 'counterclockwise' : 'clockwise';
+  const steps = Math.abs(n);
+  return steps+' step'+(steps>1?'s':'')+' '+dir;
+}
+
+function resetDice(){
+  document.getElementById('die1').textContent='-';
+  document.getElementById('die2').textContent='-';
+  document.getElementById('sumBadge').textContent='-';
+  document.getElementById('levelDie').textContent='-';
+  document.getElementById('levelMath').innerHTML='';
+  document.getElementById('levelLine').innerHTML='';
+  document.getElementById('rerollNote').textContent='';
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('statTotalLine').innerHTML='';
+  document.getElementById('trueTypePills').innerHTML='';
+  document.getElementById('finalTypePill').textContent='';
+  document.getElementById('finalTypePill').style.background='transparent';
+  document.getElementById('wildStatRollNote').textContent='';
+  wildCurrentStats = null;
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function rand(n){ return 1 + Math.floor(Math.random()*n); }
+
+// Flickers the highlight across random boxes a few times before landing on the
+// real result -- makes it obvious a fresh roll happened even if it lands on the
+// same box as last time.
+async function animateStatPick(boxes, finalIdx){
+  const flickers = 6;
+  for(let i=0;i<flickers;i++){
+    boxes.forEach(b=>b.classList.remove('hit'));
+    const flickerIdx = Math.floor(Math.random()*boxes.length);
+    if(boxes[flickerIdx]) boxes[flickerIdx].classList.add('hit');
+    await sleep(55);
+  }
+  boxes.forEach(b=>b.classList.remove('hit'));
+  if(boxes[finalIdx]) boxes[finalIdx].classList.add('hit');
+}
+
+// Index of the highest stat, ties broken randomly.
+function pickHighestIndex(stats){
+  const max = Math.max(...stats);
+  const candidates = [];
+  stats.forEach((v,i)=>{ if(v===max) candidates.push(i); });
+  return candidates[Math.floor(Math.random()*candidates.length)];
+}
+
+// Distribute `level` points across 6 base stats: highest stat first, then next-highest,
+// cycling back through once all 6 have gotten a point. Ties broken randomly.
+function distributeLevelBonus(stats, level){
+  const idx = [0,1,2,3,4,5];
+  for(let i=idx.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [idx[i],idx[j]] = [idx[j],idx[i]];
+  }
+  idx.sort((a,b) => stats[b]-stats[a]); // stable sort keeps shuffled order among ties
+  const bonus = [0,0,0,0,0,0];
+  const fullCycles = Math.floor(level/6);
+  const remainder = level%6;
+  for(let k=0;k<6;k++){ bonus[idx[k]] = fullCycles; }
+  for(let k=0;k<remainder;k++){ bonus[idx[k]] += 1; }
+  return bonus;
+}
+
+async function tumble(el, durationMs, faceMax){
+  el.classList.add('rolling');
+  const steps = Math.floor(durationMs/70);
+  for(let i=0;i<steps;i++){
+    el.textContent = rand(Math.max(faceMax,6));
+    await sleep(70);
+  }
+  el.classList.remove('rolling');
+}
+
+async function rollOneDie(el, T){
+  let value = rand(6);
+  await tumble(el, 420, 6);
+  el.textContent = value;
+  while(value > T){
+    el.classList.add('reroll');
+    document.getElementById('rerollNote').textContent = 'Rerolling -- showed ' + value + ', above threshold ' + T;
+    await sleep(380);
+    el.classList.remove('reroll');
+    await tumble(el, 300, 6);
+    value = rand(6);
+    el.textContent = value;
+  }
+  return value;
+}
+
+document.getElementById('rollBtn').addEventListener('click', async ()=>{
+  if(rolling) return;
+  rolling = true;
+  const btn = document.getElementById('rollBtn');
+  btn.disabled = true;
+  document.getElementById('errorBanner').classList.remove('show');
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('sumBadge').textContent='-';
+  document.getElementById('rerollNote').textContent='';
+
+  try {
+
+  const T = thresholdFor(badges);
+  const d1el = document.getElementById('die1');
+  const d2el = document.getElementById('die2');
+
+  const v1 = await rollOneDie(d1el, T);
+  const v2 = await rollOneDie(d2el, T);
+  document.getElementById('rerollNote').textContent='';
+
+  const sum = v1+v2;
+  const sumEl = document.getElementById('sumBadge');
+  sumEl.textContent = sum;
+
+  const loc = currentLocation();
+  const rolledSpecies = loc.table[sum-2];
+
+  // Level roll: d6 -> mapped base level -> + badges
+  const lvlEl = document.getElementById('levelDie');
+  const rawLevel = rand(6);
+  await tumble(lvlEl, 420, 6);
+  lvlEl.textContent = rawLevel;
+  const baseLevel = levelMap[rawLevel];
+  const finalLevel = baseLevel + badges;
+  document.getElementById('levelMath').innerHTML =
+    '<span class="row">Roll '+rawLevel+' -> base level '+baseLevel+'</span>' +
+    '<span class="row">+ '+badges+' badge'+(badges===1?'':'s')+'</span>' +
+    '<span class="row final">= Level '+finalLevel+'</span>';
+
+  // If the rolled species couldn't exist yet at this level, step back to its
+  // proper pre-evolution stage (only level-gated evolutions block this --
+  // stone/trade/friendship evolutions have no level requirement of their own).
+  let species = rolledSpecies;
+  let downgraded = false;
+  while (DATA.predecessor[species] && (DATA.minLevel[species] || 1) > finalLevel) {
+    species = DATA.predecessor[species];
+    downgraded = true;
+  }
+
+  const stats = DATA.dice[species] || [0,0,0,0,0,0];
+
+  document.getElementById('levelLine').innerHTML = downgraded
+    ? 'Encountered at <b>Level '+finalLevel+'</b> -- too low level for '+rolledSpecies+' (needs Lv'+DATA.minLevel[rolledSpecies]+'), appears as its earlier stage instead'
+    : 'Encountered at <b>Level '+finalLevel+'</b>';
+
+  document.getElementById('monName').textContent = species;
+  const dfEl = document.getElementById('dieFaces');
+  dfEl.innerHTML='';
+  const levelBonus = distributeLevelBonus(stats, finalLevel);
+  let statTotal = 0;
+  const currentAdjStats = [];
+  stats.forEach((n,i)=>{
+    const adj = levelBonus[i];
+    const adjVal = n + adj;
+    currentAdjStats.push(adjVal);
+    statTotal += adjVal;
+    const box = document.createElement('div');
+    box.className='die-face';
+    box.dataset.idx = i;
+    box.innerHTML = '<span class="n">'+n+'</span><span class="lbl">Die '+(i+1)+'</span><span class="adj">+'+adj+'</span>';
+    dfEl.appendChild(box);
+  });
+  wildCurrentStats = currentAdjStats;
+  document.getElementById('statTotalLine').innerHTML = 'Stat total (incl. Level '+finalLevel+' bonus): <b>'+statTotal+'</b>';
+  document.getElementById('wildStatRollNote').textContent = '';
+  const wildBoxes = Array.from(document.querySelectorAll('.die-face'));
+  wildBoxes.forEach(b=>b.classList.remove('hit'));
+  const wildHighIdx = pickHighestIndex(currentAdjStats);
+  if(wildBoxes[wildHighIdx]) wildBoxes[wildHighIdx].classList.add('highest');
+  document.getElementById('result').classList.add('show');
+
+  // True type(s) -- the Pokémon's actual dex typing
+  const trueTypes = (DATA.types[species] || ['Normal', null]).filter(t=>t).map(t=>t.toLowerCase());
+  const trueTypeEl = document.getElementById('trueTypePills');
+  trueTypeEl.innerHTML = '';
+  trueTypes.forEach(t=>{
+    const pill = document.createElement('div');
+    pill.className = 'type-pill';
+    pill.textContent = t;
+    pill.style.background = TYPE_COLOR[t] || '#888';
+    trueTypeEl.appendChild(pill);
+  });
+
+  // Attack type roll (computed, not displayed step-by-step -- same method as before)
+  const baseType = trueTypes[Math.floor(Math.random()*trueTypes.length)];
+  const av1 = rand(6);
+  const av2 = rand(6);
+  const atkSum = av1 + av2;
+  const shift = wheelShift(atkSum);
+  const baseIdx = WHEEL.indexOf(baseType);
+  const finalIdx = ((baseIdx + shift) % WHEEL.length + WHEEL.length) % WHEEL.length;
+  const finalType = WHEEL[finalIdx];
+  const finalPill = document.getElementById('finalTypePill');
+  finalPill.textContent = finalType;
+  finalPill.style.background = TYPE_COLOR[finalType] || '#888';
+
+  } catch (err) {
+    showError('The roll couldn\'t be completed. (' + err.message + ')');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    rolling = false;
+  }
+});
+
+let wildStatRolling = false;
+document.getElementById('wildStatRollBtn').addEventListener('click', async ()=>{
+  if(!wildCurrentStats){
+    document.getElementById('wildStatRollNote').textContent = 'Roll an encounter first.';
+    return;
+  }
+  if(wildStatRolling) return;
+  wildStatRolling = true;
+  const btn = document.getElementById('wildStatRollBtn');
+  btn.disabled = true;
+  document.getElementById('wildStatRollNote').textContent = '';
+
+  const boxes = Array.from(document.querySelectorAll('.die-face'));
+  const roll = rand(6);
+  await animateStatPick(boxes, roll-1);
+
+  document.getElementById('wildStatRollNote').textContent = 'Value: ' + wildCurrentStats[roll-1];
+
+  btn.disabled = false;
+  wildStatRolling = false;
+});
+
+// ============ Trainer Battle ============
+
+function trainerTeamSize(badges){
+  if(badges===0) return 1;
+  if(badges<=2) return 2;
+  if(badges<=4) return 3;
+  if(badges<=6) return 4;
+  return 5;
+}
+
+function pickStageForLevel(root, level){
+  const chain = DATA.trainerChain[root] || [root];
+  let chosen = chain[0];
+  for(const stage of chain){
+    const lvl = DATA.trainerMinLevel[stage];
+    if(lvl !== undefined && lvl <= level){
+      chosen = stage;
+    }
+  }
+  return chosen;
+}
+
+let trainerRolling = false;
+
+// Shared row builder: given a resolved species and its level, produce the same
+// stat-block / true-type / attack-type display used by both Trainer Battle and Gym Leader.
+function buildMonRow(finalSpecies, level, forcedType){
+  const stats = DATA.dice[finalSpecies] || [0,0,0,0,0,0];
+  const levelBonus = distributeLevelBonus(stats, level);
+  const adjStats = stats.map((n,i) => n + levelBonus[i]);
+  const statTotal = adjStats.reduce((a,b)=>a+b, 0);
+
+  const types = (DATA.types[finalSpecies] || ['Normal', null]).filter(t=>t).map(t=>t.toLowerCase());
+  let finalType;
+  if(forcedType){
+    // Gym leaders: attack type is a fixed rule, not a random roll.
+    finalType = forcedType;
+  } else {
+    // Wild/Trainer: pick a random type the Pokémon actually has, then shift around the wheel via 2d6.
+    const baseType = types[Math.floor(Math.random()*types.length)];
+    const av1 = rand(6);
+    const av2 = rand(6);
+    const atkSum = av1 + av2;
+    const shift = wheelShift(atkSum);
+    const baseIdx = WHEEL.indexOf(baseType);
+    const finalIdx = ((baseIdx + shift) % WHEEL.length + WHEEL.length) % WHEEL.length;
+    finalType = WHEEL[finalIdx];
+  }
+  const typeColor = TYPE_COLOR[finalType] || '#888';
+
+  const row = document.createElement('div');
+  row.className = 'trainer-mon-row';
+  const trueTypeHtml = types.map(t =>
+    '<span class="trainer-type-pill" style="background:' + (TYPE_COLOR[t]||'#888') + ';">' + t + '</span>'
+  ).join('');
+  const highIdx = pickHighestIndex(adjStats);
+  const statBoxesHtml = adjStats.map((n,i) =>
+    '<span class="stat-mini-box' + (i===highIdx ? ' highest' : '') + '" data-idx="'+i+'">'+n+'</span>'
+  ).join('');
+  row.innerHTML =
+    '<div class="trainer-mon-top">' +
+      '<span class="trainer-mon-name">' + finalSpecies + ' <span class="trainer-mon-level">Lv ' + level + '</span></span>' +
+      '<span class="trainer-type-block">' +
+        '<span class="trainer-type-label">Type</span>' +
+        '<span class="trainer-mon-types">' + trueTypeHtml + '</span>' +
+        '<span class="trainer-atk-paren">(<span class="trainer-type-label">Atk</span> ' +
+          '<span class="trainer-type-pill trainer-atk-pill" style="background:' + typeColor + ';">' + finalType + '</span>)</span>' +
+      '</span>' +
+    '</div>' +
+    '<div class="stat-mini-row">' +
+      '<span class="stat-mini-grid">' + statBoxesHtml + '</span>' +
+      '<span class="stat-mini-total">Total: ' + statTotal + '</span>' +
+    '</div>' +
+    '<span class="tap-hint">Tap card to roll a stat (1-6)</span>' +
+    '<span class="stat-roll-note"></span>';
+
+  let cardRolling = false;
+  row.addEventListener('click', async ()=>{
+    if(cardRolling) return;
+    cardRolling = true;
+    const note = row.querySelector('.stat-roll-note');
+    if(note) note.textContent = '';
+    const boxes = Array.from(row.querySelectorAll('.stat-mini-box'));
+    const roll = rand(6);
+    await animateStatPick(boxes, roll-1);
+    if(note) note.textContent = 'Value: ' + adjStats[roll-1];
+    cardRolling = false;
+  });
+
+  return row;
+}
+
+document.getElementById('trainerBtn').addEventListener('click', async ()=>{
+  if(trainerRolling) return;
+  trainerRolling = true;
+  const tbtn = document.getElementById('trainerBtn');
+  tbtn.disabled = true;
+  document.getElementById('errorBanner').classList.remove('show');
+  document.getElementById('trainerResult').classList.remove('show');
+
+  try {
+
+  // 1. Roll for trainer class (plain 2d6, no reroll/threshold)
+  const c1el = document.getElementById('classDie1');
+  const c2el = document.getElementById('classDie2');
+  await tumble(c1el, 380, 6);
+  const cv1 = rand(6);
+  c1el.textContent = cv1;
+  await tumble(c2el, 380, 6);
+  const cv2 = rand(6);
+  c2el.textContent = cv2;
+  const classSum = cv1 + cv2;
+  document.getElementById('classSumBadge').textContent = classSum;
+
+  const className = DATA.trainerClassBySum[String(classSum)];
+  document.getElementById('trainerClassName').textContent = className;
+
+  // 2. Team size (tiered by badges) and level (flat 3 + exact badges)
+  const teamSize = trainerTeamSize(badges);
+  const trainerLevel = 3 + badges;
+  document.getElementById('trainerLevelLine').innerHTML =
+    className + ' -- Team of ' + teamSize + ', all Level <b>' + trainerLevel + '</b>';
+
+  // 3. Roll each team member: 2d6 -> class's line table -> proper stage for trainerLevel
+  const table = DATA.trainerTables[className];
+  const teamEl = document.getElementById('trainerTeam');
+  teamEl.innerHTML = '';
+
+  for(let i=0; i<teamSize; i++){
+    const mv1 = rand(6);
+    const mv2 = rand(6);
+    const msum = mv1 + mv2;
+    const root = table[msum-2];
+    const finalSpecies = pickStageForLevel(root, trainerLevel);
+    teamEl.appendChild(buildMonRow(finalSpecies, trainerLevel));
+  }
+
+  document.getElementById('trainerResult').classList.add('show');
+
+  } catch (err) {
+    showError('The trainer roll couldn\'t be completed. (' + err.message + ')');
+    console.error(err);
+  } finally {
+    tbtn.disabled = false;
+    trainerRolling = false;
+  }
+});
+
+// ============ Gym Leader ============
+
+const gymSelect = document.getElementById('gymSelect');
+
+function buildGymOptionsHtml(){
+  let html = '';
+  if(badges < 8){
+    html += '<optgroup label="Gym Leaders">';
+    Object.keys(DATA.gymLeaders).forEach(name=>{
+      const info = DATA.gymLeaders[name];
+      html += '<option value="' + name + '">' + name + ' -- ' + info.town + ' (' + info.type + ')</option>';
+    });
+    html += '</optgroup>';
+  } else {
+    html += '<optgroup label="Elite Four & Champion (all 8 gyms cleared)">';
+    DATA.eliteFour.forEach(m=>{
+      html += '<option value="' + m.id + '">Elite Four -- ' + m.name + ' (' + m.type + ')</option>';
+    });
+    html += '<option value="' + DATA.champion.id + '">Champion -- ' + DATA.champion.name + '</option>';
+    html += '</optgroup>';
+  }
+  return html;
+}
+
+function refreshGymOptions(){
+  const prevValue = gymSelect.value;
+  gymSelect.innerHTML = buildGymOptionsHtml();
+  // keep the previous selection if it's still valid, otherwise fall back to the first option
+  const stillValid = Array.from(gymSelect.options).some(o => o.value === prevValue);
+  if(stillValid) gymSelect.value = prevValue;
+}
+refreshGymOptions();
+
+let gymRolling = false;
+
+document.getElementById('gymBtn').addEventListener('click', async ()=>{
+  if(gymRolling) return;
+  gymRolling = true;
+  const gbtn = document.getElementById('gymBtn');
+  gbtn.disabled = true;
+  document.getElementById('errorBanner').classList.remove('show');
+  document.getElementById('gymResult').classList.remove('show');
+
+  try {
+
+  const selectedValue = gymSelect.value;
+
+  // Attack type is a fixed rule for all of Gym/E4/Champion, not a roll:
+  // slot "3" shifts one step clockwise from primary. slot "4" shifts one step counterclockwise.
+  // every other slot (1, 2, 5, ace) uses the Pokémon's primary type as-is.
+  function fixedAttackType(finalSpecies, slotKey){
+    const primary = (DATA.types[finalSpecies][0] || 'normal').toLowerCase();
+    const idx = WHEEL.indexOf(primary);
+    let shift = 0;
+    if(slotKey === '3') shift = 1;
+    if(slotKey === '4') shift = -1;
+    const finalIdx = ((idx + shift) % WHEEL.length + WHEEL.length) % WHEEL.length;
+    return WHEEL[finalIdx];
+  }
+
+  const teamEl = document.getElementById('gymTeam');
+  teamEl.innerHTML = '';
+
+  if(selectedValue.startsWith('E4_') || selectedValue === 'CHAMPION'){
+    // ---- Elite Four / Champion: fixed roster, fixed levels, no badge-gating ----
+    const member = selectedValue === 'CHAMPION'
+      ? DATA.champion
+      : DATA.eliteFour.find(m => m.id === selectedValue);
+
+    const label = selectedValue === 'CHAMPION' ? 'Champion' : 'Elite Four';
+    document.getElementById('gymLeaderName').textContent = label + ' -- ' + member.name + (member.type !== 'Mixed' ? ' (' + member.type + ')' : '');
+    document.getElementById('gymLevelLine').innerHTML = 'Always available at 8 badges -- fixed roster and levels.';
+
+    // Display order: numbered slots first (1,2,3,4[,5]), Ace last.
+    const slotKeys = Object.keys(member.slots).filter(k => k !== 'ace').sort((a,b)=>a-b);
+    slotKeys.concat(['ace']).forEach(slotKey=>{
+      const root = member.slots[slotKey];
+      const level = member.levels[slotKey];
+      const finalSpecies = pickStageForLevel(root, level);
+      const forcedType = fixedAttackType(finalSpecies, slotKey);
+      teamEl.appendChild(buildMonRow(finalSpecies, level, forcedType));
+    });
+
+  } else {
+    // ---- Regular Gym Leader: badge-gated slots, badge-based levels ----
+    const leaderName = selectedValue;
+    const info = DATA.gymLeaders[leaderName];
+    document.getElementById('gymLeaderName').textContent = leaderName + ' -- ' + info.town + ' (' + info.type + ')';
+    document.getElementById('gymLevelLine').innerHTML =
+      'Badges already claimed: <b>' + badges + '</b>';
+
+    // Slot unlock thresholds (badges already claimed before this fight) and level formulas:
+    // 1 & 2 always unlocked. 3 needs 2+. 4 needs 4+. 5 needs 6+.
+    // Levels: 1 & 4 = badges+5. 2 & 3 = badges+4. 5 = badges+3.
+    const slotDefs = [
+      {slot:1, minBadges:0, level: badges+5},
+      {slot:2, minBadges:0, level: badges+4},
+      {slot:3, minBadges:2, level: badges+4},
+      {slot:4, minBadges:4, level: badges+5},
+      {slot:5, minBadges:6, level: badges+3},
+    ];
+    // Send-out order: 5, 2, 3, 4, 1 -- only including unlocked slots.
+    const sendOrder = [5,2,3,4,1];
+
+    sendOrder.forEach(slotNum=>{
+      const def = slotDefs.find(d=>d.slot===slotNum);
+      if(badges < def.minBadges) return; // not unlocked yet
+      const root = info.slots[String(slotNum)] || info.slots[slotNum];
+      const finalSpecies = pickStageForLevel(root, def.level);
+      const forcedType = fixedAttackType(finalSpecies, String(slotNum));
+      teamEl.appendChild(buildMonRow(finalSpecies, def.level, forcedType));
+    });
+  }
+
+  document.getElementById('gymResult').classList.add('show');
+
+  } catch (err) {
+    showError('The gym team couldn\'t be built. (' + err.message + ')');
+    console.error(err);
+  } finally {
+    gbtn.disabled = false;
+    gymRolling = false;
+  }
+});
+
+// ============ Tabs ============
+
+const tabRollerBtn = document.getElementById('tabRollerBtn');
+const tabMapBtn = document.getElementById('tabMapBtn');
+const tabDexBtn = document.getElementById('tabDexBtn');
+const rollerPanel = document.getElementById('rollerPanel');
+const mapPanel = document.getElementById('mapPanel');
+const dexPanel = document.getElementById('dexPanel');
+
+function showTab(which){
+  tabRollerBtn.classList.toggle('active', which==='roller');
+  tabMapBtn.classList.toggle('active', which==='map');
+  tabDexBtn.classList.toggle('active', which==='dex');
+  rollerPanel.style.display = which==='roller' ? '' : 'none';
+  mapPanel.style.display = which==='map' ? '' : 'none';
+  dexPanel.style.display = which==='dex' ? '' : 'none';
+  if(which==='map' && !mapBuilt) buildMap();
+  if(which==='dex' && !dexBuilt) buildDex();
+}
+tabRollerBtn.addEventListener('click', ()=> showTab('roller'));
+tabMapBtn.addEventListener('click', ()=> showTab('map'));
+tabDexBtn.addEventListener('click', ()=> showTab('dex'));
+
+// ============ Region Map ============
+
+let mapBuilt = false;
+const CELL = 42;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgEl(tag, attrs){
+  const el = document.createElementNS(SVG_NS, tag);
+  for(const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+function nodeXY(n){
+  return { x: (n.col - 0.5) * CELL, y: (n.row - 0.5) * CELL };
+}
+
+function buildMap(){
+  mapBuilt = true;
+  const maxRow = Math.max(...DATA.mapNodes.map(n=>n.row));
+  const maxCol = Math.max(...DATA.mapNodes.map(n=>n.col));
+  const svg = document.getElementById('mapSvg');
+  svg.setAttribute('viewBox', '0 0 ' + (maxCol*CELL) + ' ' + (maxRow*CELL));
+  svg.setAttribute('width', (maxCol*CELL));
+  svg.setAttribute('height', (maxRow*CELL));
+
+  const byId = {};
+  DATA.mapNodes.forEach(n=>{ byId[n.id] = n; });
+
+  // Draw edges first so nodes render on top
+  DATA.mapEdges.forEach(([a,b])=>{
+    const na = byId[a], nb = byId[b];
+    if(!na || !nb) return;
+    const pa = nodeXY(na), pb = nodeXY(nb);
+    svg.appendChild(svgEl('line', {
+      class:'map-edge', x1:pa.x, y1:pa.y, x2:pb.x, y2:pb.y
+    }));
+  });
+
+  // Draw nodes
+  DATA.mapNodes.forEach(n=>{
+    let p = nodeXY(n);
+    const g = svgEl('g', {class:'map-node', 'data-id': n.id});
+
+    if(n.kind === 'town'){
+      const s = 11;
+      const townFill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
+      g.appendChild(svgEl('rect', {
+        class:'map-node-shape', x:p.x-s, y:p.y-s, width:s*2, height:s*2, fill:townFill
+      }));
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+3, 'text-anchor':'middle', 'font-size':8}))
+        .textContent = n.id;
+    } else if(n.kind === 'dungeon'){
+      const s = 11;
+      const points = [
+        [p.x, p.y - s],
+        [p.x - s, p.y + s*0.8],
+        [p.x + s, p.y + s*0.8],
+      ].map(pt => pt.join(',')).join(' ');
+      g.appendChild(svgEl('polygon', {
+        class:'map-node-shape', points, fill:'var(--rust)'
+      }));
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+21, 'text-anchor':'middle', 'font-size':6.5}))
+        .textContent = n.id;
+    } else if(n.kind === 'combo'){
+      // Shield shape: square top (town) + triangle bottom (dungeon), split by a rule line.
+      const w = 12, hTop = 10, hBottom = 12;
+      const topFill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
+      const topPts = [
+        [p.x-w, p.y-hTop], [p.x+w, p.y-hTop], [p.x+w, p.y], [p.x-w, p.y]
+      ].map(pt=>pt.join(',')).join(' ');
+      const bottomPts = [
+        [p.x-w, p.y], [p.x+w, p.y], [p.x, p.y+hBottom]
+      ].map(pt=>pt.join(',')).join(' ');
+      g.appendChild(svgEl('polygon', {class:'map-node-shape', points: topPts, fill:topFill}));
+      g.appendChild(svgEl('polygon', {class:'map-node-shape', points: bottomPts, fill:'var(--rust)'}));
+      g.appendChild(svgEl('line', {class:'map-node-divider', x1:p.x-w, y1:p.y, x2:p.x+w, y2:p.y}));
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y-3, 'text-anchor':'middle', 'font-size':7}))
+        .textContent = n.townId;
+      g.appendChild(svgEl('text', {class:'map-node-label map-node-label-light', x:p.x, y:p.y+9, 'text-anchor':'middle', 'font-size':6}))
+        .textContent = n.dungeonId;
+    } else {
+      const r = 11;
+      g.appendChild(svgEl('circle', {class:'map-node-shape', cx:p.x, cy:p.y, r, fill:'var(--sage)'}));
+      const fontSize = n.id.length >= 3 ? 6.5 : 7.5;
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+2.5, 'text-anchor':'middle', 'font-size':fontSize}))
+        .textContent = n.id;
+    }
+
+    g.addEventListener('click', ()=> selectMapNode(n.id));
+    svg.appendChild(g);
+  });
+}
+
+function jumpTo(jump, target){
+  tabRollerBtn.click();
+  const scrollTo = (el)=>{ if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'center'}); };
+  if(jump === 'location'){
+    locSelect.value = target;
+    renderLocMeta();
+    resetDice();
+    scrollTo(document.getElementById('location'));
+  } else if(jump === 'gym'){
+    refreshGymOptions();
+    const stillThere = Array.from(gymSelect.options).some(o=>o.value===target);
+    if(stillThere){
+      gymSelect.value = target;
+      scrollTo(document.getElementById('gymSelect'));
+    }
+  }
+}
+
+function buildEncounterPreviewHtml(locationId){
+  const loc = DATA.locations.find(l => l.id === locationId);
+  if(!loc) return '';
+  const rows = loc.table.map((species, i)=>{
+    const sum = i + 2;
+    const types = (DATA.types[species] || ['Normal', null]).filter(t=>t);
+    const typeHtml = types.map(t =>
+      '<span class="trainer-type-pill" style="background:' + (TYPE_COLOR[t.toLowerCase()]||'#888') + ';">' + t + '</span>'
+    ).join('');
+    return '<div class="map-encounter-row">' +
+      '<span class="map-encounter-sum">' + sum + '</span>' +
+      '<span class="map-encounter-name">' + species + '</span>' +
+      '<span class="map-encounter-types">' + typeHtml + '</span>' +
+    '</div>';
+  }).join('');
+  return '<div class="map-encounter-title">Encounter table (2d6 sum)</div>' +
+    '<div class="map-encounter-list">' + rows + '</div>';
+}
+
+function selectMapNode(id){
+  document.querySelectorAll('.map-node').forEach(el=>el.classList.remove('selected'));
+  const el = document.querySelector('.map-node[data-id="'+id+'"]');
+  if(el) el.classList.add('selected');
+
+  const n = DATA.mapNodes.find(x=>x.id===id);
+  const infoEl = document.getElementById('mapInfo');
+  if(!n){ infoEl.innerHTML = '<div class="map-info-empty">Tap a node to see what\'s there.</div>'; return; }
+
+  if(n.kind === 'combo'){
+    const gymLine = n.gymLeader ? 'Home of Gym Leader ' + n.gymLeader + '.' : 'No gym here.';
+    infoEl.innerHTML =
+      '<div class="map-info-name">' + n.townName + ' / ' + n.dungeonName + '</div>' +
+      '<div class="map-info-kind">Town + Dungeon (same spot)</div>' +
+      '<div class="map-info-desc">' + gymLine + ' ' + n.dungeonName + ' sits in the same location.</div>' +
+      (n.gymLeader ? '<button class="map-go-btn" data-jump="gym" data-target="'+n.gymLeader+'">Go to '+n.gymLeader+' in Gym Leader tab</button> ' : '') +
+      '<button class="map-go-btn" data-jump="location" data-target="'+n.dungeonLocationId+'">Go to ' + n.dungeonName + ' in Roller</button>' +
+      buildEncounterPreviewHtml(n.dungeonLocationId);
+    infoEl.querySelectorAll('.map-go-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> jumpTo(btn.dataset.jump, btn.dataset.target));
+    });
+    return;
+  }
+
+  let kindLabel = n.kind === 'town' ? 'Town / City' : n.kind === 'dungeon' ? 'Dungeon' : 'Route';
+  let extra = '';
+  let goBtnHtml = '';
+  let encounterHtml = '';
+
+  if(n.kind === 'town'){
+    extra = n.gymLeader ? 'Home of Gym Leader ' + n.gymLeader + '.' : (n.id === 'SHO' ? 'Home of the Elite Four & Champion.' : 'No gym here.');
+    if(n.gymLeader){
+      goBtnHtml = '<button class="map-go-btn" data-jump="gym" data-target="'+n.gymLeader+'">Go to '+n.gymLeader+' in Gym Leader tab</button>';
+    }
+  } else {
+    extra = 'Wild encounter location.';
+    goBtnHtml = '<button class="map-go-btn" data-jump="location" data-target="'+n.locationId+'">Go to this location in Roller</button>';
+    encounterHtml = buildEncounterPreviewHtml(n.locationId);
+  }
+
+  infoEl.innerHTML =
+    '<div class="map-info-name">' + n.name + '</div>' +
+    '<div class="map-info-kind">' + kindLabel + '</div>' +
+    '<div class="map-info-desc">' + extra + '</div>' +
+    goBtnHtml +
+    encounterHtml;
+
+  const btn = infoEl.querySelector('.map-go-btn');
+  if(btn){
+    btn.addEventListener('click', ()=> jumpTo(btn.dataset.jump, btn.dataset.target));
+  }
+}
+
+// ============ Pokemon Data ============
+
+let dexBuilt = false;
+let dexAllNames = [];
+
+let dexLocationIndex = null;
+function buildLocationIndex(){
+  const idx = {};
+  DATA.locations.forEach(loc=>{
+    loc.table.forEach((species, i)=>{
+      const sum = i + 2;
+      idx[species] = idx[species] || [];
+      idx[species].push({ name: loc.name, sum });
+    });
+  });
+  return idx;
+}
+
+function dexEntryHtml(species){
+  const stats = DATA.dice[species] || [0,0,0,0,0,0];
+  const types = (DATA.types[species] || ['Normal', null]).filter(t=>t);
+  const typeHtml = types.map(t =>
+    '<span class="trainer-type-pill" style="background:' + (TYPE_COLOR[t.toLowerCase()]||'#888') + ';">' + t + '</span>'
+  ).join('');
+
+  const info = DATA.evoInfo[species] || {evolvesFrom:null, evolvesInto:[]};
+  let evoLines = [];
+  if(info.evolvesFrom){
+    evoLines.push('Evolves from <b>' + info.evolvesFrom + '</b>');
+  }
+  if(info.evolvesInto && info.evolvesInto.length){
+    info.evolvesInto.forEach(e=>{
+      evoLines.push('Evolves into <b>' + e.species + '</b> (' + e.method + ')');
+    });
+  }
+  if(!info.evolvesFrom && (!info.evolvesInto || !info.evolvesInto.length)){
+    evoLines.push('Does not evolve');
+  }
+
+  const spots = dexLocationIndex[species];
+  let locHtml;
+  if(spots && spots.length){
+    locHtml = spots.map(s =>
+      '<button class="dex-loc-btn" data-target="' + s.name + '">' + s.name + ' (' + s.sum + ')</button>'
+    ).join(', ');
+  } else {
+    locHtml = 'Starter -- given by the Professor, not found in the wild';
+  }
+
+  return '<div class="dex-entry" data-name="' + species.toLowerCase() + '">' +
+    '<div class="dex-entry-top">' +
+      '<span class="dex-name">' + species + '</span>' +
+      '<span class="trainer-mon-types">' + typeHtml + '</span>' +
+    '</div>' +
+    '<div class="dex-stats">Dice: ' + stats.join(' - ') + '</div>' +
+    evoLines.map(l => '<div class="dex-evo-line">' + l + '</div>').join('') +
+    '<div class="dex-loc-line">Found: ' + locHtml + '</div>' +
+  '</div>';
+}
+
+function buildDex(){
+  dexBuilt = true;
+  dexLocationIndex = buildLocationIndex();
+  dexAllNames = Object.keys(DATA.dice).sort((a,b)=> a.localeCompare(b));
+  const listEl = document.getElementById('dexList');
+  listEl.innerHTML = dexAllNames.map(dexEntryHtml).join('');
+  document.getElementById('dexCount').textContent = dexAllNames.length + ' Pokemon';
+
+  listEl.querySelectorAll('.dex-loc-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> jumpTo('location', btn.dataset.target));
+  });
+
+  document.getElementById('dexSearch').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    const entries = listEl.querySelectorAll('.dex-entry');
+    let shown = 0;
+    entries.forEach(el=>{
+      const match = el.dataset.name.includes(q);
+      el.style.display = match ? '' : 'none';
+      if(match) shown++;
+    });
+    document.getElementById('dexCount').textContent = shown + ' / ' + dexAllNames.length + ' Pokemon';
+  });
+}
+
+} catch (err) {
+  document.body.innerHTML =
+    '<div style="max-width:600px;margin:60px auto;padding:24px;' +
+    'font-family:monospace;background:#fff3f0;border:2px solid #C4572E;' +
+    'border-radius:6px;color:#1F2E3D;line-height:1.6;">' +
+    '<b style="color:#C4572E;">The tool failed to load.</b><br><br>' +
+    'Error: ' + err.message + '<br><br>' +
+    'This usually means the file got altered when it was saved or downloaded ' +
+    '(e.g. saved as .txt, or opened/re-saved by a text editor that changed the encoding). ' +
+    'Try re-downloading the original .html file directly and opening it without editing it first.' +
+    '<br><br><small>Full error for troubleshooting: ' + (err.stack || err.message) + '</small>' +
+    '</div>';
+  console.error(err);
+}
+</script>
+</body>
+</html>
