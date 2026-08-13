@@ -23,6 +23,7 @@ https://eang0521.github.io/pokemon-dice/
 ## What's in here
 
 - **`index.html`** — the interactive tool (Wild Encounter Roller, Trainer Battle, Gym Leader / Elite Four / Champion, Region Map, Pokémon Data browser).
+- **`Dice_Region_Ruleset.md`** — the generalized framework extracted from the Calli project: region-agnostic rules for building a new region (map structure, dex construction, type balance, the core dice mechanic, encounter tables, trainers, gyms, Elite Four, leveling, evolution, stats). Use this as the starting point for any future region.
 - **`docs/`** — the reference documents behind the tool:
   - `Calli_Regional_Dex.md` / `Calli_Regional_Dex_Numbered.md` — the 209-Pokémon regional dex
   - `Calli_Dungeons.md` — official routes and dungeon locations
