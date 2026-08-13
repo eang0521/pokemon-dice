@@ -1,6 +1,11 @@
-# Pokémon Dice — Calli Region
+# Pokémon Dice
 
-A dice-driven Pokémon region (Calli, based on California) with a full regional dex, gym leaders, Elite Four, trainer classes, evolution rules on a 1–20 level scale, and an interactive HTML tool for rolling wild encounters, trainer battles, gym leader teams, and browsing the region map and Pokédex.
+A dice-driven Pokémon region toolkit with a full regional dex, gym leaders, Elite Four, trainer classes, evolution rules on a 1–20 level scale, and an interactive HTML tool for rolling wild encounters, trainer battles, gym leader teams, and browsing the region map and Pokédex.
+
+Two regions are playable, switchable from a dropdown in the tool itself:
+
+- **Calli** — an original region based on California.
+- **Neo Kanto** — the original Kanto region, thirty years later: a mix of the classic 151 with a wave of migrated species, some gyms changed type or city, and Team Rocket's old haunts repurposed. See `docs/NeoKanto_Regional_Dex.md` for the premise.
 
 ## Live tool
 
@@ -22,14 +27,8 @@ https://eang0521.github.io/pokemon-dice/
 
 ## What's in here
 
-- **`index.html`** — the interactive tool (Wild Encounter Roller, Trainer Battle, Gym Leader / Elite Four / Champion, Region Map, Pokémon Data browser).
+- **`index.html`** — the interactive tool (Wild Encounter Roller, Trainer Battle, Gym Leader / Elite Four / Champion, Region Map, Pokémon Data browser). A region dropdown in the masthead switches all of it between Calli and Neo Kanto, each backed by its own self-contained data set — there's no cross-region bleed in dex, map, or badge progress.
 - **`Dice_Region_Ruleset.md`** — the generalized framework extracted from the Calli project: region-agnostic rules for building a new region (map structure, dex construction, type balance, the core dice mechanic, encounter tables, trainers, gyms, Elite Four, leveling, evolution, stats). Use this as the starting point for any future region.
-- **`docs/`** — the reference documents behind the tool:
-  - `Calli_Regional_Dex.md` / `Calli_Regional_Dex_Numbered.md` — the 209-Pokémon regional dex
-  - `Calli_Dungeons.md` — official routes and dungeon locations
-  - `Calli_Encounter_Tables.md` — full wild encounter tables per route/dungeon
-  - `Calli_Pokemon_Locations.md` — reverse lookup: where to find each Pokémon
-  - `Calli_Evolution_Guide.md` — evolution levels/methods on the 1–20 scale
-  - `Calli_Gym_Leaders.md` / `Calli_Elite_Four.md` — gym leader and Elite Four/Champion teams
-  - `Calli_Trainer_Classes.md` — the 11 generic route trainer classes
-  - `Calli_Gym_Pokemon_Stats.md` / `Calli_Full_Dex_Stats.md` — die-face stat conversions
+- **`docs/`** — the reference documents behind the tool, one set per region:
+  - `Calli_*.md` — Calli's regional dex, dungeons, encounter tables, Pokémon locations, evolution guide, gym leaders, Elite Four, trainer classes, and stat conversions.
+  - `NeoKanto_*.md` — the same document set for Neo Kanto, plus a worldbuilding proposal covering the region's premise and how it diverges from the original Kanto.
