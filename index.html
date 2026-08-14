@@ -1093,6 +1093,15 @@ function buildOptgroup(label, items){
 function rebuildLocationOptions(){
   routes = DATA.locations.filter(l=>l.kind==='route');
   dungeons = DATA.locations.filter(l=>l.kind==='dungeon');
+  // Routes: sort by the number in the name (e.g. "Route 9" before "Route 10") rather than
+  // alphabetically, so the dropdown reads in a natural, findable order.
+  routes.sort((a,b)=>{
+    const na = parseInt((a.name.match(/\d+/) || ['0'])[0], 10);
+    const nb = parseInt((b.name.match(/\d+/) || ['0'])[0], 10);
+    return na - nb;
+  });
+  // Dungeons: no numbering scheme to sort by, so alphabetical is the findable order.
+  dungeons.sort((a,b)=> a.name.localeCompare(b.name));
   locSelect.innerHTML = '';
   locSelect.appendChild(buildOptgroup('Routes', routes));
   locSelect.appendChild(buildOptgroup('Dungeons', dungeons));
