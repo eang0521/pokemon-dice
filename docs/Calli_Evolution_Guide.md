@@ -10,7 +10,7 @@ Calli uses a **1–20 level scale** instead of the usual 1–100. Here's the con
 | 4 | 10–13 | 9 | 31–35 | 14 | 56–61 | 19 | 87–93 |
 | 5 | 14–17 | 10 | 36–40 | 15 | 62–67 | 20 | 94–100 |
 
-All level-up evolutions below are converted from their standard mainline requirement to this scale. Non-level evolutions (stones, trade, friendship, special conditions) work exactly like the mainline games and aren't level-gated.
+All level-up evolutions below are converted from their standard mainline requirement to this scale. Non-level evolutions (stones, trade, friendship, special conditions) have no inherent level in the source games, so each gets a "proper level" via the buffer rule (ruleset §11): a base (first-stage) Pokémon's non-level evolution = proper level 1 + 6 = New Lv 7; a non-level evolution from an already-evolved stage = that stage's own proper level + 3. Exception: when a split evolution has a level-based sibling, the non-level branch borrows that sibling's actual level instead of using the buffer — e.g. Froslass takes Glalie's Level 11 rather than a generic buffer, so the two don't appear at different levels from Snorunt for no in-fiction reason.
 
 ---
 
@@ -99,7 +99,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Piloswine → Mamoswine | Must know the move Ancient Power, then level up |
 | Snover → Abomasnow | Level 10 |
 | Snorunt → Glalie | Level 11 |
-| Snorunt → Froslass | Dawn Stone (female only, alt. branch) |
+| Snorunt → Froslass | Dawn Stone (female only, alt. branch) → Level 11 |
 | Sneasel → Weavile | Trade holding Razor Claw |
 | Spheal → Sealeo | Level 9 |
 | Sealeo → Walrein | Level 11 |
@@ -167,7 +167,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Jigglypuff → Wigglytuff | Moon Stone |
 | Ralts → Kirlia | Level 6 |
 | Kirlia → Gardevoir | Level 8 |
-| Kirlia → Gallade | Dawn Stone (male only, alt. branch) |
+| Kirlia → Gallade | Dawn Stone (male only, alt. branch) → Level 8 |
 | Bronzor → Bronzong | Level 9 |
 | Litleo → Pyroar | Level 9 |
 | Sunkern → Sunflora | Sun Stone |

@@ -17,6 +17,8 @@
 
 *Non-level evolutions (stone, trade, friendship, special condition) have no inherent level in the source games, so each gets a "proper level" via the buffer rule (ruleset §11): a base (first-stage) Pokémon's non-level evolution = proper level 1 + 6 = New Lv 7; a non-level evolution from an already-evolved stage = that stage's own proper level + 3. Chained non-level steps compute in order, off the already-buffered result — see Kadabra→Alakazam→(n/a) or Porygon→Porygon2→Porygon-Z below for the pattern.*
 
+*Exception: when a split evolution has a level-based sibling, the non-level branch borrows that sibling's actual level instead of using the buffer — e.g. Slowking (trade) takes Slowbro's Level 10 rather than the generic base+6 buffer, so the two don't appear at different levels from Slowpoke for no in-fiction reason.*
+
 ## Starters
 
 | Evolution | Method |
@@ -77,7 +79,7 @@
 | Poliwhirl → Poliwrath | Water Stone → Level 10 |
 | Poliwhirl → Politoed | Trade holding King's Rock → Level 10 |
 | Slowpoke → Slowbro | Level 10 |
-| Slowpoke → Slowking | Trade holding King's Rock → Level 7 |
+| Slowpoke → Slowking | Trade holding King's Rock → Level 10 |
 | Shellder → Cloyster | Water Stone → Level 7 |
 | Horsea → Seadra | Level 9 |
 | Seadra → Kingdra | Trade holding Dragon Scale → Level 12 |
