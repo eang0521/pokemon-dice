@@ -1,7 +1,7 @@
 # Calli Region — Elite Four & Champion
 ### Shoreline City (San Diego)
 
-With Fire and Dark now covered by the Dunebreak and Canyon gyms, the Elite Four's specialties shifted to **Bug, Grass, Rock, and Fighting** — none of which appear among the 8 gyms. Wren and Ivy, formerly the Redwood Town and Vinehaven Town gym leaders, were promoted here rather than replaced outright, so their aces stayed the same even as their rosters got stronger.
+With Fire and Dark now covered by the Dunebreak and Canyon gyms, the Elite Four's specialties shifted to **Bug, Grass, Rock, and Fighting** — none of which appear among the 8 gyms. Wren and Ivy, formerly the Redwood Town and Vinehaven Town gym leaders, were promoted here rather than replaced outright, so their aces stayed the same even as their rosters got stronger. For die-face stats on any Pokémon named below, look it up by name in `Calli_Regional_Dex.md`.
 
 ---
 

@@ -1,6 +1,6 @@
 # Neo Kanto Elite Four & Champion
 
-*Based at Indigo Plateau, past Victory Road. Unlocked once all 8 gyms are cleared — the one part of Neo Kanto that stays badge-gated in the any-order design, matching the original games. Rosters are fixed and full-strength every time; there's no tiering the way gym teams have, since by the time you reach here you already have every badge.*
+*Based at Indigo Plateau, past Victory Road. Unlocked once all 8 gyms are cleared — the one part of Neo Kanto that stays badge-gated in the any-order design, matching the original games. Rosters are fixed and full-strength every time; there's no tiering the way gym teams have, since by the time you reach here you already have every badge. For die-face stats on any Pokémon named below, look it up by name in `NeoKanto_Regional_Dex.md`.*
 
 Three of the four seats changed specialty from the original games, each reassigned to a type a gym just vacated once Neo Kanto's lineup shifted (see Dossier §2–3): Electric (vacated by Vermilion → Steel), Ground (vacated by Viridian → Ice), and Poison (vacated by Fuchsia → Bug). The fourth seat, Dragon, is the deliberate holdover — with no gym claiming Dragon anymore, someone at the top still has to carry it, so Lance's line stays exactly where it was.
 

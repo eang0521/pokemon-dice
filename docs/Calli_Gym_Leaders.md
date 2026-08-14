@@ -2,7 +2,7 @@
 
 Gyms can be challenged in **any order**, and leaders draw from **anywhere in the region** — geography doesn't restrict picks, and neither does primary vs. secondary typing. Each leader fields the same **two core Pokémon** (one is their **ace**) from badge 1 onward; a 3rd teammate joins at your 3rd/4th badge, a 4th at your 5th/6th, and a 5th at your 7th/8th, each entering at base stage and evolving a step per tier after joining.
 
-Every leader's table is followed by an **evolution key** — the level (on Calli's 1–20 scale) or method each of their Pokémon's lines uses, in the order the evolutions happen (e.g. "Abra: 5, Trade" means Abra evolves at level 5, then its next stage evolves by Trade).
+Every leader's table is followed by an **evolution key** — the level (on Calli's 1–20 scale) or method each of their Pokémon's lines uses, in the order the evolutions happen (e.g. "Abra: 5, Trade" means Abra evolves at level 5, then its next stage evolves by Trade). For die-face stats on any Pokémon named below, look it up by name in `Calli_Regional_Dex.md`.
 
 ---
 

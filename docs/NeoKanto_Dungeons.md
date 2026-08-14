@@ -51,7 +51,7 @@
 
 ## Notes
 
-- **Diglett's Cave has been removed entirely** — no node for it on the map. Diglett/Dugtrio relocated to the Rock Tunnel encounter table instead (see `NeoKanto_Regional_Dex_Numbered.md`).
+- **Diglett's Cave has been removed entirely** — no node for it on the map. Diglett/Dugtrio relocated to the Rock Tunnel encounter table instead (see `NeoKanto_Regional_Dex.md`).
 - **Five explicit exclusions** override what plain grid adjacency would otherwise connect (per `Dice_Region_Ruleset.md` §1):
   - Cerulean Cave (CC) is *not* connected to Route 24 — it's reached from Route 4 instead.
   - Route 25 is *not* connected to Route 9 at either of its two adjacency points — keeps Route 25 a genuine dead end rather than a shortcut back into the Route 9/Power Plant corridor.
