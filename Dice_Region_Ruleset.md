@@ -1,7 +1,7 @@
 # The Dice Region Ruleset
-### A generalized framework for building Pokémon regions, extracted from the Calli project
+### A generalized framework for building Pokémon regions, extracted from the Calli project and proven again end-to-end on Neo Kanto
 
-This document strips out everything Calli-specific and keeps only the *rules* — so it can be reused to build a new region from scratch. Wherever a rule references a number (like "8 gyms" or "209 Pokémon"), treat it as a tunable default, not a hard requirement, unless marked "fixed."
+This document strips out everything region-specific and keeps only the *rules* — so it can be reused to build a new region from scratch, or to add one to a tool that already has another region in it. Wherever a rule references a number (like "8 gyms" or "209 Pokémon"), treat it as a tunable default, not a hard requirement, unless marked "fixed." §§14–16 are new since Calli — they cover the reference-doc set, the actual data schema a digital tool should use, and the build process that caught real bugs building Neo Kanto.
 
 ---
 
@@ -14,7 +14,7 @@ This document strips out everything Calli-specific and keeps only the *rules* �
   - **Routes** — numbered (1, 2, 3...); if a route needs more than one "spot" along its length (e.g., it passes a dungeon, or several other routes branch off it), suffix with a letter (`9a`, `9b`, `9c`...).
 - **Connectivity rule:** two nodes are connected if and only if they are orthogonally adjacent on the grid (up/down/left/right — never diagonal). This can be computed automatically from the grid rather than hand-drawn, which avoids human transcription errors at scale.
 - **Explicit exclusions:** allow specific adjacent pairs to be *not* connected, when the fiction calls for it (e.g., a cliff or river blocking an otherwise-adjacent path). Keep a small exception list and apply it after the automatic adjacency pass.
-- **Co-located nodes:** when a dungeon sits inside/under a town (a mine under the capital, a sewer under a city), don't give it a separate grid cell — mark it as co-located with the town's node instead. Merge these visually into a single combined marker (see §14) rather than two overlapping markers.
+- **Co-located nodes:** when a dungeon sits inside/under a town (a mine under the capital, a sewer under a city), don't give it a separate grid cell — mark it as co-located with the town's node instead, using a fourth node kind, `combo`: `{id, kind:'combo', row, col, townId, townName, gymLeader, dungeonId, dungeonName, dungeonLocationId}`. Render it as one marker split by a divider (e.g. a gym-colored rectangle on top, a dungeon-colored triangle below) instead of two overlapping shapes, and give it a single click target whose info panel shows both halves (gym-leader link, dungeon encounter-table link, encounter preview) at once.
 - **Verify full connectivity:** after building the graph, confirm every node is reachable from the starting town, and ideally that important clusters have more than one path in — this is what makes "gyms in any order" actually work without soft-locking the player.
 
 ---
@@ -26,6 +26,7 @@ This document strips out everything Calli-specific and keeps only the *rules* �
 - **Legendaries/Mythicals:** a "normal" region has roughly 5–8 Legendary/Mythical Pokémon. Tie each one thematically to a specific location (ideally a postgame-gated dungeon) rather than leaving them generic.
 - **Completeness rule:** if a Pokémon is in the dex, **every one of its non-regional-variant evolutions must also be in the dex** (both directions — don't include a mid-evolution without its later stage, and don't include a final stage without checking whether its earlier stages should also be represented). Branch evolutions (e.g., a Pokémon with two alternate final forms) count as part of the same family, not extra dex slots.
 - **Habitat organization:** group the dex by which town/route/dungeon each Pokémon is thematically associated with — makes both design and later cross-referencing much easier.
+- **Audit for genuinely uncatchable species before finalizing.** A species with no evolution to fall back on (a true single-stage) *and* no wild-table appearance is a dead end, not a stylistic choice — nothing in the game ever gives the player a way to obtain it. Species reachable only by evolving an already-placed lower stage (via level, stone, or trade) are fine to leave out of wild tables entirely; this audit is specifically for species with nothing below them to evolve from.
 
 ---
 
@@ -43,7 +44,7 @@ This document strips out everything Calli-specific and keeps only the *rules* �
 ## 4. Evolution-Stage Distribution
 
 - Real regional dexes have roughly this shape: **two-stage lines are the single most common category** (usually just over half of all lines), **three-stage lines are the backbone** (~30%, including all starters and any pseudo-legendary-style lines), and **one-stage lines are the minority** (~15%, but a good chunk of those are Legendaries/Mythicals that don't evolve, not ordinary Pokémon).
-- **Ordinary (non-Legendary) one-stage "oddities"** — Pokémon that just don't evolve, no lore reason needed — should still be roughly ~10% of the dex. If cuts have pushed that number down to near-zero, add a few back; these "oddity" Pokémon (a Tauros, a Lapras, a Farfetch'd-type pick) are part of what makes a dex feel textured rather than mechanically pure.
+- **Ordinary (non-Legendary) one-stage "oddities"** — Pokémon that just don't evolve, no lore reason needed — should still be roughly ~10% of the dex. If cuts have pushed that number down to near-zero, add a few back; these "oddity" Pokémon (a Tauros, a Lapras, a Farfetch'd-type pick) are part of what makes a dex feel textured rather than mechanically pure. Adding new evolution stages to previously-single-stage species (§11) shrinks this number fast — re-check it every time you unlock a new evolution, not just once.
 
 ---
 
@@ -64,16 +65,19 @@ This is the engine underneath everything else — wild encounters, trainer battl
 
 - **Why this matters:** early-game, only low sums are even *reachable* — there's no need to gate content by badge count separately, the dice do it automatically. High-value slots (11, 12) become reachable only once the player has enough badges to roll a 6 on both dice.
 - **Rarity is symmetric around 7.** At full threshold (7–8 badges), the exact odds are: 7 (16.7%) > 6/8 (13.9% each) > 5/9 (11.1%) > 4/10 (8.3%) > 3/11 (5.6%) > 2/12 (2.8%, tied for rarest). **2 is just as rare as 12** — don't build a table (or a trainer-class list) that treats low numbers as "common" by default; that's backwards.
+- **If the region count (gyms, etc.) isn't fixed at 8**, derive the threshold tiers from the actual count rather than hardcoding 5 bands of size ~2 — e.g. five buckets spanning `0..gymCount` at the ¼/½/¾ marks reproduces the original table exactly when the count is 8, and degrades sanely for any other count.
 
 ---
 
 ## 6. Wild Encounter Tables
 
 - One table per route/dungeon, covering sums 2–12 (11 slots).
-- **Low slots = common/base-stage. High slots = rare/evolved.** But this needs to be checked *across the whole table*, not just within one species line — an evolved Pokémon from Line A should never occupy a lower (more common) slot than an unrelated base-stage Pokémon from Line B in that same table. (This is an easy bug to introduce when hand-editing tables piecemeal — audit for it programmatically if possible.)
-- **Repeats within a table are fine and often desirable** for genuinely common species, and it's fine for some low-diversity locations (a narrow-habitat dungeon) to repeat more than a rich, varied route. Not every table needs full variety — but if you *do* want variety, vary deliberately (e.g., make sure slot 2 and slot 4 aren't reflexively identical everywhere).
-- **Reserve the rarest slot (sum 12) for the location's signature rare find** — a Legendary/Mythical if the location has one, otherwise the location's best "trophy" catch. Since sum 12 is only reachable at max badge count, this is naturally a postgame-flavored reward with zero extra flagging required.
+- **Low slots = common/base-stage. High slots = rare/evolved.** But this needs to be checked *across the whole table*, not just within one species line — an evolved Pokémon from Line A should never occupy a lower (more common) slot than an unrelated base-stage Pokémon from Line B in that same table. (This is an easy bug to introduce when hand-editing tables piecemeal — audit for it programmatically if possible.) Single-stage species with no evolution at all are the one exception worth naming explicitly: their rarity is about scarcity, not stage, so a rare one-stage species sitting above an unrelated evolved Pokémon isn't the same bug.
+- **Repeats within a table are fine and often desirable** for genuinely common species, and it's fine for some low-diversity locations (a narrow-habitat dungeon) to repeat more than a rich, varied route. Not every table needs full variety — but if you *do* want variety, vary deliberately (e.g., make sure slot 2 and slot 4 aren't reflexively identical everywhere), and prefer 11 genuinely distinct species where the local dex pool supports it (light spillover from an adjacent habitat zone is fine to reach that; a species doesn't have to be exclusive to the one zone it's filed under in the dex).
+- **Reserve the rarest slot (sum 12) for the location's signature rare find** — a Legendary/Mythical if the location has one, otherwise the location's best "trophy" catch. Since sum 12 is only reachable at max badge count, this is naturally a postgame-flavored reward with zero extra flagging required. If a signature find should require an additional condition beyond just rolling 12 (e.g. a second Legendary that only appears after some other postgame milestone), say so explicitly — don't let two Legendaries silently share one slot.
 - **Sanity-check reachability:** nothing should be *permanently* locked behind an impossible combination (e.g., don't put a Pokémon whose evolution requires a level higher than the location's level cap ever allows at a slot that implies it should be evolved there).
+- **Every species needs at least one path into the player's hands.** Cross-check the full dex against every encounter table: a species that's evolution-only (reachable by leveling/stone/trading an already-placed lower stage) is fine to leave out; a species that's neither in any wild table *nor* reachable by evolving something that is, is a dead end. This is easy to miss on one species out of ~200 — check it with a script, not by eye (build the reverse index, §14 item 5, and see what's missing).
+- **Encounter table slots store the literal target species**, already at whatever evolutionary stage that slot's rarity implies — a high slot can name an evolved form directly, and a low-level encounter against that slot downgrades via `predecessor`/`minLevel` (§15), not by storing the base species and resolving up. This is the opposite convention from trainer-class/gym/Elite Four tables (§7–9), which store the *base* species and resolve the displayed stage from level at reveal time. Don't mix the two.
 
 ---
 
@@ -83,6 +87,7 @@ This is the engine underneath everything else — wild encounters, trainer battl
   - **Reject classes that require specific terrain to make sense as a concept** — a Swimmer or Fisherman literally cannot exist on a landlocked desert route; a Hiker, Camper, Cyclist, or Backpacker can exist anywhere. This is a stricter bar than "does this Pokémon type fit here" — it's about whether the *trainer's identity* is terrain-independent.
 - **Map each class to one number on the 2–12 wheel** (plain 2d6 roll, no reroll-above-threshold — trainer *type* doesn't need to scale with badges the way encounter rarity does). Assign the numbers so that **the most generic/everyday class sits at 7** (the most probable roll) and the most unusual/elite class(es) sit at the 2/12 extremes — matching flavor to actual frequency, not the reverse.
 - **Give each class its own 11-slot table of Pokémon lines** (one per sum 2–12), with **no repeated line within a single class's own table** (reuse across *different* classes is fine and realistic). Order each class's own table the same way: the class's single most "typical" pick at 7, its most surprising/rare pick at the 2/12 extremes.
+- **Store the base (root) species per slot, not a pre-resolved stage.** This table only ever names the unevolved species; the actual battle stage is resolved from the trainer's level at reveal time (§11). It's easy to get backwards — writing the evolved name directly *looks* more informative, but then a low-level trainer would show something already evolved that shouldn't be reachable yet, and it silently duplicates a line that's actually the same family as another slot's base form.
 - **Team size scales with badge tier** (same tiering shape as the core threshold table: 1 Pokémon at 0 badges, 2 at 1–2, 3 at 3–4, 4 at 5–6, 5 at 7–8).
 - **Level is a flat formula, not tiered:** typically `base + exact badge count` (not bucketed the way team size is) — so level increases every single badge, even within a team-size tier.
 - **Level-appropriate evolution:** once a line is rolled, resolve it to whichever stage the trainer's actual level supports (see §11) — don't just hand the roll a random stage.
@@ -93,6 +98,7 @@ This is the engine underneath everything else — wild encounters, trainer battl
 
 - **8 gyms is the traditional count** — spread them across **geographically distinct towns**, not clustered near each other, so "any order" play actually produces varied early routes depending on player choice.
 - **Type coverage:** give each gym a distinct type. It's fine — good, even — if this requires reshuffling which towns host gyms partway through design; town identity (its dex habitat) doesn't have to dictate gym type if the fiction can flex (e.g., a leader can be described as importing Pokémon from elsewhere in the region).
+- **Any order means no story gate, on any gym, including a "final" one.** If the source material gates one gym behind other progress (an antagonist team's storyline, etc.), that gate either needs an in-fiction resolution before this region's story even starts, or needs to just not exist — a gym that's mechanically gated by badge count anyway (§5) doesn't need a *second*, story-based gate on top.
 - **5-slot team structure, with fixed send-order and per-slot rules:**
   - Slots **1 and 2** are always present (these are the leader's "core" — slot 1 is conventionally the Ace).
   - Slot **3** unlocks once the player has **2+ badges already claimed** (before this fight).
@@ -104,18 +110,18 @@ This is the engine underneath everything else — wild encounters, trainer battl
   - Slots 1, 2, and 5 → the Pokémon's unmodified **primary type**.
   - Slot 3 → **one step clockwise** on the 18-type wheel from primary (see §13).
   - Slot 4 → **one step counterclockwise** from primary.
-- Assign each leader **one signature evolution line per slot** (5 lines total), not a randomized species pool — gym leaders should feel authored and consistent every time you fight them, unlike route trainers.
+- Assign each leader **one signature evolution line per slot** (5 lines total), not a randomized species pool — gym leaders should feel authored and consistent every time you fight them, unlike route trainers. Same base-species-per-slot storage convention as §7; a slot's stored value can be a `[species, forcedBranch]` pair (§11) when the leader's type identity clearly wants one specific evolution out of a branching line.
 
 ---
 
 ## 9. Elite Four & Champion
 
 - **4 Elite Four members + 1 Champion**, based at the region's final city.
-- **Cover the types the 8 gyms don't.** If you have leftover "retired" concepts (e.g., you originally planned a gym for a type that got reassigned), consider promoting them to Elite Four members instead of inventing new characters from scratch — keeps continuity.
-- **Elite Four members: 5-slot roster** (numbered slots 1–4, plus a separate Ace) — same fixed-level, fixed-type-per-slot logic as gyms (slot 3 = clockwise shift, slot 4 = counterclockwise, everything else = primary).
-- **Champion: 6-slot roster** (slots 1–5, plus Ace) — same rules extended by one slot.
+- **Cover the types the 8 gyms don't.** If you have leftover "retired" concepts (e.g., you originally planned a gym for a type that got reassigned), consider promoting them to Elite Four members instead of inventing new characters from scratch — keeps continuity. If a member's specialty type stops being covered elsewhere for real in-fiction reasons (a gym's type changed), that's a good, citable reason to move the member to whatever type just opened up.
+- **Elite Four members: 5-slot roster** (numbered slots 1–4, plus a separate Ace) — same fixed-level, fixed-type-per-slot logic as gyms (slot 3 = clockwise shift, slot 4 = counterclockwise, everything else = primary). Same base-species-per-slot storage convention as §7–8.
+- **Champion: 6-slot roster** (slots 1–5, plus Ace) — same rules extended by one slot. The Champion doesn't need a fixed type at all — a roster that draws one flagship species per major region cluster, rather than doubling up on any Elite Four member's line, reads better than forcing a theme.
 - **Fixed levels, no badge-gating** — once the player has beaten all 8 gyms, the full Elite Four/Champion roster is always available exactly as designed, unlike gym teams which scale with progress.
-- **Sanity-check the level ceiling.** If your level formula caps out at some maximum (e.g., "3 + badges" caps at 11 once badges max at 8), don't assign an Elite Four/Champion Pokémon a final evolution that requires a level *above* that ceiling — it'll never actually appear. Pick a line whose evolution requirement fits within reach, even if that means passing on a flashier pseudo-legendary.
+- **Sanity-check the level ceiling.** If your level formula caps out at some maximum (e.g., "3 + badges" caps at 11 once badges max at 8), don't assign an Elite Four/Champion Pokémon a final evolution that requires a level *above* that ceiling — it'll never actually appear. Pick a line whose evolution requirement fits within reach, even if that means passing on a flashier pseudo-legendary. (It's fine, and can be a deliberate narrative beat, for a *gym* leader's own line to fall just short of a level a *Champion* slot can reach — the Champion's roster finishing an evolution arc a gym leader's own team never quite completes is a nice piece of texture, not a bug, as long as it's intentional.)
 - **Once all gyms are cleared, remove them from re-selection** — a player who's beaten all 8 gyms shouldn't be able to re-fight them from the same menu that offers the Elite Four; separate "cleared" state from "available" state.
 
 ---
@@ -146,9 +152,10 @@ Buckets don't need to be perfectly even — they're deliberately compressed at t
 - **Level-based evolutions:** convert the mainline level directly through the bucket table above.
 - **Non-level evolutions** (stone, trade, friendship, special conditions) have no inherent level in the source games — you have to invent a "proper level" for them, or two problems occur: (a) they can appear absurdly early in a level-gated system, and (b) if your system ever needs to pick "the best stage reachable at level X," a non-level evolution with the *same* threshold as its pre-evolution will instantly and permanently obsolete that pre-evolution, which is both wrong and boring.
 - **The fix — a buffer rule:** a non-level evolution's proper level = its pre-evolution's proper level **+ a fixed buffer**. A buffer that scales (e.g., +6 if the pre-evolution is level 1, +3 for anything higher) reads more naturally than one flat number, since a Pokémon evolving from its very first stage should get more runway than one evolving from something already mid-progression.
-- **Split evolutions with one level-based sibling are the exception to the buffer.** When a pre-evolution branches into two (or more) evolutions and *at least one* branch is a normal level-up evolution, give every non-level sibling in that same split the **level-based sibling's own level** instead of computing a buffer — don't make Fairy-Politoed-Bellossom-style siblings appear at a different level than the branch that got there by leveling normally, for no in-fiction reason. Only fall back to the scaling buffer when *no* branch in the split is level-based (Eevee's five stone/friendship evolutions, for instance, have no level-up sibling to borrow from, so all five use the buffer).
+- **Split evolutions with one level-based sibling are the exception to the buffer.** When a pre-evolution branches into two (or more) evolutions and *at least one* branch is a normal level-up evolution, give every non-level sibling in that same split the **level-based sibling's own level** instead of computing a buffer — don't make same-tier siblings appear at different levels than the branch that got there by leveling normally, for no in-fiction reason. Only fall back to the scaling buffer when *no* branch in the split is level-based (Eevee's stone/friendship evolutions, for instance, have no level-up sibling to borrow from, so all of them use the buffer).
 - **Chain these calculations in dependency order** when a family has back-to-back non-level steps (e.g., base → non-level stage 2 → non-level stage 3) — the second buffer must be computed from the *already-buffered* first result, not from the original mainline data, or you'll under-count.
-- **Keep this buffered ruleset separate from your "true" wild-encounter evolution data** if the two systems have different needs — wild encounters may only need a simple downgrade-if-too-low check (which never breaks even with zero buffer), while a trainer/gym system that always shows "the best reachable stage" absolutely needs the buffer. Don't let a fix for one system silently corrupt the other.
+- **Keep this buffered ruleset separate from your "true" wild-encounter evolution data** if the two systems have different needs — wild encounters may only need a simple downgrade-if-too-low check (which never breaks even with zero buffer), while a trainer/gym system that always shows "the best reachable stage" absolutely needs the buffer. Don't let a fix for one system silently corrupt the other. (Concretely: this is `minLevel` vs. `trainerMinLevel`, §15 — a non-level evolution's `minLevel` just inherits its predecessor's own `minLevel` unchanged, no buffer, while its `trainerMinLevel` gets the buffer or the borrowed sibling level above.)
+- **Branching evolutions need an explicit resolution rule for trainer/gym rosters**, not just a data note about which species exist. Default to a **random pick among whichever branches are level-eligible** at reveal time — checked *per branch option*, not once for the whole group, since branches can clear their threshold at different points (a trade-buffered sibling and a level-based sibling won't always share one, even after the rule above; check each option's own threshold independently). Reserve a **forced-branch override** for the specific roster slots where one evolution is clearly the intended pick (a Water-specialist gym leader's mid-evolution should probably become the pure-Water branch, not a coin flip that might hand them an off-type Pokémon) — implement it as a `[species, forcedBranch]` pair on that one slot only, so every *other* reference to the same species elsewhere in the region stays randomized rather than hardcoding the branch at the species level.
 
 ---
 
@@ -172,32 +179,87 @@ A way to add combat-flavor randomness without inventing a full type-effectivenes
 
 ---
 
-## 14. If You Build a Digital Companion Tool
+## 14. Reference Doc Set
 
-Lessons that generalize beyond Calli specifically:
+Author these per region as the human-readable spec — they're what the digital tool's data gets built *from*, not something the tool loads at runtime. Build them roughly in this order, since later docs key off earlier ones:
 
-- **Separate "true" data from "derived/rolled" data** in your data model from the start (e.g., a Pokémon's real typing vs. its rolled attack type) — trying to bolt this distinction on later is painful.
-- **When two systems need different versions of the same underlying rule** (e.g., wild-encounter evolution thresholds vs. trainer-team evolution thresholds), keep them as genuinely separate datasets rather than one shared table with exceptions — shared tables silently break the first time one system's needs diverge from the other's.
-- **Case sensitivity and lookup-table mismatches are a top source of silent bugs** in this kind of project — if one part of your data stores `"Water"` and a lookup table expects `"water"`, the failure won't throw an error, it'll just silently return the wrong (but plausible-looking) result. Normalize casing at the boundary, every time.
-- **CSS transforms and SVG presentation-attribute transforms don't combine — the CSS one wins and replaces the other.** If a shape needs a static rotation *and* a hover/selection effect, apply them to different layers (or use non-transform properties like stroke-width/shadow for the interactive state) rather than fighting over the same `transform` property.
-- **Test the actual shipped logic, not a hand-simplified re-implementation of it** — running the real functions end-to-end (with a proper DOM, if it's a web tool) catches bugs that re-deriving the math on paper won't, especially around scope, timing, and data-format mismatches.
-- **When a probability curve is central to the design** (like the 2d6 threshold system here), audit your content placement against the *actual* math, not intuition — it's very easy to place "common-feeling" content at low numbers out of habit, even when low numbers are statistically rare.
+1. **Regional Dex** — every species, numbered, typed, habitat-grouped, with die-face stats (§2–4, §12) *all in one doc and one table*. This is the canonical ID/name source everything else keys off — build it first. Don't split this into a numbered dex, a separate narrative habitat write-up, and a separate stats doc — that's three copies of the same ~200 rows, and they will drift out of sync the first time the dex changes (this happened during Neo Kanto's build: a species-count mismatch between two supposedly-identical docs). One table, with a one-line italic flavor blurb per habitat section if you want the narrative texture.
+2. **Dungeons** — the route/dungeon list and connectivity graph (§1). Needed before Encounter Tables, since tables are organized per location.
+3. **Evolution Guide** — every evolution's level/method on the compressed scale (§10–11), grouped the same way as the Regional Dex.
+4. **Encounter Tables** — the 11-slot table per route/dungeon (§6). The biggest doc; build it in geographic passes rather than all at once, and re-verify the document's own section structure (routes vs. dungeons) once it's fully assembled — appending in passes is exactly how a table can end up nested under the wrong heading.
+5. **Pokémon Locations** — reverse index of Encounter Tables (species → every location/slot it appears in). **Generate this from the finished Encounter Tables programmatically** rather than hand-compiling it — it's mechanically derived data, and this is also the natural place the "every species obtainable" audit (§6) falls out for free: anything with no entry here and no evolution to fall back on is the bug to fix.
+6. **Trainer Classes** — the terrain-neutral roster tables (§7).
+7. **Gym Leaders** — the 8 rosters (§8).
+8. **Elite Four & Champion** — the top-tier rosters (§9).
+
+Don't build a separate "stats for gym Pokémon only" doc — it's a strict subset of the Regional Dex with no unique data of its own (this was cut from both Calli and Neo Kanto's doc sets for exactly this reason). A one-line pointer from Gym Leaders / Elite Four ("stats: see Regional Dex") does the same job with nothing left to keep in sync.
+
+**Encounter Tables and Pokémon Locations are the one pair that looks like the same redundancy but isn't** — they answer opposite queries (what's at this place vs. where's this species), both genuinely useful, and merging them makes both harder to scan. Split docs are the right call when they serve different lookup directions; merge only when one is a strict subset or reformatting of the other.
+
+---
+
+## 15. Digital Companion Tool: Data Schema
+
+If the region feeds an interactive tool, this is the data shape that's been built and proven across two regions in the same tool — use it rather than inventing a new one per region.
+
+**One region = one object**, with these top-level keys:
+
+- `locations[]` — `{id, name, kind:'route'|'dungeon', subtitle, flavor, table:[11 species]}`, one entry per Encounter Tables location. `table[i]` is indexed by `sum-2` (sum 2 → index 0 … sum 12 → index 10) and holds the *literal target species* for that slot (§6).
+- `types` — `species -> [type1, type2|null]`.
+- `dice` — `species -> [6 numbers]`, the die-face stat conversion (§12).
+- `predecessor` — `species -> its immediate pre-evolution species, or null for a base`. Used to downgrade a wild encounter: if a table names an evolved species but the encountering trainer is under-level, step back through `predecessor` (checking `minLevel` at each stage) until you land on one the level actually supports.
+- `minLevel` — `species -> the level it's valid from`, for that wild-encounter downgrade. **A non-level evolution's entry here just inherits its predecessor's own `minLevel` unchanged — no buffer.** Wild encounters don't need one; a plain downgrade-if-too-low check never breaks even at zero buffer (§11).
+- `trainerMinLevel` — same shape as `minLevel`, but this is where the full buffer rule (§11) applies: base+6, prior-stage+3, or a level-based sibling's own level for splits. **Keep this a genuinely separate map from `minLevel`**, even though most entries end up numerically identical — the two systems' needs diverge exactly on non-level evolutions, and a shared table with exceptions bolted on will drift the first time someone edits one without the other.
+- `trainerChain` — `root species -> ordered array of stages from base to final`, used to resolve a trainer/gym roster slot (which always names a *base* species, §7–9) to the correct stage at a given level. **A stage can itself be an array** at a branch point — pick randomly among whichever branch options are individually level-eligible (checked against `trainerMinLevel` per option, not once for the group), unless the slot supplies a forced override (below).
+- `trainerClassBySum` — `'2'..'12' (string) -> class name` (§7).
+- `trainerTables` — `class name -> 11-slot array of base species` (§7). A slot's value is normally a plain species string; it can also be a `[species, forcedBranch]` pair to force one specific evolution branch for that single occurrence, without touching the random default anywhere else that species is referenced.
+- `gymLeaders` — `leader name -> {town, type, slots:{'1'..'5': base species or [species, forcedBranch]}}` (§8). No explicit level field — level is computed live from the player's current badge count via the §8 formula, not stored.
+- `eliteFour[]` — `{id, name, type, slots:{'1'..'4','ace': base species or pair}, levels:{'1'..'4','ace': number}}` (§9) — levels *are* stored here, since Elite Four rosters are fixed rather than badge-derived.
+- `champion` — same shape as one `eliteFour` entry, but slots `'1'..'5','ace'`.
+- `mapNodes[]` — `{id, kind:'town'|'dungeon'|'route'|'combo', row, col, name, gymLeader?, locationId?}`, plus the combo-specific fields (§1) when `kind==='combo'`. Route nodes that share one named route (e.g. `9a`/`9b`) all point their `locationId` at the same `locations[]` entry.
+- `mapEdges[]` — `[nodeIdA, nodeIdB]` pairs, generated from grid adjacency plus explicit exclusions (§1) rather than hand-listed — hand-listing ~80 edges is exactly where a typo produces a silently-disconnected node.
+- `evoInfo` — `species -> {evolvesFrom, evolvesInto:[{species, method}]}`, for display only (a Pokédex-entry-style "evolves into X via Y" line). Unlike `trainerChain`, this should list *every* branch a species has, not just the one `trainerChain`'s resolution path happens to follow.
+
+**Multiple regions in one tool:** wrap regions as `REGIONS = { regionKey: { label, data: {...above shape...} } }`, with one `DATA` variable reassigned to `REGIONS[currentKey].data` on switch — every function that already reads `DATA.whatever` keeps working unchanged. Derive anything that assumes a fixed count (gym-count-driven badge-pip loops, threshold-tier boundaries, the Elite-Four-unlock gate) from `Object.keys(DATA.gymLeaders).length` rather than a hardcoded number — cheap to do up front, and each region can then genuinely have a different gym count later without a second code path. On region switch: reset per-region UI state (badges, location/gym selection, search text, map node selection) but keep the active tab; explicitly clear anything rendered from the old region's data (map SVG contents, dex list) before rebuilding, rather than assuming a fresh build call will overwrite it — an SVG that's only ever been built once in the app's history won't have a clear-before-redraw step unless you add one, and it'll silently duplicate every node the second time it runs.
+
+**Two implementation traps worth naming, since both caused real bugs:** binding a DOM event listener inside a function that can now run more than once (once per region switch) stacks duplicate listeners — bind search/filter listeners once at load instead, reading fresh state each time they fire. And SVG presentation-attribute transforms don't combine with a CSS `transform` on the same element — the CSS one silently wins; if a shape needs both a static rotation and a hover/selection effect, put them on different layers.
+
+---
+
+## 16. Build Process & Validation
+
+The order that actually worked, end to end, building a second region into an existing tool:
+
+1. **Worldbuilding proposal first, as its own reviewable document** — premise, dex composition (what's kept/cut/added and why), town/gym changes, Elite Four. Get this read and locked before building any mechanical data on top of it; re-deriving a whole dex because a premise detail changed later is expensive. Expect more than one review round.
+2. **Map next**, once the premise is settled — town/gym locations depend on premise decisions, so translating the node graph (§1) into an actual grid earlier just means redoing it.
+3. **Reference docs in dependency order** (§14).
+4. **Implement by parsing the docs into the schema (§15) programmatically, not by hand-transcribing.** A script that reads the Regional Dex table and Encounter Tables and emits the region's data object is slower to write once than typing the same thing by hand, but it can't introduce a transcription typo, and re-running it after a doc edit is free. Hand-transcribing ~200 species across a dozen tables *will* introduce at least one silent mismatch — this is precisely how a "confirm both docs agree" bug (§14 item 1) happens in the first place.
+5. **Validate with scripts before trusting the result, specifically:**
+   - Every species named in every encounter table / trainer table / gym / Elite Four / Champion roster exists in `types` and `dice`.
+   - Every `locationId` referenced by a map node resolves to a real `locations[]` entry, and vice versa.
+   - The map graph is fully connected from the starting town (walk `mapEdges` from the start node; anything unvisited is orphaned).
+   - No species is both absent from every encounter table *and* unreachable by evolving anything that is placed (§6) — the one bug class that silently makes a dex entry permanently uncatchable, and the easiest one to miss by eye across ~200 species.
+   - Total dex count matches the sum of its parts (kept + added + legendary, etc.) — recompute this after every edit that adds or removes a species; it drifts fast when checked by eye instead of arithmetic.
+6. **Test the shipped tool in an actual browser, not just by reading the code.** Load it, switch regions if applicable, roll a wild encounter, roll a trainer/gym battle at a few different badge counts (including enough to trigger a branch point, §11), click through the map. A logic error in level-resolution or branch-selection code often only shows up when the code path actually runs — reading it rarely catches what running it does. Where possible, drive this with an automated script (fill inputs, click, read the resulting DOM) rather than only eyeballing screenshots, so the same check can be re-run after the next change for free.
 
 ---
 
 ## Quick-Reference Checklist for a New Region
 
-- [ ] Map: grid-based, orthogonal adjacency, verified fully connected, multiple entry paths into major clusters
-- [ ] Regional dex: ~200 Pokémon, 3 starters, 5–8 Legendaries/Mythicals, full evolution-line completeness
+- [ ] Map: grid-based, orthogonal adjacency, verified fully connected, multiple entry paths into major clusters, co-located town/dungeon pairs merged into `combo` nodes
+- [ ] Regional dex: ~200 Pokémon, 3 starters, 5–8 Legendaries/Mythicals, full evolution-line completeness, every species has at least one path into the player's hands
 - [ ] Type balance audited against National Dex norms after every major edit
-- [ ] Evolution-stage distribution checked (two-stage majority, ~30% three-stage, ~10% ordinary one-stage)
-- [ ] Core 2d6 + reroll-above-threshold mechanic defined, with badge-based threshold table
-- [ ] Wild encounter tables per route/dungeon, rarity-consistent, sum-12 reserved for signature rare finds
-- [ ] 10–12 terrain-neutral generic trainer classes, mapped to the wheel by actual frequency
-- [ ] 8 gym leaders, geographically spread, type-covered, 5-slot fixed-order roster rule
-- [ ] Elite Four + Champion covering leftover types, fixed roster/levels, level-ceiling sanity-checked
+- [ ] Evolution-stage distribution checked (two-stage majority, ~30% three-stage, ~10% ordinary one-stage) — re-checked after unlocking any new evolution stages
+- [ ] Core 2d6 + reroll-above-threshold mechanic defined, with badge-based threshold table (derived from the actual gym count, not hardcoded)
+- [ ] Wild encounter tables per route/dungeon, rarity-consistent, sum-12 reserved for signature rare finds, literal target species stored per slot
+- [ ] 10–12 terrain-neutral generic trainer classes, mapped to the wheel by actual frequency, base species (not pre-resolved stages) stored per slot
+- [ ] 8 gym leaders, geographically spread, type-covered, 5-slot fixed-order roster rule, no story-based gate beyond the badge-count one, base species per slot
+- [ ] Elite Four + Champion covering leftover types, fixed roster/levels, level-ceiling sanity-checked, base species per slot
 - [ ] 1–20 (or other compressed) level scale with an explicit bucket-conversion table
-- [ ] Non-level evolutions given a buffered "proper level," computed in dependency order
+- [ ] Non-level evolutions given a buffered "proper level" — or a level-based sibling's own level, for splits with one — computed in dependency order, kept separate from the wild-encounter (`minLevel`) version
+- [ ] Branching evolutions resolve randomly among level-eligible options by default (checked per branch), with forced overrides only on the specific slots where flavor clearly demands one
 - [ ] Stat-to-die conversion formula fixed, level-based bonus distribution rule defined
 - [ ] (Optional) attack-type wheel mechanic for combat flavor
-- [ ] (Optional) digital tool: true-vs-derived data kept separate, casing normalized, real end-to-end testing before shipping changes
+- [ ] Reference doc set built in dependency order (dex → dungeons → evolution guide → encounter tables → locations → trainer classes → gyms → Elite Four), one merged dex/stats doc, no gym-only stats doc
+- [ ] Digital tool data built by parsing the docs programmatically, then validated (species existence, `locationId` resolution, graph connectivity, obtainability, dex-count arithmetic) before trusting it
+- [ ] Shipped tool tested by actually driving it — region switch (if applicable), wild roll, trainer/gym roll at multiple badge counts, map interaction — not just read through
