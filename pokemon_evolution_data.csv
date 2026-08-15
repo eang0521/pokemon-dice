@@ -1,0 +1,834 @@
+dexNum,name,baseName,slug,type1,type2,evolvesFromName,evolvesFromDexNum,evolvesFromCondition,evolvesTo
+1,Bulbasaur,Bulbasaur,bulbasaur,Grass,Poison,,,,Ivysaur (Level 16)
+2,Ivysaur,Ivysaur,ivysaur,Grass,Poison,Bulbasaur,1,Level 16,Venusaur (Level 32)
+3,Venusaur,Venusaur,venusaur,Grass,Poison,Ivysaur,2,Level 32,
+4,Charmander,Charmander,charmander,Fire,,,,,Charmeleon (Level 16)
+5,Charmeleon,Charmeleon,charmeleon,Fire,,Charmander,4,Level 16,Charizard (Level 36)
+6,Charizard,Charizard,charizard,Fire,Flying,Charmeleon,5,Level 36,
+7,Squirtle,Squirtle,squirtle,Water,,,,,Wartortle (Level 16)
+8,Wartortle,Wartortle,wartortle,Water,,Squirtle,7,Level 16,Blastoise (Level 36)
+9,Blastoise,Blastoise,blastoise,Water,,Wartortle,8,Level 36,
+10,Caterpie,Caterpie,caterpie,Bug,,,,,Metapod (Level 7)
+11,Metapod,Metapod,metapod,Bug,,Caterpie,10,Level 7,Butterfree (Level 10)
+12,Butterfree,Butterfree,butterfree,Bug,Flying,Metapod,11,Level 10,
+13,Weedle,Weedle,weedle,Bug,Poison,,,,Kakuna (Level 7)
+14,Kakuna,Kakuna,kakuna,Bug,Poison,Weedle,13,Level 7,Beedrill (Level 10)
+15,Beedrill,Beedrill,beedrill,Bug,Poison,Kakuna,14,Level 10,
+16,Pidgey,Pidgey,pidgey,Normal,Flying,,,,Pidgeotto (Level 18)
+17,Pidgeotto,Pidgeotto,pidgeotto,Normal,Flying,Pidgey,16,Level 18,Pidgeot (Level 36)
+18,Pidgeot,Pidgeot,pidgeot,Normal,Flying,Pidgeotto,17,Level 36,
+19,Rattata,Rattata,rattata,Normal,,,,,Raticate (Level 20)
+20,Raticate,Raticate,raticate,Normal,,Rattata,19,Level 20,
+21,Spearow,Spearow,spearow,Normal,Flying,,,,Fearow (Level 20)
+22,Fearow,Fearow,fearow,Normal,Flying,Spearow,21,Level 20,
+23,Ekans,Ekans,ekans,Poison,,,,,Arbok (Level 22)
+24,Arbok,Arbok,arbok,Poison,,Ekans,23,Level 22,
+25,Pikachu,Pikachu,pikachu,Electric,,Pichu,172,high Friendship,"Raichu (use Thunder Stone, outside Alola); Alolan Raichu (use Thunder Stone, in Alola)"
+26,Alolan Raichu,Raichu,raichu,Electric,Psychic,Pikachu,25,"use Thunder Stone, in Alola",
+26,Raichu,Raichu,raichu,Electric,,Pikachu,25,"use Thunder Stone, outside Alola",
+27,Sandshrew,Sandshrew,sandshrew,Ground,,,,,Sandslash (Level 22)
+28,Sandslash,Sandslash,sandslash,Ground,,Sandshrew,27,Level 22,
+29,Nidoran♀,Nidoran♀,nidoran-f,Poison,,,,,Nidorina (Level 16)
+30,Nidorina,Nidorina,nidorina,Poison,,Nidoran♀,29,Level 16,Nidoqueen (use Moon Stone)
+31,Nidoqueen,Nidoqueen,nidoqueen,Poison,Ground,Nidorina,30,use Moon Stone,
+32,Nidoran♂,Nidoran♂,nidoran-m,Poison,,,,,Nidorino (Level 16)
+33,Nidorino,Nidorino,nidorino,Poison,,Nidoran♂,32,Level 16,Nidoking (use Moon Stone)
+34,Nidoking,Nidoking,nidoking,Poison,Ground,Nidorino,33,use Moon Stone,
+35,Clefairy,Clefairy,clefairy,Fairy,,Cleffa,173,high Friendship,Clefable (use Moon Stone)
+36,Clefable,Clefable,clefable,Fairy,,Clefairy,35,use Moon Stone,
+37,Vulpix,Vulpix,vulpix,Fire,,,,,Ninetales (use Fire Stone)
+38,Ninetales,Ninetales,ninetales,Fire,,Vulpix,37,use Fire Stone,
+39,Jigglypuff,Jigglypuff,jigglypuff,Normal,Fairy,Igglybuff,174,high Friendship,Wigglytuff (use Moon Stone)
+40,Wigglytuff,Wigglytuff,wigglytuff,Normal,Fairy,Jigglypuff,39,use Moon Stone,
+41,Zubat,Zubat,zubat,Poison,Flying,,,,Golbat (Level 22)
+42,Golbat,Golbat,golbat,Poison,Flying,Zubat,41,Level 22,Crobat (high Friendship)
+43,Oddish,Oddish,oddish,Grass,Poison,,,,Gloom (Level 21)
+44,Gloom,Gloom,gloom,Grass,Poison,Oddish,43,Level 21,Vileplume (use Leaf Stone); Bellossom (use Sun Stone)
+45,Vileplume,Vileplume,vileplume,Grass,Poison,Gloom,44,use Leaf Stone,
+46,Paras,Paras,paras,Bug,Grass,,,,Parasect (Level 24)
+47,Parasect,Parasect,parasect,Bug,Grass,Paras,46,Level 24,
+48,Venonat,Venonat,venonat,Bug,Poison,,,,Venomoth (Level 31)
+49,Venomoth,Venomoth,venomoth,Bug,Poison,Venonat,48,Level 31,
+50,Diglett,Diglett,diglett,Ground,,,,,Dugtrio (Level 26)
+51,Dugtrio,Dugtrio,dugtrio,Ground,,Diglett,50,Level 26,
+52,Meowth,Meowth,meowth,Normal,,,,,Persian (Level 28)
+53,Persian,Persian,persian,Normal,,Meowth,52,Level 28,
+54,Psyduck,Psyduck,psyduck,Water,,,,,Golduck (Level 33)
+55,Golduck,Golduck,golduck,Water,,Psyduck,54,Level 33,
+56,Mankey,Mankey,mankey,Fighting,,,,,Primeape (Level 28)
+57,Primeape,Primeape,primeape,Fighting,,Mankey,56,Level 28,Annihilape (Use Rage Fist 20 times)
+58,Growlithe,Growlithe,growlithe,Fire,,,,,Arcanine (use Fire Stone)
+59,Arcanine,Arcanine,arcanine,Fire,,Growlithe,58,use Fire Stone,
+60,Poliwag,Poliwag,poliwag,Water,,,,,Poliwhirl (Level 25)
+61,Poliwhirl,Poliwhirl,poliwhirl,Water,,Poliwag,60,Level 25,Poliwrath (use Water Stone); Politoed (trade holding Kings Rock)
+62,Poliwrath,Poliwrath,poliwrath,Water,Fighting,Poliwhirl,61,use Water Stone,
+63,Abra,Abra,abra,Psychic,,,,,Kadabra (Level 16)
+64,Kadabra,Kadabra,kadabra,Psychic,,Abra,63,Level 16,Alakazam (Trade)
+65,Alakazam,Alakazam,alakazam,Psychic,,Kadabra,64,Trade,
+66,Machop,Machop,machop,Fighting,,,,,Machoke (Level 28)
+67,Machoke,Machoke,machoke,Fighting,,Machop,66,Level 28,Machamp (Trade)
+68,Machamp,Machamp,machamp,Fighting,,Machoke,67,Trade,
+69,Bellsprout,Bellsprout,bellsprout,Grass,Poison,,,,Weepinbell (Level 21)
+70,Weepinbell,Weepinbell,weepinbell,Grass,Poison,Bellsprout,69,Level 21,Victreebel (use Leaf Stone)
+71,Victreebel,Victreebel,victreebel,Grass,Poison,Weepinbell,70,use Leaf Stone,
+72,Tentacool,Tentacool,tentacool,Water,Poison,,,,Tentacruel (Level 30)
+73,Tentacruel,Tentacruel,tentacruel,Water,Poison,Tentacool,72,Level 30,
+74,Geodude,Geodude,geodude,Rock,Ground,,,,Graveler (Level 25)
+75,Graveler,Graveler,graveler,Rock,Ground,Geodude,74,Level 25,Golem (Trade)
+76,Golem,Golem,golem,Rock,Ground,Graveler,75,Trade,
+77,Ponyta,Ponyta,ponyta,Fire,,,,,Rapidash (Level 40)
+78,Rapidash,Rapidash,rapidash,Fire,,Ponyta,77,Level 40,
+79,Slowpoke,Slowpoke,slowpoke,Water,Psychic,,,,Slowbro (Level 37); Slowking (trade holding Kings Rock)
+80,Slowbro,Slowbro,slowbro,Water,Psychic,Slowpoke,79,Level 37,
+81,Magnemite,Magnemite,magnemite,Electric,Steel,,,,Magneton (Level 30)
+82,Magneton,Magneton,magneton,Electric,Steel,Magnemite,81,Level 30,"Magnezone (use Thunder Stone, in Gen 8+, or level up in a Magnetic Field area)"
+83,Galarian Farfetch'd,Farfetch'd,farfetchd,Fighting,,,,,Sirfetch'd (achieve 3 critical hits in one battle)
+84,Doduo,Doduo,doduo,Normal,Flying,,,,Dodrio (Level 31)
+85,Dodrio,Dodrio,dodrio,Normal,Flying,Doduo,84,Level 31,
+86,Seel,Seel,seel,Water,,,,,Dewgong (Level 34)
+87,Dewgong,Dewgong,dewgong,Water,Ice,Seel,86,Level 34,
+88,Grimer,Grimer,grimer,Poison,,,,,Muk (Level 38)
+89,Muk,Muk,muk,Poison,,Grimer,88,Level 38,
+90,Shellder,Shellder,shellder,Water,,,,,Cloyster (use Water Stone)
+91,Cloyster,Cloyster,cloyster,Water,Ice,Shellder,90,use Water Stone,
+92,Gastly,Gastly,gastly,Ghost,Poison,,,,Haunter (Level 25)
+93,Haunter,Haunter,haunter,Ghost,Poison,Gastly,92,Level 25,Gengar (Trade)
+94,Gengar,Gengar,gengar,Ghost,Poison,Haunter,93,Trade,
+95,Onix,Onix,onix,Rock,Ground,,,,Steelix (trade holding Metal Coat)
+96,Drowzee,Drowzee,drowzee,Psychic,,,,,Hypno (Level 26)
+97,Hypno,Hypno,hypno,Psychic,,Drowzee,96,Level 26,
+98,Krabby,Krabby,krabby,Water,,,,,Kingler (Level 28)
+99,Kingler,Kingler,kingler,Water,,Krabby,98,Level 28,
+100,Voltorb,Voltorb,voltorb,Electric,,,,,Electrode (Level 30)
+101,Electrode,Electrode,electrode,Electric,,Voltorb,100,Level 30,
+102,Exeggcute,Exeggcute,exeggcute,Grass,Psychic,,,,"Exeggutor (use Leaf Stone, outside Alola); Alolan Exeggutor (use Leaf Stone, in Alola)"
+103,Alolan Exeggutor,Exeggutor,exeggutor,Grass,Dragon,Exeggcute,102,"use Leaf Stone, in Alola",
+103,Exeggutor,Exeggutor,exeggutor,Grass,Psychic,Exeggcute,102,"use Leaf Stone, outside Alola",
+104,Cubone,Cubone,cubone,Ground,,,,,"Marowak (Level 28, outside Alola); Alolan Marowak (Level 28, Nighttime, in Alola)"
+105,Alolan Marowak,Marowak,marowak,Fire,Ghost,Cubone,104,"Level 28, Nighttime, in Alola",
+105,Marowak,Marowak,marowak,Ground,,Cubone,104,"Level 28, outside Alola",
+106,Hitmonlee,Hitmonlee,hitmonlee,Fighting,,Tyrogue,236,"Level 20, Attack > Defense",
+107,Hitmonchan,Hitmonchan,hitmonchan,Fighting,,Tyrogue,236,"Level 20, Attack < Defense",
+108,Lickitung,Lickitung,lickitung,Normal,,,,,Lickilicky (after Rollout learned)
+109,Koffing,Koffing,koffing,Poison,,,,,"Weezing (Level 35, outside Galar); Galarian Weezing (Level 35, in Galar)"
+110,Galarian Weezing,Weezing,weezing,Poison,Fairy,Koffing,109,"Level 35, in Galar",
+110,Weezing,Weezing,weezing,Poison,,Koffing,109,"Level 35, outside Galar",
+111,Rhyhorn,Rhyhorn,rhyhorn,Ground,Rock,,,,Rhydon (Level 42)
+112,Rhydon,Rhydon,rhydon,Ground,Rock,Rhyhorn,111,Level 42,Rhyperior (trade holding Protector)
+113,Chansey,Chansey,chansey,Normal,,Happiny,440,"hold Oval Stone, Daytime",Blissey (high Friendship)
+114,Tangela,Tangela,tangela,Grass,,,,,Tangrowth (after Ancient Power learned)
+116,Horsea,Horsea,horsea,Water,,,,,Seadra (Level 32)
+117,Seadra,Seadra,seadra,Water,,Horsea,116,Level 32,Kingdra (trade holding Dragon Scale)
+118,Goldeen,Goldeen,goldeen,Water,,,,,Seaking (Level 33)
+119,Seaking,Seaking,seaking,Water,,Goldeen,118,Level 33,
+120,Staryu,Staryu,staryu,Water,,,,,Starmie (use Water Stone)
+121,Starmie,Starmie,starmie,Water,Psychic,Staryu,120,use Water Stone,
+122,Galarian Mr. Mime,Mr. Mime,mr-mime,Ice,Psychic,Mime Jr.,439,"after Mimic learned, in Galar",Mr. Rime (Level 42)
+122,Mr. Mime,Mr. Mime,mr-mime,Psychic,Fairy,Mime Jr.,439,"after Mimic learned, outside Galar",
+123,Scyther,Scyther,scyther,Bug,Flying,,,,Scizor (trade holding Metal Coat); Kleavor (use Black Augurite)
+124,Jynx,Jynx,jynx,Ice,Psychic,Smoochum,238,Level 30,
+125,Electabuzz,Electabuzz,electabuzz,Electric,,Elekid,239,Level 30,Electivire (trade holding Electirizer)
+126,Magmar,Magmar,magmar,Fire,,Magby,240,Level 30,Magmortar (trade holding Magmarizer)
+129,Magikarp,Magikarp,magikarp,Water,,,,,Gyarados (Level 20)
+130,Gyarados,Gyarados,gyarados,Water,Flying,Magikarp,129,Level 20,
+133,Eevee,Eevee,eevee,Normal,,,,,Vaporeon (use Water Stone); Jolteon (use Thunder Stone); Flareon (use Fire Stone)
+134,Vaporeon,Vaporeon,vaporeon,Water,,Eevee,133,use Water Stone,
+135,Jolteon,Jolteon,jolteon,Electric,,Eevee,133,use Thunder Stone,
+136,Flareon,Flareon,flareon,Fire,,Eevee,133,use Fire Stone,
+137,Porygon,Porygon,porygon,Normal,,,,,Porygon2 (trade holding Upgrade)
+138,Omanyte,Omanyte,omanyte,Rock,Water,,,,Omastar (Level 40)
+139,Omastar,Omastar,omastar,Rock,Water,Omanyte,138,Level 40,
+140,Kabuto,Kabuto,kabuto,Rock,Water,,,,Kabutops (Level 40)
+141,Kabutops,Kabutops,kabutops,Rock,Water,Kabuto,140,Level 40,
+143,Snorlax,Snorlax,snorlax,Normal,,Munchlax,446,high Friendship,
+147,Dratini,Dratini,dratini,Dragon,,,,,Dragonair (Level 30)
+148,Dragonair,Dragonair,dragonair,Dragon,,Dratini,147,Level 30,Dragonite (Level 55)
+149,Dragonite,Dragonite,dragonite,Dragon,Flying,Dragonair,148,Level 55,
+152,Chikorita,Chikorita,chikorita,Grass,,,,,Bayleef (Level 16)
+153,Bayleef,Bayleef,bayleef,Grass,,Chikorita,152,Level 16,Meganium (Level 32)
+154,Meganium,Meganium,meganium,Grass,,Bayleef,153,Level 32,
+155,Cyndaquil,Cyndaquil,cyndaquil,Fire,,,,,"Quilava (Level 14, or Level 17 in Legends: Arceus)"
+156,Quilava,Quilava,quilava,Fire,,Cyndaquil,155,"Level 14, or Level 17 in Legends: Arceus","Typhlosion (Level 36); Hisuian Typhlosion (Level 36, in Legends: Arceus)"
+157,Hisuian Typhlosion,Typhlosion,typhlosion,Fire,Ghost,Quilava,156,"Level 36, in Legends: Arceus",
+157,Typhlosion,Typhlosion,typhlosion,Fire,,Quilava,156,Level 36,
+158,Totodile,Totodile,totodile,Water,,,,,Croconaw (Level 18)
+159,Croconaw,Croconaw,croconaw,Water,,Totodile,158,Level 18,Feraligatr (Level 30)
+160,Feraligatr,Feraligatr,feraligatr,Water,,Croconaw,159,Level 30,
+161,Sentret,Sentret,sentret,Normal,,,,,Furret (Level 15)
+162,Furret,Furret,furret,Normal,,Sentret,161,Level 15,
+163,Hoothoot,Hoothoot,hoothoot,Normal,Flying,,,,Noctowl (Level 20)
+164,Noctowl,Noctowl,noctowl,Normal,Flying,Hoothoot,163,Level 20,
+165,Ledyba,Ledyba,ledyba,Bug,Flying,,,,Ledian (Level 18)
+166,Ledian,Ledian,ledian,Bug,Flying,Ledyba,165,Level 18,
+167,Spinarak,Spinarak,spinarak,Bug,Poison,,,,Ariados (Level 22)
+168,Ariados,Ariados,ariados,Bug,Poison,Spinarak,167,Level 22,
+169,Crobat,Crobat,crobat,Poison,Flying,Golbat,42,high Friendship,
+170,Chinchou,Chinchou,chinchou,Water,Electric,,,,Lanturn (Level 27)
+171,Lanturn,Lanturn,lanturn,Water,Electric,Chinchou,170,Level 27,
+172,Pichu,Pichu,pichu,Electric,,,,,Pikachu (high Friendship)
+173,Cleffa,Cleffa,cleffa,Fairy,,,,,Clefairy (high Friendship)
+174,Igglybuff,Igglybuff,igglybuff,Normal,Fairy,,,,Jigglypuff (high Friendship)
+175,Togepi,Togepi,togepi,Fairy,,,,,Togetic (high Friendship)
+176,Togetic,Togetic,togetic,Fairy,Flying,Togepi,175,high Friendship,Togekiss (use Shiny Stone)
+177,Natu,Natu,natu,Psychic,Flying,,,,Xatu (Level 25)
+178,Xatu,Xatu,xatu,Psychic,Flying,Natu,177,Level 25,
+179,Mareep,Mareep,mareep,Electric,,,,,Flaaffy (Level 15)
+180,Flaaffy,Flaaffy,flaaffy,Electric,,Mareep,179,Level 15,Ampharos (Level 30)
+181,Ampharos,Ampharos,ampharos,Electric,,Flaaffy,180,Level 30,
+182,Bellossom,Bellossom,bellossom,Grass,,Gloom,44,use Sun Stone,
+183,Marill,Marill,marill,Water,Fairy,Azurill,298,high Friendship,Azumarill (Level 18)
+184,Azumarill,Azumarill,azumarill,Water,Fairy,Marill,183,Level 18,
+185,Sudowoodo,Sudowoodo,sudowoodo,Rock,,Bonsly,438,after Mimic learned,
+186,Politoed,Politoed,politoed,Water,,Poliwhirl,61,trade holding Kings Rock,
+187,Hoppip,Hoppip,hoppip,Grass,Flying,,,,Skiploom (Level 18)
+188,Skiploom,Skiploom,skiploom,Grass,Flying,Hoppip,187,Level 18,Jumpluff (Level 27)
+189,Jumpluff,Jumpluff,jumpluff,Grass,Flying,Skiploom,188,Level 27,
+190,Aipom,Aipom,aipom,Normal,,,,,Ambipom (after Double Hit learned)
+191,Sunkern,Sunkern,sunkern,Grass,,,,,Sunflora (use Sun Stone)
+192,Sunflora,Sunflora,sunflora,Grass,,Sunkern,191,use Sun Stone,
+193,Yanma,Yanma,yanma,Bug,Flying,,,,Yanmega (after Ancient Power learned)
+194,Wooper,Wooper,wooper,Water,Ground,,,,Quagsire (Level 20)
+195,Quagsire,Quagsire,quagsire,Water,Ground,Wooper,194,Level 20,
+198,Murkrow,Murkrow,murkrow,Dark,Flying,,,,Honchkrow (use Dusk Stone)
+199,Slowking,Slowking,slowking,Water,Psychic,Slowpoke,79,trade holding Kings Rock,
+200,Misdreavus,Misdreavus,misdreavus,Ghost,,,,,Mismagius (use Dusk Stone)
+202,Wobbuffet,Wobbuffet,wobbuffet,Psychic,,Wynaut,360,Level 15,
+203,Girafarig,Girafarig,girafarig,Normal,Psychic,,,,Farigiraf (after Twin Beam learned)
+204,Pineco,Pineco,pineco,Bug,,,,,Forretress (Level 31)
+205,Forretress,Forretress,forretress,Bug,Steel,Pineco,204,Level 31,
+206,Dunsparce,Dunsparce,dunsparce,Normal,,,,,"Dudunsparce (Two-Segment Form) (after Hyper Drill learned); Dudunsparce (Three-Segment Form) (after Hyper Drill learned, rare)"
+207,Gligar,Gligar,gligar,Ground,Flying,,,,"Gliscor (hold Razor Fang, Nighttime)"
+208,Steelix,Steelix,steelix,Steel,Ground,Onix,95,trade holding Metal Coat,
+209,Snubbull,Snubbull,snubbull,Fairy,,,,,Granbull (Level 23)
+210,Granbull,Granbull,granbull,Fairy,,Snubbull,209,Level 23,
+211,Hisuian Qwilfish,Qwilfish,qwilfish,Dark,Poison,,,,Overqwil (use Barb Barrage 20 times in Strong Style)
+212,Scizor,Scizor,scizor,Bug,Steel,Scyther,123,trade holding Metal Coat,
+215,Sneasel,Sneasel,sneasel,Dark,Ice,,,,"Weavile (hold Razor Claw, Nighttime)"
+216,Teddiursa,Teddiursa,teddiursa,Normal,,,,,Ursaring (Level 30)
+217,Ursaring,Ursaring,ursaring,Normal,,Teddiursa,216,Level 30,"Ursaluna (use Peat Block, under a full moon, in Legends: Arceus)"
+218,Slugma,Slugma,slugma,Fire,,,,,Magcargo (Level 38)
+219,Magcargo,Magcargo,magcargo,Fire,Rock,Slugma,218,Level 38,
+220,Swinub,Swinub,swinub,Ice,Ground,,,,Piloswine (Level 33)
+221,Piloswine,Piloswine,piloswine,Ice,Ground,Swinub,220,Level 33,Mamoswine (after Ancient Power learned)
+222,Galarian Corsola,Corsola,corsola,Ghost,,,,,Cursola (Level 38)
+223,Remoraid,Remoraid,remoraid,Water,,,,,Octillery (Level 25)
+224,Octillery,Octillery,octillery,Water,,Remoraid,223,Level 25,
+226,Mantine,Mantine,mantine,Water,Flying,Mantyke,458,with Remoraid in party,
+228,Houndour,Houndour,houndour,Dark,Fire,,,,Houndoom (Level 24)
+229,Houndoom,Houndoom,houndoom,Dark,Fire,Houndour,228,Level 24,
+230,Kingdra,Kingdra,kingdra,Water,Dragon,Seadra,117,trade holding Dragon Scale,
+231,Phanpy,Phanpy,phanpy,Ground,,,,,Donphan (Level 25)
+232,Donphan,Donphan,donphan,Ground,,Phanpy,231,Level 25,
+233,Porygon2,Porygon2,porygon2,Normal,,Porygon,137,trade holding Upgrade,Porygon-Z (trade holding Dubious Disc)
+234,Stantler,Stantler,stantler,Normal,,,,,Wyrdeer (use Psyshield Bash 20 times in Agile Style)
+236,Tyrogue,Tyrogue,tyrogue,Fighting,,,,,"Hitmonlee (Level 20, Attack > Defense); Hitmonchan (Level 20, Attack < Defense); Hitmontop (Level 20, Attack = Defense)"
+237,Hitmontop,Hitmontop,hitmontop,Fighting,,Tyrogue,236,"Level 20, Attack = Defense",
+238,Smoochum,Smoochum,smoochum,Ice,Psychic,,,,Jynx (Level 30)
+239,Elekid,Elekid,elekid,Electric,,,,,Electabuzz (Level 30)
+240,Magby,Magby,magby,Fire,,,,,Magmar (Level 30)
+242,Blissey,Blissey,blissey,Normal,,Chansey,113,high Friendship,
+246,Larvitar,Larvitar,larvitar,Rock,Ground,,,,Pupitar (Level 30)
+247,Pupitar,Pupitar,pupitar,Rock,Ground,Larvitar,246,Level 30,Tyranitar (Level 55)
+248,Tyranitar,Tyranitar,tyranitar,Rock,Dark,Pupitar,247,Level 55,
+252,Treecko,Treecko,treecko,Grass,,,,,Grovyle (Level 16)
+253,Grovyle,Grovyle,grovyle,Grass,,Treecko,252,Level 16,Sceptile (Level 36)
+254,Sceptile,Sceptile,sceptile,Grass,,Grovyle,253,Level 36,
+255,Torchic,Torchic,torchic,Fire,,,,,Combusken (Level 16)
+256,Combusken,Combusken,combusken,Fire,Fighting,Torchic,255,Level 16,Blaziken (Level 36)
+257,Blaziken,Blaziken,blaziken,Fire,Fighting,Combusken,256,Level 36,
+258,Mudkip,Mudkip,mudkip,Water,,,,,Marshtomp (Level 16)
+259,Marshtomp,Marshtomp,marshtomp,Water,Ground,Mudkip,258,Level 16,Swampert (Level 36)
+260,Swampert,Swampert,swampert,Water,Ground,Marshtomp,259,Level 36,
+261,Poochyena,Poochyena,poochyena,Dark,,,,,Mightyena (Level 18)
+262,Mightyena,Mightyena,mightyena,Dark,,Poochyena,261,Level 18,
+263,Zigzagoon,Zigzagoon,zigzagoon,Normal,,,,,Linoone (Level 20)
+264,Linoone,Linoone,linoone,Normal,,Zigzagoon,263,Level 20,
+265,Wurmple,Wurmple,wurmple,Bug,,,,,"Silcoon (Level 7, random based on personality); Cascoon (Level 7, random based on personality)"
+266,Silcoon,Silcoon,silcoon,Bug,,Wurmple,265,"Level 7, random based on personality",Beautifly (Level 10)
+267,Beautifly,Beautifly,beautifly,Bug,Flying,Silcoon,266,Level 10,
+268,Cascoon,Cascoon,cascoon,Bug,,Wurmple,265,"Level 7, random based on personality",Dustox (Level 10)
+269,Dustox,Dustox,dustox,Bug,Poison,Cascoon,268,Level 10,
+270,Lotad,Lotad,lotad,Water,Grass,,,,Lombre (Level 14)
+271,Lombre,Lombre,lombre,Water,Grass,Lotad,270,Level 14,Ludicolo (use Water Stone)
+272,Ludicolo,Ludicolo,ludicolo,Water,Grass,Lombre,271,use Water Stone,
+273,Seedot,Seedot,seedot,Grass,,,,,Nuzleaf (Level 14)
+274,Nuzleaf,Nuzleaf,nuzleaf,Grass,Dark,Seedot,273,Level 14,Shiftry (use Leaf Stone)
+275,Shiftry,Shiftry,shiftry,Grass,Dark,Nuzleaf,274,use Leaf Stone,
+276,Taillow,Taillow,taillow,Normal,Flying,,,,Swellow (Level 22)
+277,Swellow,Swellow,swellow,Normal,Flying,Taillow,276,Level 22,
+278,Wingull,Wingull,wingull,Water,Flying,,,,Pelipper (Level 25)
+279,Pelipper,Pelipper,pelipper,Water,Flying,Wingull,278,Level 25,
+280,Ralts,Ralts,ralts,Psychic,Fairy,,,,Kirlia (Level 20)
+281,Kirlia,Kirlia,kirlia,Psychic,Fairy,Ralts,280,Level 20,"Gardevoir (Level 30); Gallade (use Dawn Stone, Male)"
+282,Gardevoir,Gardevoir,gardevoir,Psychic,Fairy,Kirlia,281,Level 30,
+283,Surskit,Surskit,surskit,Bug,Water,,,,Masquerain (Level 22)
+284,Masquerain,Masquerain,masquerain,Bug,Flying,Surskit,283,Level 22,
+285,Shroomish,Shroomish,shroomish,Grass,,,,,Breloom (Level 23)
+286,Breloom,Breloom,breloom,Grass,Fighting,Shroomish,285,Level 23,
+287,Slakoth,Slakoth,slakoth,Normal,,,,,Vigoroth (Level 18)
+288,Vigoroth,Vigoroth,vigoroth,Normal,,Slakoth,287,Level 18,Slaking (Level 36)
+289,Slaking,Slaking,slaking,Normal,,Vigoroth,288,Level 36,
+290,Nincada,Nincada,nincada,Bug,Ground,,,,"Ninjask (Level 20); Ninjask (Level 20, empty spot in party, Pokéball in bag)"
+291,Ninjask,Ninjask,ninjask,Bug,Flying,Nincada,290,Level 20,
+293,Whismur,Whismur,whismur,Normal,,,,,Loudred (Level 20)
+294,Loudred,Loudred,loudred,Normal,,Whismur,293,Level 20,Exploud (Level 40)
+295,Exploud,Exploud,exploud,Normal,,Loudred,294,Level 40,
+296,Makuhita,Makuhita,makuhita,Fighting,,,,,Hariyama (Level 24)
+297,Hariyama,Hariyama,hariyama,Fighting,,Makuhita,296,Level 24,
+298,Azurill,Azurill,azurill,Normal,Fairy,,,,Marill (high Friendship)
+299,Nosepass,Nosepass,nosepass,Rock,,,,,"Probopass (use Thunder Stone, in Gen 8+, or level up in a Magnetic Field area)"
+300,Skitty,Skitty,skitty,Normal,,,,,Delcatty (use Moon Stone)
+301,Delcatty,Delcatty,delcatty,Normal,,Skitty,300,use Moon Stone,
+304,Aron,Aron,aron,Steel,Rock,,,,Lairon (Level 32)
+305,Lairon,Lairon,lairon,Steel,Rock,Aron,304,Level 32,Aggron (Level 42)
+306,Aggron,Aggron,aggron,Steel,Rock,Lairon,305,Level 42,
+307,Meditite,Meditite,meditite,Fighting,Psychic,,,,Medicham (Level 37)
+308,Medicham,Medicham,medicham,Fighting,Psychic,Meditite,307,Level 37,
+309,Electrike,Electrike,electrike,Electric,,,,,Manectric (Level 26)
+310,Manectric,Manectric,manectric,Electric,,Electrike,309,Level 26,
+315,Roselia,Roselia,roselia,Grass,Poison,Budew,406,"high Friendship, Daytime",Roserade (use Shiny Stone)
+316,Gulpin,Gulpin,gulpin,Poison,,,,,Swalot (Level 26)
+317,Swalot,Swalot,swalot,Poison,,Gulpin,316,Level 26,
+318,Carvanha,Carvanha,carvanha,Water,Dark,,,,Sharpedo (Level 30)
+319,Sharpedo,Sharpedo,sharpedo,Water,Dark,Carvanha,318,Level 30,
+320,Wailmer,Wailmer,wailmer,Water,,,,,Wailord (Level 40)
+321,Wailord,Wailord,wailord,Water,,Wailmer,320,Level 40,
+322,Numel,Numel,numel,Fire,Ground,,,,Camerupt (Level 33)
+323,Camerupt,Camerupt,camerupt,Fire,Ground,Numel,322,Level 33,
+325,Spoink,Spoink,spoink,Psychic,,,,,Grumpig (Level 32)
+326,Grumpig,Grumpig,grumpig,Psychic,,Spoink,325,Level 32,
+328,Trapinch,Trapinch,trapinch,Ground,,,,,Vibrava (Level 35)
+329,Vibrava,Vibrava,vibrava,Ground,Dragon,Trapinch,328,Level 35,Flygon (Level 45)
+330,Flygon,Flygon,flygon,Ground,Dragon,Vibrava,329,Level 45,
+331,Cacnea,Cacnea,cacnea,Grass,,,,,Cacturne (Level 32)
+332,Cacturne,Cacturne,cacturne,Grass,Dark,Cacnea,331,Level 32,
+333,Swablu,Swablu,swablu,Normal,Flying,,,,Altaria (Level 35)
+334,Altaria,Altaria,altaria,Dragon,Flying,Swablu,333,Level 35,
+339,Barboach,Barboach,barboach,Water,Ground,,,,Whiscash (Level 30)
+340,Whiscash,Whiscash,whiscash,Water,Ground,Barboach,339,Level 30,
+341,Corphish,Corphish,corphish,Water,,,,,Crawdaunt (Level 30)
+342,Crawdaunt,Crawdaunt,crawdaunt,Water,Dark,Corphish,341,Level 30,
+343,Baltoy,Baltoy,baltoy,Ground,Psychic,,,,Claydol (Level 36)
+344,Claydol,Claydol,claydol,Ground,Psychic,Baltoy,343,Level 36,
+345,Lileep,Lileep,lileep,Rock,Grass,,,,Cradily (Level 40)
+346,Cradily,Cradily,cradily,Rock,Grass,Lileep,345,Level 40,
+347,Anorith,Anorith,anorith,Rock,Bug,,,,Armaldo (Level 40)
+348,Armaldo,Armaldo,armaldo,Rock,Bug,Anorith,347,Level 40,
+349,Feebas,Feebas,feebas,Water,,,,,"Milotic (trade holding Prism Scale, or level up with max Beauty)"
+350,Milotic,Milotic,milotic,Water,,Feebas,349,"trade holding Prism Scale, or level up with max Beauty",
+353,Shuppet,Shuppet,shuppet,Ghost,,,,,Banette (Level 37)
+354,Banette,Banette,banette,Ghost,,Shuppet,353,Level 37,
+355,Duskull,Duskull,duskull,Ghost,,,,,Dusclops (Level 37)
+356,Dusclops,Dusclops,dusclops,Ghost,,Duskull,355,Level 37,Dusknoir (trade holding Reaper Cloth)
+358,Chimecho,Chimecho,chimecho,Psychic,,Chingling,433,"high Friendship, Nighttime",
+360,Wynaut,Wynaut,wynaut,Psychic,,,,,Wobbuffet (Level 15)
+361,Snorunt,Snorunt,snorunt,Ice,,,,,"Glalie (Level 42); Froslass (use Dawn Stone, Female)"
+362,Glalie,Glalie,glalie,Ice,,Snorunt,361,Level 42,
+363,Spheal,Spheal,spheal,Ice,Water,,,,Sealeo (Level 32)
+364,Sealeo,Sealeo,sealeo,Ice,Water,Spheal,363,Level 32,Walrein (Level 44)
+365,Walrein,Walrein,walrein,Ice,Water,Sealeo,364,Level 44,
+366,Clamperl,Clamperl,clamperl,Water,,,,,Huntail (trade holding Deep Sea Tooth); Gorebyss (trade holding Deep Sea Scale)
+367,Huntail,Huntail,huntail,Water,,Clamperl,366,trade holding Deep Sea Tooth,
+368,Gorebyss,Gorebyss,gorebyss,Water,,Clamperl,366,trade holding Deep Sea Scale,
+371,Bagon,Bagon,bagon,Dragon,,,,,Shelgon (Level 30)
+372,Shelgon,Shelgon,shelgon,Dragon,,Bagon,371,Level 30,Salamence (Level 50)
+373,Salamence,Salamence,salamence,Dragon,Flying,Shelgon,372,Level 50,
+374,Beldum,Beldum,beldum,Steel,Psychic,,,,Metang (Level 20)
+375,Metang,Metang,metang,Steel,Psychic,Beldum,374,Level 20,Metagross (Level 45)
+376,Metagross,Metagross,metagross,Steel,Psychic,Metang,375,Level 45,
+387,Turtwig,Turtwig,turtwig,Grass,,,,,Grotle (Level 18)
+388,Grotle,Grotle,grotle,Grass,,Turtwig,387,Level 18,Torterra (Level 32)
+389,Torterra,Torterra,torterra,Grass,Ground,Grotle,388,Level 32,
+390,Chimchar,Chimchar,chimchar,Fire,,,,,Monferno (Level 14)
+391,Monferno,Monferno,monferno,Fire,Fighting,Chimchar,390,Level 14,Infernape (Level 36)
+392,Infernape,Infernape,infernape,Fire,Fighting,Monferno,391,Level 36,
+393,Piplup,Piplup,piplup,Water,,,,,Prinplup (Level 16)
+394,Prinplup,Prinplup,prinplup,Water,,Piplup,393,Level 16,Empoleon (Level 36)
+395,Empoleon,Empoleon,empoleon,Water,Steel,Prinplup,394,Level 36,
+396,Starly,Starly,starly,Normal,Flying,,,,Staravia (Level 14)
+397,Staravia,Staravia,staravia,Normal,Flying,Starly,396,Level 14,Staraptor (Level 34)
+398,Staraptor,Staraptor,staraptor,Normal,Flying,Staravia,397,Level 34,
+399,Bidoof,Bidoof,bidoof,Normal,,,,,Bibarel (Level 15)
+400,Bibarel,Bibarel,bibarel,Normal,Water,Bidoof,399,Level 15,
+401,Kricketot,Kricketot,kricketot,Bug,,,,,Kricketune (Level 10)
+402,Kricketune,Kricketune,kricketune,Bug,,Kricketot,401,Level 10,
+403,Shinx,Shinx,shinx,Electric,,,,,Luxio (Level 15)
+404,Luxio,Luxio,luxio,Electric,,Shinx,403,Level 15,Luxray (Level 30)
+405,Luxray,Luxray,luxray,Electric,,Luxio,404,Level 30,
+406,Budew,Budew,budew,Grass,Poison,,,,"Roselia (high Friendship, Daytime)"
+407,Roserade,Roserade,roserade,Grass,Poison,Roselia,315,use Shiny Stone,
+408,Cranidos,Cranidos,cranidos,Rock,,,,,Rampardos (Level 30)
+409,Rampardos,Rampardos,rampardos,Rock,,Cranidos,408,Level 30,
+410,Shieldon,Shieldon,shieldon,Rock,Steel,,,,Bastiodon (Level 30)
+411,Bastiodon,Bastiodon,bastiodon,Rock,Steel,Shieldon,410,Level 30,
+412,Burmy (Plant Cloak),Burmy,burmy,Bug,,,,,"Mothim (Level 20, Male)"
+414,Mothim,Mothim,mothim,Bug,Flying,Burmy (Plant Cloak),412,"Level 20, Male",
+415,Combee,Combee,combee,Bug,Flying,,,,"Vespiquen (Level 21, Female)"
+416,Vespiquen,Vespiquen,vespiquen,Bug,Flying,Combee,415,"Level 21, Female",
+418,Buizel,Buizel,buizel,Water,,,,,Floatzel (Level 26)
+419,Floatzel,Floatzel,floatzel,Water,,Buizel,418,Level 26,
+420,Cherubi,Cherubi,cherubi,Grass,,,,,Cherrim (Level 25)
+421,Cherrim,Cherrim,cherrim,Grass,,Cherubi,420,Level 25,
+422,Shellos,Shellos,shellos,Water,,,,,Gastrodon (Level 30)
+423,Gastrodon,Gastrodon,gastrodon,Water,Ground,Shellos,422,Level 30,
+424,Ambipom,Ambipom,ambipom,Normal,,Aipom,190,after Double Hit learned,
+425,Drifloon,Drifloon,drifloon,Ghost,Flying,,,,Drifblim (Level 28)
+426,Drifblim,Drifblim,drifblim,Ghost,Flying,Drifloon,425,Level 28,
+427,Buneary,Buneary,buneary,Normal,,,,,Lopunny (high Friendship)
+428,Lopunny,Lopunny,lopunny,Normal,,Buneary,427,high Friendship,
+429,Mismagius,Mismagius,mismagius,Ghost,,Misdreavus,200,use Dusk Stone,
+430,Honchkrow,Honchkrow,honchkrow,Dark,Flying,Murkrow,198,use Dusk Stone,
+431,Glameow,Glameow,glameow,Normal,,,,,Purugly (Level 38)
+432,Purugly,Purugly,purugly,Normal,,Glameow,431,Level 38,
+433,Chingling,Chingling,chingling,Psychic,,,,,"Chimecho (high Friendship, Nighttime)"
+434,Stunky,Stunky,stunky,Poison,Dark,,,,Skuntank (Level 34)
+435,Skuntank,Skuntank,skuntank,Poison,Dark,Stunky,434,Level 34,
+436,Bronzor,Bronzor,bronzor,Steel,Psychic,,,,Bronzong (Level 33)
+437,Bronzong,Bronzong,bronzong,Steel,Psychic,Bronzor,436,Level 33,
+438,Bonsly,Bonsly,bonsly,Rock,,,,,Sudowoodo (after Mimic learned)
+439,Mime Jr.,Mime Jr.,mime-jr,Psychic,Fairy,,,,"Mr. Mime (after Mimic learned, outside Galar); Galarian Mr. Mime (after Mimic learned, in Galar)"
+440,Happiny,Happiny,happiny,Normal,,,,,"Chansey (hold Oval Stone, Daytime)"
+443,Gible,Gible,gible,Dragon,Ground,,,,Gabite (Level 24)
+444,Gabite,Gabite,gabite,Dragon,Ground,Gible,443,Level 24,Garchomp (Level 48)
+445,Garchomp,Garchomp,garchomp,Dragon,Ground,Gabite,444,Level 48,
+446,Munchlax,Munchlax,munchlax,Normal,,,,,Snorlax (high Friendship)
+447,Riolu,Riolu,riolu,Fighting,,,,,"Lucario (high Friendship, Daytime)"
+448,Lucario,Lucario,lucario,Fighting,Steel,Riolu,447,"high Friendship, Daytime",
+449,Hippopotas,Hippopotas,hippopotas,Ground,,,,,Hippowdon (Level 34)
+450,Hippowdon,Hippowdon,hippowdon,Ground,,Hippopotas,449,Level 34,
+451,Skorupi,Skorupi,skorupi,Poison,Bug,,,,Drapion (Level 40)
+452,Drapion,Drapion,drapion,Poison,Dark,Skorupi,451,Level 40,
+453,Croagunk,Croagunk,croagunk,Poison,Fighting,,,,Toxicroak (Level 37)
+454,Toxicroak,Toxicroak,toxicroak,Poison,Fighting,Croagunk,453,Level 37,
+456,Finneon,Finneon,finneon,Water,,,,,Lumineon (Level 31)
+457,Lumineon,Lumineon,lumineon,Water,,Finneon,456,Level 31,
+458,Mantyke,Mantyke,mantyke,Water,Flying,,,,Mantine (with Remoraid in party)
+459,Snover,Snover,snover,Grass,Ice,,,,Abomasnow (Level 40)
+460,Abomasnow,Abomasnow,abomasnow,Grass,Ice,Snover,459,Level 40,
+461,Weavile,Weavile,weavile,Dark,Ice,Sneasel,215,"hold Razor Claw, Nighttime",
+462,Magnezone,Magnezone,magnezone,Electric,Steel,Magneton,82,"use Thunder Stone, in Gen 8+, or level up in a Magnetic Field area",
+463,Lickilicky,Lickilicky,lickilicky,Normal,,Lickitung,108,after Rollout learned,
+464,Rhyperior,Rhyperior,rhyperior,Ground,Rock,Rhydon,112,trade holding Protector,
+465,Tangrowth,Tangrowth,tangrowth,Grass,,Tangela,114,after Ancient Power learned,
+466,Electivire,Electivire,electivire,Electric,,Electabuzz,125,trade holding Electirizer,
+467,Magmortar,Magmortar,magmortar,Fire,,Magmar,126,trade holding Magmarizer,
+468,Togekiss,Togekiss,togekiss,Fairy,Flying,Togetic,176,use Shiny Stone,
+469,Yanmega,Yanmega,yanmega,Bug,Flying,Yanma,193,after Ancient Power learned,
+472,Gliscor,Gliscor,gliscor,Ground,Flying,Gligar,207,"hold Razor Fang, Nighttime",
+473,Mamoswine,Mamoswine,mamoswine,Ice,Ground,Piloswine,221,after Ancient Power learned,
+474,Porygon-Z,Porygon-Z,porygon-z,Normal,,Porygon2,233,trade holding Dubious Disc,
+475,Gallade,Gallade,gallade,Psychic,Fighting,Kirlia,281,"use Dawn Stone, Male",
+476,Probopass,Probopass,probopass,Rock,Steel,Nosepass,299,"use Thunder Stone, in Gen 8+, or level up in a Magnetic Field area",
+477,Dusknoir,Dusknoir,dusknoir,Ghost,,Dusclops,356,trade holding Reaper Cloth,
+478,Froslass,Froslass,froslass,Ice,Ghost,Snorunt,361,"use Dawn Stone, Female",
+495,Snivy,Snivy,snivy,Grass,,,,,Servine (Level 17)
+496,Servine,Servine,servine,Grass,,Snivy,495,Level 17,Serperior (Level 36)
+497,Serperior,Serperior,serperior,Grass,,Servine,496,Level 36,
+498,Tepig,Tepig,tepig,Fire,,,,,Pignite (Level 17)
+499,Pignite,Pignite,pignite,Fire,Fighting,Tepig,498,Level 17,Emboar (Level 36)
+500,Emboar,Emboar,emboar,Fire,Fighting,Pignite,499,Level 36,
+501,Oshawott,Oshawott,oshawott,Water,,,,,Dewott (Level 17)
+502,Dewott,Dewott,dewott,Water,,Oshawott,501,Level 17,"Samurott (Level 36); Hisuian Samurott (Level 36, in Legends: Arceus)"
+503,Hisuian Samurott,Samurott,samurott,Water,Dark,Dewott,502,"Level 36, in Legends: Arceus",
+503,Samurott,Samurott,samurott,Water,,Dewott,502,Level 36,
+504,Patrat,Patrat,patrat,Normal,,,,,Watchog (Level 20)
+505,Watchog,Watchog,watchog,Normal,,Patrat,504,Level 20,
+506,Lillipup,Lillipup,lillipup,Normal,,,,,Herdier (Level 16)
+507,Herdier,Herdier,herdier,Normal,,Lillipup,506,Level 16,Stoutland (Level 32)
+508,Stoutland,Stoutland,stoutland,Normal,,Herdier,507,Level 32,
+509,Purrloin,Purrloin,purrloin,Dark,,,,,Liepard (Level 20)
+510,Liepard,Liepard,liepard,Dark,,Purrloin,509,Level 20,
+511,Pansage,Pansage,pansage,Grass,,,,,Simisage (use Leaf Stone)
+512,Simisage,Simisage,simisage,Grass,,Pansage,511,use Leaf Stone,
+513,Pansear,Pansear,pansear,Fire,,,,,Simisear (use Fire Stone)
+514,Simisear,Simisear,simisear,Fire,,Pansear,513,use Fire Stone,
+515,Panpour,Panpour,panpour,Water,,,,,Simipour (use Water Stone)
+516,Simipour,Simipour,simipour,Water,,Panpour,515,use Water Stone,
+517,Munna,Munna,munna,Psychic,,,,,Musharna (use Moon Stone)
+518,Musharna,Musharna,musharna,Psychic,,Munna,517,use Moon Stone,
+519,Pidove,Pidove,pidove,Normal,Flying,,,,Tranquill (Level 21)
+520,Tranquill,Tranquill,tranquill,Normal,Flying,Pidove,519,Level 21,Unfezant (Level 32)
+521,Unfezant,Unfezant,unfezant,Normal,Flying,Tranquill,520,Level 32,
+522,Blitzle,Blitzle,blitzle,Electric,,,,,Zebstrika (Level 27)
+523,Zebstrika,Zebstrika,zebstrika,Electric,,Blitzle,522,Level 27,
+524,Roggenrola,Roggenrola,roggenrola,Rock,,,,,Boldore (Level 25)
+525,Boldore,Boldore,boldore,Rock,,Roggenrola,524,Level 25,Gigalith (Trade)
+526,Gigalith,Gigalith,gigalith,Rock,,Boldore,525,Trade,
+527,Woobat,Woobat,woobat,Psychic,Flying,,,,Swoobat (high Friendship)
+528,Swoobat,Swoobat,swoobat,Psychic,Flying,Woobat,527,high Friendship,
+529,Drilbur,Drilbur,drilbur,Ground,,,,,Excadrill (Level 31)
+530,Excadrill,Excadrill,excadrill,Ground,Steel,Drilbur,529,Level 31,
+532,Timburr,Timburr,timburr,Fighting,,,,,Gurdurr (Level 25)
+533,Gurdurr,Gurdurr,gurdurr,Fighting,,Timburr,532,Level 25,Conkeldurr (Trade)
+534,Conkeldurr,Conkeldurr,conkeldurr,Fighting,,Gurdurr,533,Trade,
+535,Tympole,Tympole,tympole,Water,,,,,Palpitoad (Level 25)
+536,Palpitoad,Palpitoad,palpitoad,Water,Ground,Tympole,535,Level 25,Seismitoad (Level 36)
+537,Seismitoad,Seismitoad,seismitoad,Water,Ground,Palpitoad,536,Level 36,
+540,Sewaddle,Sewaddle,sewaddle,Bug,Grass,,,,Swadloon (Level 20)
+541,Swadloon,Swadloon,swadloon,Bug,Grass,Sewaddle,540,Level 20,Leavanny (high Friendship)
+542,Leavanny,Leavanny,leavanny,Bug,Grass,Swadloon,541,high Friendship,
+543,Venipede,Venipede,venipede,Bug,Poison,,,,Whirlipede (Level 22)
+544,Whirlipede,Whirlipede,whirlipede,Bug,Poison,Venipede,543,Level 22,Scolipede (Level 30)
+545,Scolipede,Scolipede,scolipede,Bug,Poison,Whirlipede,544,Level 30,
+546,Cottonee,Cottonee,cottonee,Grass,Fairy,,,,Whimsicott (use Sun Stone)
+547,Whimsicott,Whimsicott,whimsicott,Grass,Fairy,Cottonee,546,use Sun Stone,
+548,Petilil,Petilil,petilil,Grass,,,,,"Lilligant (use Sun Stone); Hisuian Lilligant (use Sun Stone, in Legends: Arceus)"
+549,Hisuian Lilligant,Lilligant,lilligant,Grass,Fighting,Petilil,548,"use Sun Stone, in Legends: Arceus",
+549,Lilligant,Lilligant,lilligant,Grass,,Petilil,548,use Sun Stone,
+550,Basculin (White-Striped Form),Basculin,basculin,Water,,,,,"Basculegion (Male) (Male, receive 294 recoil damage in battle); Basculegion (Female) (Female, receive 294 recoil damage in battle)"
+551,Sandile,Sandile,sandile,Ground,Dark,,,,Krokorok (Level 29)
+552,Krokorok,Krokorok,krokorok,Ground,Dark,Sandile,551,Level 29,Krookodile (Level 40)
+553,Krookodile,Krookodile,krookodile,Ground,Dark,Krokorok,552,Level 40,
+554,Darumaka,Darumaka,darumaka,Fire,,,,,Darmanitan (Standard Mode) (Level 35)
+555,Darmanitan (Standard Mode),Darmanitan,darmanitan,Fire,,Darumaka,554,Level 35,
+557,Dwebble,Dwebble,dwebble,Bug,Rock,,,,Crustle (Level 34)
+558,Crustle,Crustle,crustle,Bug,Rock,Dwebble,557,Level 34,
+559,Scraggy,Scraggy,scraggy,Dark,Fighting,,,,Scrafty (Level 39)
+560,Scrafty,Scrafty,scrafty,Dark,Fighting,Scraggy,559,Level 39,
+562,Yamask,Yamask,yamask,Ghost,,,,,Cofagrigus (Level 34)
+563,Cofagrigus,Cofagrigus,cofagrigus,Ghost,,Yamask,562,Level 34,
+564,Tirtouga,Tirtouga,tirtouga,Water,Rock,,,,Carracosta (Level 37)
+565,Carracosta,Carracosta,carracosta,Water,Rock,Tirtouga,564,Level 37,
+566,Archen,Archen,archen,Rock,Flying,,,,Archeops (Level 37)
+567,Archeops,Archeops,archeops,Rock,Flying,Archen,566,Level 37,
+568,Trubbish,Trubbish,trubbish,Poison,,,,,Garbodor (Level 36)
+569,Garbodor,Garbodor,garbodor,Poison,,Trubbish,568,Level 36,
+570,Zorua,Zorua,zorua,Dark,,,,,Zoroark (Level 30)
+571,Zoroark,Zoroark,zoroark,Dark,,Zorua,570,Level 30,
+572,Minccino,Minccino,minccino,Normal,,,,,Cinccino (use Shiny Stone)
+573,Cinccino,Cinccino,cinccino,Normal,,Minccino,572,use Shiny Stone,
+574,Gothita,Gothita,gothita,Psychic,,,,,Gothorita (Level 32)
+575,Gothorita,Gothorita,gothorita,Psychic,,Gothita,574,Level 32,Gothitelle (Level 41)
+576,Gothitelle,Gothitelle,gothitelle,Psychic,,Gothorita,575,Level 41,
+577,Solosis,Solosis,solosis,Psychic,,,,,Duosion (Level 32)
+578,Duosion,Duosion,duosion,Psychic,,Solosis,577,Level 32,Reuniclus (Level 41)
+579,Reuniclus,Reuniclus,reuniclus,Psychic,,Duosion,578,Level 41,
+580,Ducklett,Ducklett,ducklett,Water,Flying,,,,Swanna (Level 35)
+581,Swanna,Swanna,swanna,Water,Flying,Ducklett,580,Level 35,
+582,Vanillite,Vanillite,vanillite,Ice,,,,,Vanillish (Level 35)
+583,Vanillish,Vanillish,vanillish,Ice,,Vanillite,582,Level 35,Vanilluxe (Level 47)
+584,Vanilluxe,Vanilluxe,vanilluxe,Ice,,Vanillish,583,Level 47,
+585,Deerling,Deerling,deerling,Normal,Grass,,,,Sawsbuck (Level 34)
+586,Sawsbuck,Sawsbuck,sawsbuck,Normal,Grass,Deerling,585,Level 34,
+588,Karrablast,Karrablast,karrablast,Bug,,,,,Escavalier (Trade with Shelmet)
+589,Escavalier,Escavalier,escavalier,Bug,Steel,Karrablast,588,Trade with Shelmet,
+590,Foongus,Foongus,foongus,Grass,Poison,,,,Amoonguss (Level 39)
+591,Amoonguss,Amoonguss,amoonguss,Grass,Poison,Foongus,590,Level 39,
+592,Frillish,Frillish,frillish,Water,Ghost,,,,Jellicent (Level 40)
+593,Jellicent,Jellicent,jellicent,Water,Ghost,Frillish,592,Level 40,
+595,Joltik,Joltik,joltik,Bug,Electric,,,,Galvantula (Level 36)
+596,Galvantula,Galvantula,galvantula,Bug,Electric,Joltik,595,Level 36,
+597,Ferroseed,Ferroseed,ferroseed,Grass,Steel,,,,Ferrothorn (Level 40)
+598,Ferrothorn,Ferrothorn,ferrothorn,Grass,Steel,Ferroseed,597,Level 40,
+599,Klink,Klink,klink,Steel,,,,,Klang (Level 38)
+600,Klang,Klang,klang,Steel,,Klink,599,Level 38,Klinklang (Level 49)
+601,Klinklang,Klinklang,klinklang,Steel,,Klang,600,Level 49,
+602,Tynamo,Tynamo,tynamo,Electric,,,,,Eelektrik (Level 39)
+603,Eelektrik,Eelektrik,eelektrik,Electric,,Tynamo,602,Level 39,Eelektross (use Thunder Stone)
+604,Eelektross,Eelektross,eelektross,Electric,,Eelektrik,603,use Thunder Stone,
+605,Elgyem,Elgyem,elgyem,Psychic,,,,,Beheeyem (Level 42)
+606,Beheeyem,Beheeyem,beheeyem,Psychic,,Elgyem,605,Level 42,
+607,Litwick,Litwick,litwick,Ghost,Fire,,,,Lampent (Level 41)
+608,Lampent,Lampent,lampent,Ghost,Fire,Litwick,607,Level 41,Chandelure (use Dusk Stone)
+609,Chandelure,Chandelure,chandelure,Ghost,Fire,Lampent,608,use Dusk Stone,
+610,Axew,Axew,axew,Dragon,,,,,Fraxure (Level 38)
+611,Fraxure,Fraxure,fraxure,Dragon,,Axew,610,Level 38,Haxorus (Level 48)
+612,Haxorus,Haxorus,haxorus,Dragon,,Fraxure,611,Level 48,
+613,Cubchoo,Cubchoo,cubchoo,Ice,,,,,Beartic (Level 37)
+614,Beartic,Beartic,beartic,Ice,,Cubchoo,613,Level 37,
+616,Shelmet,Shelmet,shelmet,Bug,,,,,Accelgor (Trade with Karrablast)
+617,Accelgor,Accelgor,accelgor,Bug,,Shelmet,616,Trade with Karrablast,
+619,Mienfoo,Mienfoo,mienfoo,Fighting,,,,,Mienshao (Level 50)
+620,Mienshao,Mienshao,mienshao,Fighting,,Mienfoo,619,Level 50,
+622,Golett,Golett,golett,Ground,Ghost,,,,Golurk (Level 43)
+623,Golurk,Golurk,golurk,Ground,Ghost,Golett,622,Level 43,
+624,Pawniard,Pawniard,pawniard,Dark,Steel,,,,Bisharp (Level 52)
+625,Bisharp,Bisharp,bisharp,Dark,Steel,Pawniard,624,Level 52,Kingambit (defeat 3 Bisharp that are holding Leader's Crest)
+627,Rufflet,Rufflet,rufflet,Normal,Flying,,,,"Braviary (Level 54); Hisuian Braviary (Level 54, in Legends: Arceus)"
+628,Braviary,Braviary,braviary,Normal,Flying,Rufflet,627,Level 54,
+628,Hisuian Braviary,Braviary,braviary,Psychic,Flying,Rufflet,627,"Level 54, in Legends: Arceus",
+629,Vullaby,Vullaby,vullaby,Dark,Flying,,,,Mandibuzz (Level 54)
+630,Mandibuzz,Mandibuzz,mandibuzz,Dark,Flying,Vullaby,629,Level 54,
+633,Deino,Deino,deino,Dark,Dragon,,,,Zweilous (Level 50)
+634,Zweilous,Zweilous,zweilous,Dark,Dragon,Deino,633,Level 50,Hydreigon (Level 64)
+635,Hydreigon,Hydreigon,hydreigon,Dark,Dragon,Zweilous,634,Level 64,
+636,Larvesta,Larvesta,larvesta,Bug,Fire,,,,Volcarona (Level 59)
+637,Volcarona,Volcarona,volcarona,Bug,Fire,Larvesta,636,Level 59,
+650,Chespin,Chespin,chespin,Grass,,,,,Quilladin (Level 16)
+651,Quilladin,Quilladin,quilladin,Grass,,Chespin,650,Level 16,Chesnaught (Level 36)
+652,Chesnaught,Chesnaught,chesnaught,Grass,Fighting,Quilladin,651,Level 36,
+653,Fennekin,Fennekin,fennekin,Fire,,,,,Braixen (Level 16)
+654,Braixen,Braixen,braixen,Fire,,Fennekin,653,Level 16,Delphox (Level 36)
+655,Delphox,Delphox,delphox,Fire,Psychic,Braixen,654,Level 36,
+656,Froakie,Froakie,froakie,Water,,,,,Frogadier (Level 16)
+657,Frogadier,Frogadier,frogadier,Water,,Froakie,656,Level 16,Greninja (Level 36)
+658,Greninja,Greninja,greninja,Water,Dark,Frogadier,657,Level 36,
+659,Bunnelby,Bunnelby,bunnelby,Normal,,,,,Diggersby (Level 20)
+660,Diggersby,Diggersby,diggersby,Normal,Ground,Bunnelby,659,Level 20,
+661,Fletchling,Fletchling,fletchling,Normal,Flying,,,,Fletchinder (Level 17)
+662,Fletchinder,Fletchinder,fletchinder,Fire,Flying,Fletchling,661,Level 17,Talonflame (Level 35)
+663,Talonflame,Talonflame,talonflame,Fire,Flying,Fletchinder,662,Level 35,
+664,Scatterbug,Scatterbug,scatterbug,Bug,,,,,Spewpa (Level 9)
+665,Spewpa,Spewpa,spewpa,Bug,,Scatterbug,664,Level 9,Vivillon (Level 12)
+666,Vivillon,Vivillon,vivillon,Bug,Flying,Spewpa,665,Level 12,
+667,Litleo,Litleo,litleo,Fire,Normal,,,,Pyroar (Level 35)
+668,Pyroar,Pyroar,pyroar,Fire,Normal,Litleo,667,Level 35,
+669,Flabébé,Flabébé,flabebe,Fairy,,,,,Floette (Level 19)
+670,Floette,Floette,floette,Fairy,,Flabébé,669,Level 19,Florges (use Shiny Stone)
+671,Florges,Florges,florges,Fairy,,Floette,670,use Shiny Stone,
+672,Skiddo,Skiddo,skiddo,Grass,,,,,Gogoat (Level 32)
+673,Gogoat,Gogoat,gogoat,Grass,,Skiddo,672,Level 32,
+674,Pancham,Pancham,pancham,Fighting,,,,,"Pangoro (Level 32, Dark type Pokémon in party)"
+675,Pangoro,Pangoro,pangoro,Fighting,Dark,Pancham,674,"Level 32, Dark type Pokémon in party",
+677,Espurr,Espurr,espurr,Psychic,,,,,"Meowstic (Male) (Level 25, Male); Meowstic (Female) (Level 25, Female)"
+678,Meowstic (Female),Meowstic,meowstic,Psychic,,Espurr,677,"Level 25, Female",
+678,Meowstic (Male),Meowstic,meowstic,Psychic,,Espurr,677,"Level 25, Male",
+679,Honedge,Honedge,honedge,Steel,Ghost,,,,Doublade (Level 35)
+680,Doublade,Doublade,doublade,Steel,Ghost,Honedge,679,Level 35,Aegislash (Shield Forme) (use Dusk Stone)
+681,Aegislash (Shield Forme),Aegislash,aegislash,Steel,Ghost,Doublade,680,use Dusk Stone,
+682,Spritzee,Spritzee,spritzee,Fairy,,,,,Aromatisse (trade holding Sachet)
+683,Aromatisse,Aromatisse,aromatisse,Fairy,,Spritzee,682,trade holding Sachet,
+684,Swirlix,Swirlix,swirlix,Fairy,,,,,Slurpuff (trade holding Whipped Dream)
+685,Slurpuff,Slurpuff,slurpuff,Fairy,,Swirlix,684,trade holding Whipped Dream,
+686,Inkay,Inkay,inkay,Dark,Psychic,,,,"Malamar (Level 30, holding console upside down)"
+687,Malamar,Malamar,malamar,Dark,Psychic,Inkay,686,"Level 30, holding console upside down",
+688,Binacle,Binacle,binacle,Rock,Water,,,,Barbaracle (Level 39)
+689,Barbaracle,Barbaracle,barbaracle,Rock,Water,Binacle,688,Level 39,
+690,Skrelp,Skrelp,skrelp,Poison,Water,,,,Dragalge (Level 48)
+691,Dragalge,Dragalge,dragalge,Poison,Dragon,Skrelp,690,Level 48,
+692,Clauncher,Clauncher,clauncher,Water,,,,,Clawitzer (Level 37)
+693,Clawitzer,Clawitzer,clawitzer,Water,,Clauncher,692,Level 37,
+694,Helioptile,Helioptile,helioptile,Electric,Normal,,,,Heliolisk (use Sun Stone)
+695,Heliolisk,Heliolisk,heliolisk,Electric,Normal,Helioptile,694,use Sun Stone,
+696,Tyrunt,Tyrunt,tyrunt,Rock,Dragon,,,,"Tyrantrum (Level 39, Daytime)"
+697,Tyrantrum,Tyrantrum,tyrantrum,Rock,Dragon,Tyrunt,696,"Level 39, Daytime",
+698,Amaura,Amaura,amaura,Rock,Ice,,,,"Aurorus (Level 39, Nighttime)"
+699,Aurorus,Aurorus,aurorus,Rock,Ice,Amaura,698,"Level 39, Nighttime",
+704,Goomy,Goomy,goomy,Dragon,,,,,"Sliggoo (Level 40); Hisuian Sliggoo (Level 40, in Legends: Arceus)"
+705,Hisuian Sliggoo,Sliggoo,sliggoo,Steel,Dragon,Goomy,704,"Level 40, in Legends: Arceus","Hisuian Goodra (Level 50, during rain, in Legends: Arceus)"
+705,Sliggoo,Sliggoo,sliggoo,Dragon,,Goomy,704,Level 40,"Goodra (Level 50, during rain)"
+706,Goodra,Goodra,goodra,Dragon,,Sliggoo,705,"Level 50, during rain",
+706,Hisuian Goodra,Goodra,goodra,Steel,Dragon,Hisuian Sliggoo,705,"Level 50, during rain, in Legends: Arceus",
+708,Phantump,Phantump,phantump,Ghost,Grass,,,,Trevenant (Trade)
+709,Trevenant,Trevenant,trevenant,Ghost,Grass,Phantump,708,Trade,
+710,Pumpkaboo (Average Size),Pumpkaboo,pumpkaboo,Ghost,Grass,,,,Gourgeist (Average Size) (Trade)
+711,Gourgeist (Average Size),Gourgeist,gourgeist,Ghost,Grass,Pumpkaboo (Average Size),710,Trade,
+712,Bergmite,Bergmite,bergmite,Ice,,,,,"Avalugg (Level 37); Hisuian Avalugg (Level 37, in Legends: Arceus)"
+713,Avalugg,Avalugg,avalugg,Ice,,Bergmite,712,Level 37,
+713,Hisuian Avalugg,Avalugg,avalugg,Ice,Rock,Bergmite,712,"Level 37, in Legends: Arceus",
+714,Noibat,Noibat,noibat,Flying,Dragon,,,,Noivern (Level 48)
+715,Noivern,Noivern,noivern,Flying,Dragon,Noibat,714,Level 48,
+722,Rowlet,Rowlet,rowlet,Grass,Flying,,,,Dartrix (Level 17)
+723,Dartrix,Dartrix,dartrix,Grass,Flying,Rowlet,722,Level 17,"Decidueye (Level 34); Hisuian Decidueye (Level 36, in Legends: Arceus)"
+724,Decidueye,Decidueye,decidueye,Grass,Ghost,Dartrix,723,Level 34,
+724,Hisuian Decidueye,Decidueye,decidueye,Grass,Fighting,Dartrix,723,"Level 36, in Legends: Arceus",
+725,Litten,Litten,litten,Fire,,,,,Torracat (Level 17)
+726,Torracat,Torracat,torracat,Fire,,Litten,725,Level 17,Incineroar (Level 34)
+727,Incineroar,Incineroar,incineroar,Fire,Dark,Torracat,726,Level 34,
+728,Popplio,Popplio,popplio,Water,,,,,Brionne (Level 17)
+729,Brionne,Brionne,brionne,Water,,Popplio,728,Level 17,Primarina (Level 34)
+730,Primarina,Primarina,primarina,Water,Fairy,Brionne,729,Level 34,
+731,Pikipek,Pikipek,pikipek,Normal,Flying,,,,Trumbeak (Level 14)
+732,Trumbeak,Trumbeak,trumbeak,Normal,Flying,Pikipek,731,Level 14,Toucannon (Level 28)
+733,Toucannon,Toucannon,toucannon,Normal,Flying,Trumbeak,732,Level 28,
+734,Yungoos,Yungoos,yungoos,Normal,,,,,"Gumshoos (Level 20, Daytime)"
+735,Gumshoos,Gumshoos,gumshoos,Normal,,Yungoos,734,"Level 20, Daytime",
+736,Grubbin,Grubbin,grubbin,Bug,,,,,Charjabug (Level 20)
+737,Charjabug,Charjabug,charjabug,Bug,Electric,Grubbin,736,Level 20,"Vikavolt (use Thunder Stone, in Gen 8+, or level up in a Magnetic Field area)"
+738,Vikavolt,Vikavolt,vikavolt,Bug,Electric,Charjabug,737,"use Thunder Stone, in Gen 8+, or level up in a Magnetic Field area",
+739,Crabrawler,Crabrawler,crabrawler,Fighting,,,,,"Crabominable (use Ice Stone, or at Mount Lanakila in Alola)"
+740,Crabominable,Crabominable,crabominable,Fighting,Ice,Crabrawler,739,"use Ice Stone, or at Mount Lanakila in Alola",
+742,Cutiefly,Cutiefly,cutiefly,Bug,Fairy,,,,Ribombee (Level 25)
+743,Ribombee,Ribombee,ribombee,Bug,Fairy,Cutiefly,742,Level 25,
+744,Rockruff,Rockruff,rockruff,Rock,,,,,"Lycanroc (Midday Form) (Level 25, Daytime); Lycanroc (Midnight Form) (Level 25, Nighttime)"
+745,Lycanroc (Midday Form),Lycanroc,lycanroc,Rock,,Rockruff,744,"Level 25, Daytime",
+745,Lycanroc (Midnight Form),Lycanroc,lycanroc,Rock,,Rockruff,744,"Level 25, Nighttime",
+747,Mareanie,Mareanie,mareanie,Poison,Water,,,,Toxapex (Level 38)
+748,Toxapex,Toxapex,toxapex,Poison,Water,Mareanie,747,Level 38,
+749,Mudbray,Mudbray,mudbray,Ground,,,,,Mudsdale (Level 30)
+750,Mudsdale,Mudsdale,mudsdale,Ground,,Mudbray,749,Level 30,
+751,Dewpider,Dewpider,dewpider,Water,Bug,,,,Araquanid (Level 22)
+752,Araquanid,Araquanid,araquanid,Water,Bug,Dewpider,751,Level 22,
+753,Fomantis,Fomantis,fomantis,Grass,,,,,"Lurantis (Level 34, Daytime)"
+754,Lurantis,Lurantis,lurantis,Grass,,Fomantis,753,"Level 34, Daytime",
+755,Morelull,Morelull,morelull,Grass,Fairy,,,,Shiinotic (Level 24)
+756,Shiinotic,Shiinotic,shiinotic,Grass,Fairy,Morelull,755,Level 24,
+757,Salandit,Salandit,salandit,Poison,Fire,,,,"Salazzle (Level 33, Female)"
+758,Salazzle,Salazzle,salazzle,Poison,Fire,Salandit,757,"Level 33, Female",
+759,Stufful,Stufful,stufful,Normal,Fighting,,,,Bewear (Level 27)
+760,Bewear,Bewear,bewear,Normal,Fighting,Stufful,759,Level 27,
+761,Bounsweet,Bounsweet,bounsweet,Grass,,,,,Steenee (Level 18)
+762,Steenee,Steenee,steenee,Grass,,Bounsweet,761,Level 18,Tsareena (after Stomp learned)
+763,Tsareena,Tsareena,tsareena,Grass,,Steenee,762,after Stomp learned,
+767,Wimpod,Wimpod,wimpod,Bug,Water,,,,Golisopod (Level 30)
+768,Golisopod,Golisopod,golisopod,Bug,Water,Wimpod,767,Level 30,
+769,Sandygast,Sandygast,sandygast,Ghost,Ground,,,,Palossand (Level 42)
+770,Palossand,Palossand,palossand,Ghost,Ground,Sandygast,769,Level 42,
+772,Type: Null,Type: Null,type-null,Normal,,,,,Silvally (high Friendship)
+773,Silvally,Silvally,silvally,Normal,,Type: Null,772,high Friendship,
+782,Jangmo-o,Jangmo-o,jangmo-o,Dragon,,,,,Hakamo-o (Level 35)
+783,Hakamo-o,Hakamo-o,hakamo-o,Dragon,Fighting,Jangmo-o,782,Level 35,Kommo-o (Level 45)
+784,Kommo-o,Kommo-o,kommo-o,Dragon,Fighting,Hakamo-o,783,Level 45,
+789,Cosmog,Cosmog,cosmog,Psychic,,,,,Cosmoem (Level 43)
+790,Cosmoem,Cosmoem,cosmoem,Psychic,,Cosmog,789,Level 43,"Solgaleo (Level 53, in Pokémon Sun or Ultra Sun); Lunala (Level 53, in Pokémon Moon or Ultra Moon)"
+791,Solgaleo,Solgaleo,solgaleo,Psychic,Steel,Cosmoem,790,"Level 53, in Pokémon Sun or Ultra Sun",
+792,Lunala,Lunala,lunala,Psychic,Ghost,Cosmoem,790,"Level 53, in Pokémon Moon or Ultra Moon",
+803,Poipole,Poipole,poipole,Poison,,,,,Naganadel (after Dragon Pulse learned)
+804,Naganadel,Naganadel,naganadel,Poison,Dragon,Poipole,803,after Dragon Pulse learned,
+808,Meltan,Meltan,meltan,Steel,,,,,"Melmetal (Pokémon GO only, 400 Meltan Candies)"
+809,Melmetal,Melmetal,melmetal,Steel,,Meltan,808,"Pokémon GO only, 400 Meltan Candies",
+810,Grookey,Grookey,grookey,Grass,,,,,Thwackey (Level 16)
+811,Thwackey,Thwackey,thwackey,Grass,,Grookey,810,Level 16,Rillaboom (Level 35)
+812,Rillaboom,Rillaboom,rillaboom,Grass,,Thwackey,811,Level 35,
+813,Scorbunny,Scorbunny,scorbunny,Fire,,,,,Raboot (Level 16)
+814,Raboot,Raboot,raboot,Fire,,Scorbunny,813,Level 16,Cinderace (Level 35)
+815,Cinderace,Cinderace,cinderace,Fire,,Raboot,814,Level 35,
+816,Sobble,Sobble,sobble,Water,,,,,Drizzile (Level 16)
+817,Drizzile,Drizzile,drizzile,Water,,Sobble,816,Level 16,Inteleon (Level 35)
+818,Inteleon,Inteleon,inteleon,Water,,Drizzile,817,Level 35,
+819,Skwovet,Skwovet,skwovet,Normal,,,,,Greedent (Level 24)
+820,Greedent,Greedent,greedent,Normal,,Skwovet,819,Level 24,
+821,Rookidee,Rookidee,rookidee,Flying,,,,,Corvisquire (Level 18)
+822,Corvisquire,Corvisquire,corvisquire,Flying,,Rookidee,821,Level 18,Corviknight (Level 38)
+823,Corviknight,Corviknight,corviknight,Flying,Steel,Corvisquire,822,Level 38,
+824,Blipbug,Blipbug,blipbug,Bug,,,,,Dottler (Level 10)
+825,Dottler,Dottler,dottler,Bug,Psychic,Blipbug,824,Level 10,Orbeetle (Level 30)
+826,Orbeetle,Orbeetle,orbeetle,Bug,Psychic,Dottler,825,Level 30,
+827,Nickit,Nickit,nickit,Dark,,,,,Thievul (Level 18)
+828,Thievul,Thievul,thievul,Dark,,Nickit,827,Level 18,
+829,Gossifleur,Gossifleur,gossifleur,Grass,,,,,Eldegoss (Level 20)
+830,Eldegoss,Eldegoss,eldegoss,Grass,,Gossifleur,829,Level 20,
+831,Wooloo,Wooloo,wooloo,Normal,,,,,Dubwool (Level 24)
+832,Dubwool,Dubwool,dubwool,Normal,,Wooloo,831,Level 24,
+833,Chewtle,Chewtle,chewtle,Water,,,,,Drednaw (Level 22)
+834,Drednaw,Drednaw,drednaw,Water,Rock,Chewtle,833,Level 22,
+835,Yamper,Yamper,yamper,Electric,,,,,Boltund (Level 25)
+836,Boltund,Boltund,boltund,Electric,,Yamper,835,Level 25,
+837,Rolycoly,Rolycoly,rolycoly,Rock,,,,,Carkol (Level 18)
+838,Carkol,Carkol,carkol,Rock,Fire,Rolycoly,837,Level 18,Coalossal (Level 34)
+839,Coalossal,Coalossal,coalossal,Rock,Fire,Carkol,838,Level 34,
+840,Applin,Applin,applin,Grass,Dragon,,,,Flapple (use Tart Apple); Appletun (use Sweet Apple); Dipplin (use Syrupy Apple)
+841,Flapple,Flapple,flapple,Grass,Dragon,Applin,840,use Tart Apple,
+842,Appletun,Appletun,appletun,Grass,Dragon,Applin,840,use Sweet Apple,
+843,Silicobra,Silicobra,silicobra,Ground,,,,,Sandaconda (Level 36)
+844,Sandaconda,Sandaconda,sandaconda,Ground,,Silicobra,843,Level 36,
+846,Arrokuda,Arrokuda,arrokuda,Water,,,,,Barraskewda (Level 26)
+847,Barraskewda,Barraskewda,barraskewda,Water,,Arrokuda,846,Level 26,
+848,Toxel,Toxel,toxel,Electric,Poison,,,,"Toxtricity (Amped Form) (Level 30, with an amped Nature); Toxtricity (Low Key Form) (Level 30, with a low key Nature)"
+849,Toxtricity (Amped Form),Toxtricity,toxtricity,Electric,Poison,Toxel,848,"Level 30, with an amped Nature",
+849,Toxtricity (Low Key Form),Toxtricity,toxtricity,Electric,Poison,Toxel,848,"Level 30, with a low key Nature",
+850,Sizzlipede,Sizzlipede,sizzlipede,Fire,Bug,,,,Centiskorch (Level 28)
+851,Centiskorch,Centiskorch,centiskorch,Fire,Bug,Sizzlipede,850,Level 28,
+852,Clobbopus,Clobbopus,clobbopus,Fighting,,,,,Grapploct (after Taunt learned)
+853,Grapploct,Grapploct,grapploct,Fighting,,Clobbopus,852,after Taunt learned,
+854,Sinistea,Sinistea,sinistea,Ghost,,,,,Polteageist (use Cracked Pot)
+855,Polteageist,Polteageist,polteageist,Ghost,,Sinistea,854,use Cracked Pot,
+856,Hatenna,Hatenna,hatenna,Psychic,,,,,Hattrem (Level 32)
+857,Hattrem,Hattrem,hattrem,Psychic,,Hatenna,856,Level 32,Hatterene (Level 42)
+858,Hatterene,Hatterene,hatterene,Psychic,Fairy,Hattrem,857,Level 42,
+859,Impidimp,Impidimp,impidimp,Dark,Fairy,,,,Morgrem (Level 32)
+860,Morgrem,Morgrem,morgrem,Dark,Fairy,Impidimp,859,Level 32,Grimmsnarl (Level 42)
+861,Grimmsnarl,Grimmsnarl,grimmsnarl,Dark,Fairy,Morgrem,860,Level 42,
+864,Cursola,Cursola,cursola,Ghost,,Galarian Corsola,222,Level 38,
+865,Sirfetch'd,Sirfetch'd,sirfetchd,Fighting,,Galarian Farfetch'd,83,achieve 3 critical hits in one battle,
+866,Mr. Rime,Mr. Rime,mr-rime,Ice,Psychic,Galarian Mr. Mime,122,Level 42,
+868,Milcery,Milcery,milcery,Fairy,,,,,Alcremie (spin around holding Sweet)
+869,Alcremie,Alcremie,alcremie,Fairy,,Milcery,868,spin around holding Sweet,
+872,Snom,Snom,snom,Ice,Bug,,,,"Frosmoth (high Friendship, Nighttime)"
+873,Frosmoth,Frosmoth,frosmoth,Ice,Bug,Snom,872,"high Friendship, Nighttime",
+878,Cufant,Cufant,cufant,Steel,,,,,Copperajah (Level 34)
+879,Copperajah,Copperajah,copperajah,Steel,,Cufant,878,Level 34,
+884,Duraludon,Duraludon,duraludon,Steel,Dragon,,,,Archaludon (use Metal Alloy)
+885,Dreepy,Dreepy,dreepy,Dragon,Ghost,,,,Drakloak (Level 50)
+886,Drakloak,Drakloak,drakloak,Dragon,Ghost,Dreepy,885,Level 50,Dragapult (Level 60)
+887,Dragapult,Dragapult,dragapult,Dragon,Ghost,Drakloak,886,Level 60,
+891,Kubfu,Kubfu,kubfu,Fighting,,,,,"Urshifu (Single Strike Style) (use Scroll Of Darkness, or in Tower of Darkness in Galar); Urshifu (Rapid Strike Style) (use Scroll Of Waters, or in Tower of Water in Galar)"
+892,Urshifu (Rapid Strike Style),Urshifu,urshifu,Fighting,Water,Kubfu,891,"use Scroll Of Waters, or in Tower of Water in Galar",
+892,Urshifu (Single Strike Style),Urshifu,urshifu,Fighting,Dark,Kubfu,891,"use Scroll Of Darkness, or in Tower of Darkness in Galar",
+899,Wyrdeer,Wyrdeer,wyrdeer,Normal,Psychic,Stantler,234,use Psyshield Bash 20 times in Agile Style,
+900,Kleavor,Kleavor,kleavor,Bug,Rock,Scyther,123,use Black Augurite,
+901,Ursaluna,Ursaluna,ursaluna,Ground,Normal,Ursaring,217,"use Peat Block, under a full moon, in Legends: Arceus",
+902,Basculegion (Female),Basculegion,basculegion,Water,Ghost,Basculin (White-Striped Form),550,"Female, receive 294 recoil damage in battle",
+902,Basculegion (Male),Basculegion,basculegion,Water,Ghost,Basculin (White-Striped Form),550,"Male, receive 294 recoil damage in battle",
+904,Overqwil,Overqwil,overqwil,Dark,Poison,Hisuian Qwilfish,211,use Barb Barrage 20 times in Strong Style,
+906,Sprigatito,Sprigatito,sprigatito,Grass,,,,,Floragato (Level 16)
+907,Floragato,Floragato,floragato,Grass,,Sprigatito,906,Level 16,Meowscarada (Level 36)
+908,Meowscarada,Meowscarada,meowscarada,Grass,Dark,Floragato,907,Level 36,
+909,Fuecoco,Fuecoco,fuecoco,Fire,,,,,Crocalor (Level 16)
+910,Crocalor,Crocalor,crocalor,Fire,,Fuecoco,909,Level 16,Skeledirge (Level 36)
+911,Skeledirge,Skeledirge,skeledirge,Fire,Ghost,Crocalor,910,Level 36,
+912,Quaxly,Quaxly,quaxly,Water,,,,,Quaxwell (Level 16)
+913,Quaxwell,Quaxwell,quaxwell,Water,,Quaxly,912,Level 16,Quaquaval (Level 36)
+914,Quaquaval,Quaquaval,quaquaval,Water,Fighting,Quaxwell,913,Level 36,
+915,Lechonk,Lechonk,lechonk,Normal,,,,,"Oinkologne (Male) (Level 18, Male); Oinkologne (Female) (Level 18, Female)"
+916,Oinkologne (Female),Oinkologne,oinkologne,Normal,,Lechonk,915,"Level 18, Female",
+916,Oinkologne (Male),Oinkologne,oinkologne,Normal,,Lechonk,915,"Level 18, Male",
+917,Tarountula,Tarountula,tarountula,Bug,,,,,Spidops (Level 15)
+918,Spidops,Spidops,spidops,Bug,,Tarountula,917,Level 15,
+919,Nymble,Nymble,nymble,Bug,,,,,Lokix (Level 24)
+920,Lokix,Lokix,lokix,Bug,Dark,Nymble,919,Level 24,
+921,Pawmi,Pawmi,pawmi,Electric,,,,,Pawmo (Level 18)
+922,Pawmo,Pawmo,pawmo,Electric,Fighting,Pawmi,921,Level 18,"Pawmot (walk 1,000 steps in Let's Go mode)"
+923,Pawmot,Pawmot,pawmot,Electric,Fighting,Pawmo,922,"walk 1,000 steps in Let's Go mode",
+924,Tandemaus,Tandemaus,tandemaus,Normal,,,,,"Maushold (Family of Three) (Level 25, rare); Maushold (Family of Four) (Level 25)"
+925,Maushold (Family of Four),Maushold,maushold,Normal,,Tandemaus,924,Level 25,
+925,Maushold (Family of Three),Maushold,maushold,Normal,,Tandemaus,924,"Level 25, rare",
+926,Fidough,Fidough,fidough,Fairy,,,,,Dachsbun (Level 26)
+927,Dachsbun,Dachsbun,dachsbun,Fairy,,Fidough,926,Level 26,
+928,Smoliv,Smoliv,smoliv,Grass,Normal,,,,Dolliv (Level 25)
+929,Dolliv,Dolliv,dolliv,Grass,Normal,Smoliv,928,Level 25,Arboliva (Level 35)
+930,Arboliva,Arboliva,arboliva,Grass,Normal,Dolliv,929,Level 35,
+932,Nacli,Nacli,nacli,Rock,,,,,Naclstack (Level 24)
+933,Naclstack,Naclstack,naclstack,Rock,,Nacli,932,Level 24,Garganacl (Level 38)
+934,Garganacl,Garganacl,garganacl,Rock,,Naclstack,933,Level 38,
+935,Charcadet,Charcadet,charcadet,Fire,,,,,Armarouge (use Auspicious Armor); Ceruledge (use Malicious Armor)
+936,Armarouge,Armarouge,armarouge,Fire,Psychic,Charcadet,935,use Auspicious Armor,
+937,Ceruledge,Ceruledge,ceruledge,Fire,Ghost,Charcadet,935,use Malicious Armor,
+938,Tadbulb,Tadbulb,tadbulb,Electric,,,,,Bellibolt (use Thunder Stone)
+939,Bellibolt,Bellibolt,bellibolt,Electric,,Tadbulb,938,use Thunder Stone,
+940,Wattrel,Wattrel,wattrel,Electric,Flying,,,,Kilowattrel (Level 25)
+941,Kilowattrel,Kilowattrel,kilowattrel,Electric,Flying,Wattrel,940,Level 25,
+942,Maschiff,Maschiff,maschiff,Dark,,,,,Mabosstiff (Level 30)
+943,Mabosstiff,Mabosstiff,mabosstiff,Dark,,Maschiff,942,Level 30,
+944,Shroodle,Shroodle,shroodle,Poison,Normal,,,,Grafaiai (Level 28)
+945,Grafaiai,Grafaiai,grafaiai,Poison,Normal,Shroodle,944,Level 28,
+946,Bramblin,Bramblin,bramblin,Grass,Ghost,,,,"Brambleghast (walk 1,000 steps in Let's Go mode)"
+947,Brambleghast,Brambleghast,brambleghast,Grass,Ghost,Bramblin,946,"walk 1,000 steps in Let's Go mode",
+948,Toedscool,Toedscool,toedscool,Ground,Grass,,,,Toedscruel (Level 30)
+949,Toedscruel,Toedscruel,toedscruel,Ground,Grass,Toedscool,948,Level 30,
+951,Capsakid,Capsakid,capsakid,Grass,,,,,Scovillain (use Fire Stone)
+952,Scovillain,Scovillain,scovillain,Grass,Fire,Capsakid,951,use Fire Stone,
+953,Rellor,Rellor,rellor,Bug,,,,,"Rabsca (walk 1,000 steps in Let's Go mode)"
+954,Rabsca,Rabsca,rabsca,Bug,Psychic,Rellor,953,"walk 1,000 steps in Let's Go mode",
+955,Flittle,Flittle,flittle,Psychic,,,,,Espathra (Level 35)
+956,Espathra,Espathra,espathra,Psychic,,Flittle,955,Level 35,
+957,Tinkatink,Tinkatink,tinkatink,Fairy,Steel,,,,Tinkatuff (Level 24)
+958,Tinkatuff,Tinkatuff,tinkatuff,Fairy,Steel,Tinkatink,957,Level 24,Tinkaton (Level 38)
+959,Tinkaton,Tinkaton,tinkaton,Fairy,Steel,Tinkatuff,958,Level 38,
+960,Wiglett,Wiglett,wiglett,Water,,,,,Wugtrio (Level 26)
+961,Wugtrio,Wugtrio,wugtrio,Water,,Wiglett,960,Level 26,
+963,Finizen,Finizen,finizen,Water,,,,,"Palafin (Zero Form) (Level 38, while in multiplayer)"
+964,Palafin (Zero Form),Palafin,palafin,Water,,Finizen,963,"Level 38, while in multiplayer",
+965,Varoom,Varoom,varoom,Steel,Poison,,,,Revavroom (Level 40)
+966,Revavroom,Revavroom,revavroom,Steel,Poison,Varoom,965,Level 40,
+969,Glimmet,Glimmet,glimmet,Rock,Poison,,,,Glimmora (Level 35)
+970,Glimmora,Glimmora,glimmora,Rock,Poison,Glimmet,969,Level 35,
+971,Greavard,Greavard,greavard,Ghost,,,,,"Houndstone (Level 30, Nighttime)"
+972,Houndstone,Houndstone,houndstone,Ghost,,Greavard,971,"Level 30, Nighttime",
+974,Cetoddle,Cetoddle,cetoddle,Ice,,,,,Cetitan (use Ice Stone)
+975,Cetitan,Cetitan,cetitan,Ice,,Cetoddle,974,use Ice Stone,
+979,Annihilape,Annihilape,annihilape,Fighting,Ghost,Primeape,57,Use Rage Fist 20 times,
+981,Farigiraf,Farigiraf,farigiraf,Normal,Psychic,Girafarig,203,after Twin Beam learned,
+982,Dudunsparce (Three-Segment Form),Dudunsparce,dudunsparce,Normal,,Dunsparce,206,"after Hyper Drill learned, rare",
+982,Dudunsparce (Two-Segment Form),Dudunsparce,dudunsparce,Normal,,Dunsparce,206,after Hyper Drill learned,
+983,Kingambit,Kingambit,kingambit,Dark,Steel,Bisharp,625,defeat 3 Bisharp that are holding Leader's Crest,
+996,Frigibax,Frigibax,frigibax,Dragon,Ice,,,,Arctibax (Level 35)
+997,Arctibax,Arctibax,arctibax,Dragon,Ice,Frigibax,996,Level 35,Baxcalibur (Level 54)
+998,Baxcalibur,Baxcalibur,baxcalibur,Dragon,Ice,Arctibax,997,Level 54,
+999,Gimmighoul (Chest Form),Gimmighoul,gimmighoul,Ghost,,,,,Gholdengo (collect 999 Coins from Roaming Form)
+1000,Gholdengo,Gholdengo,gholdengo,Steel,Ghost,Gimmighoul (Chest Form),999,collect 999 Coins from Roaming Form,
+1011,Dipplin,Dipplin,dipplin,Grass,Dragon,Applin,840,use Syrupy Apple,Hydrapple (after Dragon Cheer learned)
+1012,Poltchageist,Poltchageist,poltchageist,Grass,Ghost,,,,Sinistcha (use Unremarkable Teacup)
+1013,Sinistcha,Sinistcha,sinistcha,Grass,Ghost,Poltchageist,1012,use Unremarkable Teacup,
+1018,Archaludon,Archaludon,archaludon,Steel,Dragon,Duraludon,884,use Metal Alloy,
+1019,Hydrapple,Hydrapple,hydrapple,Grass,Dragon,Dipplin,1011,after Dragon Cheer learned,
