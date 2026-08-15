@@ -48,6 +48,7 @@
   .masthead-row{
     display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
   }
+  .nav-links{ display:flex; gap:8px; flex-wrap:wrap; }
   .back-link{
     font-family:'IBM Plex Mono', monospace;
     font-size:12px; font-weight:500;
@@ -205,6 +206,22 @@
   }
   .auto-ev-btn:hover{ background:#7a9389; }
   .auto-ev-btn:active{ transform: translateY(1px); }
+
+  .save-mon-btn{
+    width:100%;
+    margin-top:14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    font-weight:600;
+    padding: 9px 14px;
+    background: var(--gold);
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    border-radius:2px;
+    cursor:pointer;
+  }
+  .save-mon-btn:hover{ background:#c4923a; }
+  .save-mon-btn:active{ transform: translateY(1px); }
 
   .stat-table{ width:100%; border-collapse:collapse; margin-top:4px; }
   .stat-table th{
@@ -377,7 +394,10 @@
 <div class="sheet">
   <div class="masthead">
     <div class="masthead-row">
-      <a class="back-link" href="index.html">&larr; Back to Field Guide</a>
+      <div class="nav-links">
+        <a class="back-link" href="index.html">&larr; Back to Field Guide</a>
+        <a class="back-link" href="my_pokemon.html">My Pokemon</a>
+      </div>
       <div class="brand">Battle Simulator<small>1v1 dice-off odds</small></div>
     </div>
   </div>
@@ -421,6 +441,33 @@ const TYPE_COLOR = {
 };
 const TYPES = Object.keys(TYPE_COLOR).sort();
 const STAT_NAMES = ['HP','Atk','Def','SpA','SpD','Spe'];
+
+// ============ My Pokemon (localStorage collection) ============
+// Same key/shape as index.html and my_pokemon.html -- localStorage under
+// file:// is one shared "file://" origin (confirmed by testing), so this
+// persists identically whether opened by double-clicking the file or served
+// over GitHub Pages.
+const MY_POKEMON_KEY = 'pokemonDiceMyPokemonV1';
+function loadMyPokemon(){
+  try {
+    const list = JSON.parse(localStorage.getItem(MY_POKEMON_KEY) || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch(e){ return []; }
+}
+function saveMyPokemonList(list){
+  try { localStorage.setItem(MY_POKEMON_KEY, JSON.stringify(list)); }
+  catch(e){ console.error('Could not save My Pokemon', e); }
+}
+function addMyPokemon(entry){
+  const list = loadMyPokemon();
+  const full = Object.assign({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+    caughtAt: new Date().toISOString(),
+  }, entry);
+  list.push(full);
+  saveMyPokemonList(list);
+  return full;
+}
 
 // Standard 18-type effectiveness chart. Only non-1x entries listed; anything
 // absent is a normal (1x) matchup. attacker -> {defender: multiplier}.
@@ -552,6 +599,10 @@ function sideHTML(side){
     + '  <div class="species-status" id="status'+side+'"></div>'
     + '</div>'
     + '<div class="field">'
+    + '  <label class="field-label" for="myPokemon'+side+'">Or load from My Pokemon</label>'
+    + '  <select id="myPokemon'+side+'"><option value="">&mdash; pick a caught Pokemon &mdash;</option></select>'
+    + '</div>'
+    + '<div class="field">'
     + '  <label class="field-label">True type(s)</label>'
     + '  <div class="type-row">'
     + '    <select id="type1'+side+'">'+typeOptions(s.type1,false)+'</select>'
@@ -576,7 +627,9 @@ function sideHTML(side){
     + '    <tbody>'+statRows+'</tbody>'
     + '  </table>'
     + '  <div class="level-readout" id="level'+side+'"></div>'
-    + '</div>';
+    + '</div>'
+    + '<button type="button" class="save-mon-btn" id="saveMon'+side+'">Save to My Pokemon &#9974;</button>'
+    + '<div class="species-status" id="saveNote'+side+'"></div>';
 }
 
 function renderSides(){
@@ -795,23 +848,38 @@ function wireSide(side){
     document.getElementById('base'+side+i).addEventListener('input', ()=>{ readSide(side); recompute(); });
     document.getElementById('ev'+side+i).addEventListener('input', ()=>{ readSide(side); recompute(); });
   }
+  document.getElementById('myPokemon'+side).addEventListener('change', (e)=>{
+    const idx = e.target.value;
+    if(idx === '') return;
+    const entry = loadMyPokemon()[idx];
+    if(!entry) return;
+    loadFromMyPokemon(side, entry);
+    recompute();
+  });
+  document.getElementById('saveMon'+side).addEventListener('click', ()=>{
+    const s = state[side];
+    addMyPokemon({name: s.name, t1: s.type1 || null, t2: s.type2 || null, atk: s.attackType, base: s.base, ev: s.ev, note: 'Battle Sim'});
+    const note = document.getElementById('saveNote'+side);
+    note.className = 'species-status matched';
+    note.textContent = '✓ Saved to My Pokemon!';
+    setTimeout(()=>{ note.textContent = ''; }, 1800);
+    populateMyPokemonSelects();
+  });
 }
 
-// Populate a side directly from "Send to Battle Sim" params -- bypasses the
-// SPECIES lookup on purpose, since the incoming base/EV split is exactly how
-// that Pokemon was actually encountered/rostered in the field guide (real
-// base die-faces plus whatever level bonus it had there), which would be
-// lost if we re-autofilled from the plain real-Pokemon base table instead.
-function applyIncomingSide(side, name, t1, t2, atk, baseStr, evStr){
+// Shared by "Send to Battle Sim" params, "Load from My Pokemon", and any
+// other source that hands over an already-resolved base/EV split rather
+// than a bare species name -- bypasses the SPECIES lookup on purpose, since
+// re-autofilling from the plain real-Pokemon base table would overwrite
+// whatever level bonus/custom stats this specific Pokemon actually has.
+function fillSideFields(side, name, t1, t2, atk, baseArr, evArr, statusPrefix){
   document.getElementById('species'+side).value = name;
   document.getElementById('type1'+side).value = t1;
   document.getElementById('type2'+side).value = t2 || '';
   document.getElementById('atk'+side).value = atk;
-  const baseNums = baseStr.split(',').map(n => parseInt(n,10) || 0);
-  const evNums = evStr.split(',').map(n => parseInt(n,10) || 0);
   for(let i=0;i<6;i++){
-    document.getElementById('base'+side+i).value = baseNums[i] || 0;
-    document.getElementById('ev'+side+i).value = evNums[i] || 0;
+    document.getElementById('base'+side+i).value = baseArr[i] || 0;
+    document.getElementById('ev'+side+i).value = evArr[i] || 0;
   }
   // Lock base stats only if this is a real (national dex) Pokemon -- a
   // homebrew region's own species (Calli, Neo Kanto) won't be in SPECIES,
@@ -820,8 +888,35 @@ function applyIncomingSide(side, name, t1, t2, atk, baseStr, evStr){
   setBaseLocked(side, isReal);
   const status = document.getElementById('status'+side);
   status.className = 'species-status matched';
-  status.textContent = '✓ Sent from Field Guide: '+name+' ('+t1+(t2?'/'+t2:'')+')' + (isReal ? ' — base stats locked' : '');
+  status.textContent = '✓ ' + statusPrefix + ': '+name+' ('+t1+(t2?'/'+t2:'')+')' + (isReal ? ' — base stats locked' : '');
   readSide(side);
+}
+
+function applyIncomingSide(side, name, t1, t2, atk, baseStr, evStr, fromMyPokemon){
+  const baseNums = baseStr.split(',').map(n => parseInt(n,10) || 0);
+  const evNums = evStr.split(',').map(n => parseInt(n,10) || 0);
+  fillSideFields(side, name, t1, t2, atk, baseNums, evNums, fromMyPokemon ? 'Sent from My Pokemon' : 'Sent from Field Guide');
+}
+
+function loadFromMyPokemon(side, entry){
+  fillSideFields(side, entry.name, entry.t1, entry.t2, entry.atk, entry.base, entry.ev, 'Loaded from My Pokemon');
+}
+
+function populateMyPokemonSelect(side){
+  const sel = document.getElementById('myPokemon'+side);
+  const prevValue = sel.value;
+  const list = loadMyPokemon();
+  sel.innerHTML = '<option value="">&mdash; pick a caught Pokemon &mdash;</option>' +
+    list.map((e,i)=>{
+      const total = e.base.reduce((a,b)=>a+b,0) + e.ev.reduce((a,b)=>a+b,0);
+      const label = e.name + ' (' + e.t1 + (e.t2?'/'+e.t2:'') + ', total ' + total + ')';
+      return '<option value="'+i+'">'+label+'</option>';
+    }).join('');
+  if(Array.from(sel.options).some(o=>o.value===prevValue)) sel.value = prevValue;
+}
+function populateMyPokemonSelects(){
+  populateMyPokemonSelect('A');
+  populateMyPokemonSelect('B');
 }
 
 function init(){
@@ -829,9 +924,12 @@ function init(){
   dl.innerHTML = SPECIES.map(s => '<option value="'+s[0]+'">').join('');
   renderSides();
   wireSide('A'); wireSide('B');
+  populateMyPokemonSelects();
 
   const params = new URLSearchParams(window.location.search);
   const incomingName = params.get('name');
+  const incomingSide = params.get('side') === 'A' ? 'A' : 'B';
+  const otherSide = incomingSide === 'A' ? 'B' : 'A';
   const returnState = params.get('return');
 
   // Forward the field guide's saved state through the back link so leaving
@@ -841,12 +939,12 @@ function init(){
     if(backLink) backLink.href = 'index.html?restore=' + encodeURIComponent(returnState);
   }
 
-  onSpeciesInput('A');
+  onSpeciesInput(otherSide);
   if(incomingName){
-    applyIncomingSide('B', incomingName, params.get('t1')||'', params.get('t2')||'', params.get('atk')||'', params.get('base')||'0,0,0,0,0,0', params.get('ev')||'0,0,0,0,0,0');
+    applyIncomingSide(incomingSide, incomingName, params.get('t1')||'', params.get('t2')||'', params.get('atk')||'', params.get('base')||'0,0,0,0,0,0', params.get('ev')||'0,0,0,0,0,0', params.get('origin')==='mypokemon');
     recompute();
   } else {
-    onSpeciesInput('B');
+    onSpeciesInput(incomingSide);
   }
 
   if(incomingName || returnState){
