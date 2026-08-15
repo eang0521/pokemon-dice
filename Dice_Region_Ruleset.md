@@ -1,7 +1,7 @@
 # The Dice Region Ruleset
 ### A generalized framework for building Pokémon regions, extracted from the Calli project and proven again end-to-end on Neo Kanto
 
-This document strips out everything region-specific and keeps only the *rules* — so it can be reused to build a new region from scratch, or to add one to a tool that already has another region in it. Wherever a rule references a number (like "8 gyms" or "209 Pokémon"), treat it as a tunable default, not a hard requirement, unless marked "fixed." §§14–16 are new since Calli — they cover the reference-doc set, the actual data schema a digital tool should use, and the build process that caught real bugs building Neo Kanto.
+This document strips out everything region-specific and keeps only the *rules* — so it can be reused to build a new region from scratch, or to add one to a tool that already has another region in it. Wherever a rule references a number (like "8 gyms" or "209 Pokémon"), treat it as a tunable default, not a hard requirement, unless marked "fixed." §§15–17 are new since Calli — they cover the reference-doc set, the actual data schema a digital tool should use, and the build process that caught real bugs building Neo Kanto. §14 is new since Hoenn — it's the actual 1v1 combat-resolution math (dice-vs-stat rolls, type-effectiveness dice swaps, STAB), which everything up through §13 assumes exists but never actually defines.
 
 ---
 
@@ -78,8 +78,8 @@ This is the engine underneath everything else — wild encounters, trainer battl
 - **Reserve the rarest slot (sum 12) for the location's signature rare find** — a Legendary/Mythical if the location has one, otherwise the location's best "trophy" catch. Since sum 12 is only reachable at max badge count, this is naturally a postgame-flavored reward with zero extra flagging required. If a signature find should require an additional condition beyond just rolling 12 (e.g. a second Legendary that only appears after some other postgame milestone), say so explicitly — don't let two Legendaries silently share one slot.
 - **Sanity-check reachability:** nothing should be *permanently* locked behind an impossible combination (e.g., don't put a Pokémon whose evolution requires a level higher than the location's level cap ever allows at a slot that implies it should be evolved there).
 - **Prefer keeping an evolution family together in one table**, not just in the dex overall — rather than scattering its stages across unrelated locations, place the base and its evolution(s) in the *same* table wherever the local dex pool supports it (this is the natural consequence of the ~4–5-families rule above, not a separate step). This isn't a hard requirement (a genuinely rare/scattered species is fine to split, and it's not always possible), but a table where every line's second half lives in a different table reads as unauthored the same way an all-singles table does. Audit this the same way as reachability: for every evolution step where both stages are placed *somewhere* in the region, check they share at least one table — and when redesigning a table, watch for orphaning a species that used to be there (removing a base-stage's only appearance because its slot got reassigned, while its evolution is still shown elsewhere with nothing under it).
-- **Every species needs at least one path into the player's hands.** Cross-check the full dex against every encounter table: a species that's evolution-only (reachable by leveling/stone/trading an already-placed lower stage) is fine to leave out; a species that's neither in any wild table *nor* reachable by evolving something that is, is a dead end. This is easy to miss on one species out of ~200 — check it with a script, not by eye (build the reverse index, §14 item 5, and see what's missing).
-- **Encounter table slots store the literal target species**, already at whatever evolutionary stage that slot's rarity implies — a high slot can name an evolved form directly, and a low-level encounter against that slot downgrades via `predecessor`/`minLevel` (§15), not by storing the base species and resolving up. This is the opposite convention from trainer-class/gym/Elite Four tables (§7–9), which store the *base* species and resolve the displayed stage from level at reveal time. Don't mix the two.
+- **Every species needs at least one path into the player's hands.** Cross-check the full dex against every encounter table: a species that's evolution-only (reachable by leveling/stone/trading an already-placed lower stage) is fine to leave out; a species that's neither in any wild table *nor* reachable by evolving something that is, is a dead end. This is easy to miss on one species out of ~200 — check it with a script, not by eye (build the reverse index, §15 item 5, and see what's missing).
+- **Encounter table slots store the literal target species**, already at whatever evolutionary stage that slot's rarity implies — a high slot can name an evolved form directly, and a low-level encounter against that slot downgrades via `predecessor`/`minLevel` (§16), not by storing the base species and resolving up. This is the opposite convention from trainer-class/gym/Elite Four tables (§7–9), which store the *base* species and resolve the displayed stage from level at reveal time. Don't mix the two.
 
 ---
 
@@ -157,7 +157,7 @@ Buckets don't need to be perfectly even — they're deliberately compressed at t
 - **The fix — a buffer rule:** a non-level evolution's proper level = its pre-evolution's proper level **+ a fixed buffer**. A buffer that scales (e.g., +6 if the pre-evolution is level 1, +3 for anything higher) reads more naturally than one flat number, since a Pokémon evolving from its very first stage should get more runway than one evolving from something already mid-progression.
 - **Split evolutions with one level-based sibling are the exception to the buffer.** When a pre-evolution branches into two (or more) evolutions and *at least one* branch is a normal level-up evolution, give every non-level sibling in that same split the **level-based sibling's own level** instead of computing a buffer — don't make same-tier siblings appear at different levels than the branch that got there by leveling normally, for no in-fiction reason. Only fall back to the scaling buffer when *no* branch in the split is level-based (Eevee's stone/friendship evolutions, for instance, have no level-up sibling to borrow from, so all of them use the buffer).
 - **Chain these calculations in dependency order** when a family has back-to-back non-level steps (e.g., base → non-level stage 2 → non-level stage 3) — the second buffer must be computed from the *already-buffered* first result, not from the original mainline data, or you'll under-count.
-- **Keep this buffered ruleset separate from your "true" wild-encounter evolution data** if the two systems have different needs — wild encounters may only need a simple downgrade-if-too-low check (which never breaks even with zero buffer), while a trainer/gym system that always shows "the best reachable stage" absolutely needs the buffer. Don't let a fix for one system silently corrupt the other. (Concretely: this is `minLevel` vs. `trainerMinLevel`, §15 — a non-level evolution's `minLevel` just inherits its predecessor's own `minLevel` unchanged, no buffer, while its `trainerMinLevel` gets the buffer or the borrowed sibling level above.)
+- **Keep this buffered ruleset separate from your "true" wild-encounter evolution data** if the two systems have different needs — wild encounters may only need a simple downgrade-if-too-low check (which never breaks even with zero buffer), while a trainer/gym system that always shows "the best reachable stage" absolutely needs the buffer. Don't let a fix for one system silently corrupt the other. (Concretely: this is `minLevel` vs. `trainerMinLevel`, §16 — a non-level evolution's `minLevel` just inherits its predecessor's own `minLevel` unchanged, no buffer, while its `trainerMinLevel` gets the buffer or the borrowed sibling level above.)
 - **Branching evolutions need an explicit resolution rule for trainer/gym rosters**, not just a data note about which species exist. Default to a **random pick among whichever branches are level-eligible** at reveal time — checked *per branch option*, not once for the whole group, since branches can clear their threshold at different points (a trade-buffered sibling and a level-based sibling won't always share one, even after the rule above; check each option's own threshold independently). Reserve a **forced-branch override** for the specific roster slots where one evolution is clearly the intended pick (a Water-specialist gym leader's mid-evolution should probably become the pure-Water branch, not a coin flip that might hand them an off-type Pokémon) — implement it as a `[species, forcedBranch]` pair on that one slot only, so every *other* reference to the same species elsewhere in the region stays randomized rather than hardcoding the branch at the species level.
 
 ---
@@ -182,7 +182,32 @@ A way to add combat-flavor randomness without inventing a full type-effectivenes
 
 ---
 
-## 14. Reference Doc Set
+## 14. Battle Resolution System (1v1 Combat)
+
+A lightweight, single-roll combat model for resolving "which of these two Pokémon wins this exchange" — not a full HP/damage engine. Built entirely from pieces §12–13 already established: die-face stats plus their level bonus points, and the true-type/attack-type split.
+
+- **Combat stat = the six die-face numbers, level bonus already included** (§12) — the same six numbers already shown for the Pokémon elsewhere in the tool. No separate combat-only stat block.
+- **Each side rolls 1d6 to pick which of its own six stats is in play** — 1→HP, 2→Atk, 3→Def, 4→SpA, 5→SpD, 6→Spe (the fixed die-face order from §12). The side's **result is the *value* of the picked stat, not the raw 1–6 roll** — a Pokémon with die-faces `[6,7,3,5,4,7]` rolling a 6 contributes a result of 7 (its Speed die-face), not 6.
+- **Type effectiveness changes how many of these picks are rolled and whether the best or worst is kept.** This needs a real 18-type effectiveness chart (the attacker's attack type against every one of the defender's 1–2 true types, multiplied together the normal way) — the §13 wheel only ever *picks* an attack type and was never meant to resolve effectiveness, so don't reuse it for this.
+
+  | Effectiveness | Picks rolled | Keep |
+  |---|---|---|
+  | 4× (doubly super effective) | 3 | best |
+  | 2× (super effective) | 2 | best |
+  | 1× (normal) | 1 | — |
+  | 0.5× (not very effective) | 2 | worst |
+  | 0.25× (doubly resisted) | 3 | worst |
+  | 0× (immune) | 3 | worst |
+
+  Each "pick" is a full independent stat-selection roll (previous bullet), not a plain 1–6 number — "2 picks, keep best" means rolling which-stat twice, independently (repeats allowed), and keeping the higher of the two resulting stat *values*.
+- **STAB (Same-Type Attack Bonus): +1 to the final result** if the Pokémon's attack type matches one of its own true types. This is exactly why §13 insists on keeping true type and rolled/assigned attack type visibly distinct — STAB is the one place that distinction has a mechanical payoff, not just a display nicety.
+- **Resolution: higher final result wins the exchange.** A tie is a draw (reroll, or split the outcome — GM's call). Because every input is a small number of d6-scale picks, the full outcome space is always small enough to enumerate exactly rather than simulate — worst case (3 picks vs. 3 picks) is only 6³ × 6³ = 46,656 pairings, so exact win/loss/tie odds are cheap to compute by brute force.
+- **This is a single opposed roll, not a multi-round battle with HP loss** — deliberately so, matching the granularity everything else in this ruleset already works at (one roll decides one outcome). A region wanting a full turn-based battle system needs a different mechanic; this one only answers "who wins this exchange."
+- **A standalone battle simulator page is the natural implementation, kept separate from the main region tool.** It doesn't need a region loaded to be useful — a species picker backed by a fixed base-stat table (real Pokémon, or a region's own `types`/`dice` data, §16) lets the user select any two Pokémon, assign bonus points per stat (their sum *is* the Pokémon's effective level, §10, §12 — don't make the user set level and bonus points separately, one derives the other), assign each an attack type, and see exact win/loss/tie percentages computed by enumeration rather than by sampling. Link it from the main tool and back, but keep it its own file — comparing two arbitrary Pokémon is a distinct tool from the region-bound roller/map/dex.
+
+---
+
+## 15. Reference Doc Set
 
 Author these per region as the human-readable spec — they're what the digital tool's data gets built *from*, not something the tool loads at runtime. Build them roughly in this order, since later docs key off earlier ones:
 
@@ -201,7 +226,7 @@ Don't build a separate "stats for gym Pokémon only" doc — it's a strict subse
 
 ---
 
-## 15. Digital Companion Tool: Data Schema
+## 16. Digital Companion Tool: Data Schema
 
 If the region feeds an interactive tool, this is the data shape that's been built and proven across two regions in the same tool — use it rather than inventing a new one per region.
 
@@ -229,14 +254,14 @@ If the region feeds an interactive tool, this is the data shape that's been buil
 
 ---
 
-## 16. Build Process & Validation
+## 17. Build Process & Validation
 
 The order that actually worked, end to end, building a second region into an existing tool:
 
 1. **Worldbuilding proposal first, as its own reviewable document** — premise, dex composition (what's kept/cut/added and why), town/gym changes, Elite Four. Get this read and locked before building any mechanical data on top of it; re-deriving a whole dex because a premise detail changed later is expensive. Expect more than one review round.
 2. **Map next**, once the premise is settled — town/gym locations depend on premise decisions, so translating the node graph (§1) into an actual grid earlier just means redoing it.
-3. **Reference docs in dependency order** (§14).
-4. **Implement by parsing the docs into the schema (§15) programmatically, not by hand-transcribing.** A script that reads the Regional Dex table and Encounter Tables and emits the region's data object is slower to write once than typing the same thing by hand, but it can't introduce a transcription typo, and re-running it after a doc edit is free. Hand-transcribing ~200 species across a dozen tables *will* introduce at least one silent mismatch — this is precisely how a "confirm both docs agree" bug (§14 item 1) happens in the first place.
+3. **Reference docs in dependency order** (§15).
+4. **Implement by parsing the docs into the schema (§16) programmatically, not by hand-transcribing.** A script that reads the Regional Dex table and Encounter Tables and emits the region's data object is slower to write once than typing the same thing by hand, but it can't introduce a transcription typo, and re-running it after a doc edit is free. Hand-transcribing ~200 species across a dozen tables *will* introduce at least one silent mismatch — this is precisely how a "confirm both docs agree" bug (§15 item 1) happens in the first place.
 5. **Validate with scripts before trusting the result, specifically:**
    - Every species named in every encounter table / trainer table / gym / Elite Four / Champion roster exists in `types` and `dice`.
    - Every `locationId` referenced by a map node resolves to a real `locations[]` entry, and vice versa.
@@ -264,6 +289,7 @@ The order that actually worked, end to end, building a second region into an exi
 - [ ] Branching evolutions resolve randomly among level-eligible options by default (checked per branch), with forced overrides only on the specific slots where flavor clearly demands one
 - [ ] Stat-to-die conversion formula fixed, level-based bonus distribution rule defined
 - [ ] (Optional) attack-type wheel mechanic for combat flavor
+- [ ] (Optional) 1v1 battle resolution system defined (dice-vs-stat picks, type-effectiveness dice-count/best-worst table, STAB), backed by a real 18-type effectiveness chart rather than the attack-type wheel; standalone battle simulator built and cross-linked with the main tool if so
 - [ ] Reference doc set built in dependency order (dex → dungeons → evolution guide → encounter tables → locations → trainer classes → gyms → Elite Four), one merged dex/stats doc, no gym-only stats doc
 - [ ] Digital tool data built by parsing the docs programmatically, then validated (species existence, `locationId` resolution, graph connectivity, obtainability, dex-count arithmetic) before trusting it
 - [ ] Shipped tool tested by actually driving it — region switch (if applicable), wild roll, trainer/gym roll at multiple badge counts, map interaction — not just read through

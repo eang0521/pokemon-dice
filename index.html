@@ -489,6 +489,12 @@
     border-radius: 4px;
     cursor:pointer;
   }
+  .tab-link{
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
   .tab-btn.active{
     background: var(--redwood);
     color: var(--paper);
@@ -939,6 +945,7 @@
     <button class="tab-btn active" id="tabRollerBtn">Roller</button>
     <button class="tab-btn" id="tabMapBtn">Region Map</button>
     <button class="tab-btn" id="tabDexBtn">Pokemon Data</button>
+    <a class="tab-btn tab-link" href="battle_simulator.html">Battle Sim</a>
   </div>
 
   <div id="rollerPanel">
