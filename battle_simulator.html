@@ -159,6 +159,12 @@
   input[type="text"]:focus-visible, input[type="number"]:focus-visible, select:focus-visible{
     outline: 3px solid var(--gold); outline-offset:1px;
   }
+  input[type="number"]:disabled{
+    background: var(--paper-deep);
+    color: var(--sage);
+    cursor: not-allowed;
+    border-style: dashed;
+  }
   .species-status{
     margin-top:6px;
     font-family:'IBM Plex Mono', monospace;
@@ -619,6 +625,16 @@ function autoSetEVs(side){
   recompute();
 }
 
+// Real Pokemon have fixed base stats -- lock those six inputs so they can't
+// be edited into something that species doesn't actually have. EVs, type,
+// and attack type stay editable either way (bonus points and attack-type
+// choice are legitimately variable even for a real Pokemon).
+function setBaseLocked(side, locked){
+  for(let i=0;i<6;i++){
+    document.getElementById('base'+side+i).disabled = locked;
+  }
+}
+
 function onSpeciesInput(side){
   const input = document.getElementById('species'+side);
   const status = document.getElementById('status'+side);
@@ -629,9 +645,11 @@ function onSpeciesInput(side){
     document.getElementById('type2'+side).value = t2 || '';
     document.getElementById('atk'+side).value = t1;
     for(let i=0;i<6;i++){ document.getElementById('base'+side+i).value = faces[i]; }
+    setBaseLocked(side, true);
     status.className = 'species-status matched';
-    status.textContent = '✓ Matched: '+name+' ('+t1+(t2?'/'+t2:'')+')';
+    status.textContent = '✓ Matched: '+name+' ('+t1+(t2?'/'+t2:'')+') — base stats locked';
   } else {
+    setBaseLocked(side, false);
     status.className = 'species-status custom';
     status.textContent = '— Custom entry — set type and base stats manually';
   }
@@ -795,9 +813,14 @@ function applyIncomingSide(side, name, t1, t2, atk, baseStr, evStr){
     document.getElementById('base'+side+i).value = baseNums[i] || 0;
     document.getElementById('ev'+side+i).value = evNums[i] || 0;
   }
+  // Lock base stats only if this is a real (national dex) Pokemon -- a
+  // homebrew region's own species (Calli, Neo Kanto) won't be in SPECIES,
+  // so those stay editable same as any other custom entry.
+  const isReal = !!findSpecies(name);
+  setBaseLocked(side, isReal);
   const status = document.getElementById('status'+side);
   status.className = 'species-status matched';
-  status.textContent = '✓ Sent from Field Guide: '+name+' ('+t1+(t2?'/'+t2:'')+')';
+  status.textContent = '✓ Sent from Field Guide: '+name+' ('+t1+(t2?'/'+t2:'')+')' + (isReal ? ' — base stats locked' : '');
   readSide(side);
 }
 
