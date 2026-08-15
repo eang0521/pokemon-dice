@@ -627,12 +627,51 @@ function wireSide(side){
   }
 }
 
+// Populate a side directly from "Send to Battle Sim" params -- bypasses the
+// SPECIES lookup on purpose, since the incoming stats already include the
+// Pokemon's level bonus as encountered/rostered in the field guide, which
+// would be lost if we re-autofilled from the plain real-Pokemon base table.
+function applyIncomingSide(side, name, t1, t2, atk, statsStr){
+  document.getElementById('species'+side).value = name;
+  document.getElementById('type1'+side).value = t1;
+  document.getElementById('type2'+side).value = t2 || '';
+  document.getElementById('atk'+side).value = atk;
+  const nums = statsStr.split(',').map(n => parseInt(n,10) || 0);
+  for(let i=0;i<6;i++){ document.getElementById('base'+side+i).value = nums[i] || 0; }
+  const status = document.getElementById('status'+side);
+  status.className = 'species-status matched';
+  status.textContent = '✓ Sent from Field Guide: '+name+' ('+t1+(t2?'/'+t2:'')+')';
+  readSide(side);
+}
+
 function init(){
   const dl = document.getElementById('pokemonList');
   dl.innerHTML = SPECIES.map(s => '<option value="'+s[0]+'">').join('');
   renderSides();
   wireSide('A'); wireSide('B');
-  onSpeciesInput('A'); onSpeciesInput('B');
+
+  const params = new URLSearchParams(window.location.search);
+  const incomingName = params.get('name');
+  const returnState = params.get('return');
+
+  // Forward the field guide's saved state through the back link so leaving
+  // this page returns to exactly where the user was, not a fresh reload.
+  if(returnState){
+    const backLink = document.querySelector('.back-link');
+    if(backLink) backLink.href = 'index.html?restore=' + encodeURIComponent(returnState);
+  }
+
+  onSpeciesInput('A');
+  if(incomingName){
+    applyIncomingSide('B', incomingName, params.get('t1')||'', params.get('t2')||'', params.get('atk')||'', params.get('stats')||'0,0,0,0,0,0');
+    recompute();
+  } else {
+    onSpeciesInput('B');
+  }
+
+  if(incomingName || returnState){
+    history.replaceState(null, '', window.location.pathname);
+  }
 }
 init();
 </script>

@@ -813,6 +813,22 @@
     text-transform:uppercase;
     letter-spacing:0.06em;
   }
+  .send-battle-btn{
+    align-self:flex-start;
+    margin-top: 4px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight:600;
+    padding: 6px 11px;
+    background: var(--sage);
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    cursor:pointer;
+  }
+  .send-battle-btn:hover{ background:#7a9389; }
+  .send-battle-btn:active{ transform: translateY(1px); }
+  #wildSendBattleBtn{ margin: 14px auto 0; display:block; width:auto; }
   .stat-mini-row{
     display:flex;
     align-items:center;
@@ -997,6 +1013,7 @@
       </div>
       <div class="die-faces" id="dieFaces"></div>
       <div class="stat-total-line" id="statTotalLine"></div>
+      <button type="button" class="send-battle-btn" id="wildSendBattleBtn">Send to Battle Sim &#9876;</button>
       <button class="roll-btn stat-roll-btn" id="wildStatRollBtn">Roll a Stat (1-6)</button>
       <div class="stat-roll-note" id="wildStatRollNote" style="text-align:center;margin-top:8px;"></div>
     </div>
@@ -1208,6 +1225,16 @@ const TYPE_COLOR = {
   poison:'#9B59B6', bug:'#9AAE3A', electric:'#D9A441', steel:'#8C97A3', rock:'#B7A05A',
   ground:'#C9A66B', ice:'#6FB8C2', water:'#4E86C6'
 };
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+// Last resolved result per panel, kept around so (a) the "Send to Battle Sim"
+// buttons have something to read and (b) a restored page can redisplay the
+// exact same result without re-rolling (re-rolling would re-randomize tie
+// breaks and attack-type wheel spins, silently changing what's shown).
+let lastWildResult = null;
+let lastTrainerResult = null;
+let lastGymResult = null;
+
 function wheelShift(sum){
   if(sum===2) return -2;
   if(sum===3||sum===4) return -1;
@@ -1374,48 +1401,12 @@ document.getElementById('rollBtn').addEventListener('click', async ()=>{
   }
 
   const stats = DATA.dice[species] || [0,0,0,0,0,0];
-
-  document.getElementById('levelLine').innerHTML = downgraded
-    ? 'Encountered at <b>Level '+finalLevel+'</b> -- too low level for '+rolledSpecies+' (needs Lv'+DATA.minLevel[rolledSpecies]+'), appears as its earlier stage instead'
-    : 'Encountered at <b>Level '+finalLevel+'</b>';
-
-  document.getElementById('monName').textContent = species;
-  const dfEl = document.getElementById('dieFaces');
-  dfEl.innerHTML='';
   const levelBonus = distributeLevelBonus(stats, finalLevel);
-  let statTotal = 0;
-  const currentAdjStats = [];
-  stats.forEach((n,i)=>{
-    const adj = levelBonus[i];
-    const adjVal = n + adj;
-    currentAdjStats.push(adjVal);
-    statTotal += adjVal;
-    const box = document.createElement('div');
-    box.className='die-face';
-    box.dataset.idx = i;
-    box.innerHTML = '<span class="n">'+n+'</span><span class="lbl">Die '+(i+1)+'</span><span class="adj">+'+adj+'</span>';
-    dfEl.appendChild(box);
-  });
-  wildCurrentStats = currentAdjStats;
-  document.getElementById('statTotalLine').innerHTML = 'Stat total (incl. Level '+finalLevel+' bonus): <b>'+statTotal+'</b>';
-  document.getElementById('wildStatRollNote').textContent = '';
-  const wildBoxes = Array.from(document.querySelectorAll('.die-face'));
-  wildBoxes.forEach(b=>b.classList.remove('hit'));
-  const wildHighIdx = pickHighestIndex(currentAdjStats);
-  if(wildBoxes[wildHighIdx]) wildBoxes[wildHighIdx].classList.add('highest');
-  document.getElementById('result').classList.add('show');
+  const adjStats = stats.map((n,i) => n + levelBonus[i]);
+  const highIdx = pickHighestIndex(adjStats);
 
   // True type(s) -- the Pokémon's actual dex typing
   const trueTypes = (DATA.types[species] || ['Normal', null]).filter(t=>t).map(t=>t.toLowerCase());
-  const trueTypeEl = document.getElementById('trueTypePills');
-  trueTypeEl.innerHTML = '';
-  trueTypes.forEach(t=>{
-    const pill = document.createElement('div');
-    pill.className = 'type-pill';
-    pill.textContent = t;
-    pill.style.background = TYPE_COLOR[t] || '#888';
-    trueTypeEl.appendChild(pill);
-  });
 
   // Attack type roll (computed, not displayed step-by-step -- same method as before)
   const baseType = trueTypes[Math.floor(Math.random()*trueTypes.length)];
@@ -1426,9 +1417,8 @@ document.getElementById('rollBtn').addEventListener('click', async ()=>{
   const baseIdx = WHEEL.indexOf(baseType);
   const finalIdx = ((baseIdx + shift) % WHEEL.length + WHEEL.length) % WHEEL.length;
   const finalType = WHEEL[finalIdx];
-  const finalPill = document.getElementById('finalTypePill');
-  finalPill.textContent = finalType;
-  finalPill.style.background = TYPE_COLOR[finalType] || '#888';
+
+  renderWildResult({species, finalLevel, downgraded, rolledSpecies, adjStats, highIdx, trueTypes, finalType});
 
   } catch (err) {
     showError('The roll couldn\'t be completed. (' + err.message + ')');
@@ -1438,6 +1428,61 @@ document.getElementById('rollBtn').addEventListener('click', async ()=>{
     rolling = false;
   }
 });
+
+// Display a resolved wild-encounter result -- used both right after a live
+// roll and when redisplaying one from restored state. All the randomized
+// decisions (downgrade, stat tie-breaks, attack-type roll) are already
+// baked into `data`; this function only writes them to the DOM.
+function renderWildResult(data){
+  document.getElementById('levelLine').innerHTML = data.downgraded
+    ? 'Encountered at <b>Level '+data.finalLevel+'</b> -- too low level for '+data.rolledSpecies+' (needs Lv'+DATA.minLevel[data.rolledSpecies]+'), appears as its earlier stage instead'
+    : 'Encountered at <b>Level '+data.finalLevel+'</b>';
+
+  document.getElementById('monName').textContent = data.species;
+  const stats = DATA.dice[data.species] || [0,0,0,0,0,0];
+  const dfEl = document.getElementById('dieFaces');
+  dfEl.innerHTML = '';
+  let statTotal = 0;
+  data.adjStats.forEach((adjVal, i)=>{
+    const adj = adjVal - stats[i];
+    statTotal += adjVal;
+    const box = document.createElement('div');
+    box.className = 'die-face';
+    box.dataset.idx = i;
+    box.innerHTML = '<span class="n">'+stats[i]+'</span><span class="lbl">Die '+(i+1)+'</span><span class="adj">+'+adj+'</span>';
+    dfEl.appendChild(box);
+  });
+  wildCurrentStats = data.adjStats;
+  document.getElementById('statTotalLine').innerHTML = 'Stat total (incl. Level '+data.finalLevel+' bonus): <b>'+statTotal+'</b>';
+  document.getElementById('wildStatRollNote').textContent = '';
+  const wildBoxes = Array.from(document.querySelectorAll('.die-face'));
+  wildBoxes.forEach(b=>b.classList.remove('hit'));
+  if(wildBoxes[data.highIdx]) wildBoxes[data.highIdx].classList.add('highest');
+  document.getElementById('result').classList.add('show');
+
+  const trueTypeEl = document.getElementById('trueTypePills');
+  trueTypeEl.innerHTML = '';
+  data.trueTypes.forEach(t=>{
+    const pill = document.createElement('div');
+    pill.className = 'type-pill';
+    pill.textContent = t;
+    pill.style.background = TYPE_COLOR[t] || '#888';
+    trueTypeEl.appendChild(pill);
+  });
+
+  const finalPill = document.getElementById('finalTypePill');
+  finalPill.textContent = data.finalType;
+  finalPill.style.background = TYPE_COLOR[data.finalType] || '#888';
+
+  const sendBtn = document.getElementById('wildSendBattleBtn');
+  sendBtn.dataset.name = data.species;
+  sendBtn.dataset.t1 = data.trueTypes[0] ? cap(data.trueTypes[0]) : '';
+  sendBtn.dataset.t2 = data.trueTypes[1] ? cap(data.trueTypes[1]) : '';
+  sendBtn.dataset.atk = cap(data.finalType);
+  sendBtn.dataset.stats = data.adjStats.join(',');
+
+  lastWildResult = data;
+}
 
 let wildStatRolling = false;
 document.getElementById('wildStatRollBtn').addEventListener('click', async ()=>{
@@ -1510,10 +1555,20 @@ let trainerRolling = false;
 
 // Shared row builder: given a resolved species and its level, produce the same
 // stat-block / true-type / attack-type display used by both Trainer Battle and Gym Leader.
-function buildMonRow(finalSpecies, level, forcedType){
+// `precomputed`, when given as {adjStats, highIdx}, skips the two randomized
+// steps below (stat-bonus tie-break, highest-stat tie-break) and uses those
+// exact values instead -- used when redisplaying a previously-rolled row
+// (e.g. after restoring state) so a re-roll's tie-breaks can't silently
+// change what's shown.
+function buildMonRow(finalSpecies, level, forcedType, precomputed){
   const stats = DATA.dice[finalSpecies] || [0,0,0,0,0,0];
-  const levelBonus = distributeLevelBonus(stats, level);
-  const adjStats = stats.map((n,i) => n + levelBonus[i]);
+  let adjStats;
+  if(precomputed && precomputed.adjStats){
+    adjStats = precomputed.adjStats;
+  } else {
+    const levelBonus = distributeLevelBonus(stats, level);
+    adjStats = stats.map((n,i) => n + levelBonus[i]);
+  }
   const statTotal = adjStats.reduce((a,b)=>a+b, 0);
 
   const types = (DATA.types[finalSpecies] || ['Normal', null]).filter(t=>t).map(t=>t.toLowerCase());
@@ -1539,10 +1594,12 @@ function buildMonRow(finalSpecies, level, forcedType){
   const trueTypeHtml = types.map(t =>
     '<span class="trainer-type-pill" style="background:' + (TYPE_COLOR[t]||'#888') + ';">' + t + '</span>'
   ).join('');
-  const highIdx = pickHighestIndex(adjStats);
+  const highIdx = (precomputed && precomputed.highIdx !== undefined) ? precomputed.highIdx : pickHighestIndex(adjStats);
   const statBoxesHtml = adjStats.map((n,i) =>
     '<span class="stat-mini-box' + (i===highIdx ? ' highest' : '') + '" data-idx="'+i+'">'+n+'</span>'
   ).join('');
+  const sendT1 = types[0] ? cap(types[0]) : '';
+  const sendT2 = types[1] ? cap(types[1]) : '';
   row.innerHTML =
     '<div class="trainer-mon-top">' +
       '<span class="trainer-mon-name">' + finalSpecies + ' <span class="trainer-mon-level">Lv ' + level + '</span></span>' +
@@ -1558,10 +1615,12 @@ function buildMonRow(finalSpecies, level, forcedType){
       '<span class="stat-mini-total">Total: ' + statTotal + '</span>' +
     '</div>' +
     '<span class="tap-hint">Tap card to roll a stat (1-6)</span>' +
-    '<span class="stat-roll-note"></span>';
+    '<span class="stat-roll-note"></span>' +
+    '<button type="button" class="send-battle-btn" data-name="' + finalSpecies + '" data-t1="' + sendT1 + '" data-t2="' + sendT2 + '" data-atk="' + cap(finalType) + '" data-stats="' + adjStats.join(',') + '">Send to Battle Sim &#9876;</button>';
 
   let cardRolling = false;
-  row.addEventListener('click', async ()=>{
+  row.addEventListener('click', async (e)=>{
+    if(e.target.closest('.send-battle-btn')) return;
     if(cardRolling) return;
     cardRolling = true;
     const note = row.querySelector('.stat-roll-note');
@@ -1573,7 +1632,7 @@ function buildMonRow(finalSpecies, level, forcedType){
     cardRolling = false;
   });
 
-  return row;
+  return {row, adjStats, finalType, highIdx};
 }
 
 document.getElementById('trainerBtn').addEventListener('click', async ()=>{
@@ -1612,16 +1671,20 @@ document.getElementById('trainerBtn').addEventListener('click', async ()=>{
   const teamEl = document.getElementById('trainerTeam');
   teamEl.innerHTML = '';
 
+  const team = [];
   for(let i=0; i<teamSize; i++){
     const mv1 = rand(6);
     const mv2 = rand(6);
     const msum = mv1 + mv2;
     const root = table[msum-2];
     const finalSpecies = pickStageForLevel(root, trainerLevel);
-    teamEl.appendChild(buildMonRow(finalSpecies, trainerLevel));
+    const built = buildMonRow(finalSpecies, trainerLevel);
+    teamEl.appendChild(built.row);
+    team.push({species: finalSpecies, level: trainerLevel, adjStats: built.adjStats, finalType: built.finalType, highIdx: built.highIdx});
   }
 
   document.getElementById('trainerResult').classList.add('show');
+  lastTrainerResult = {className, trainerLevel, teamSize, classDie1: cv1, classDie2: cv2, classSum, team};
 
   } catch (err) {
     showError('The trainer roll couldn\'t be completed. (' + err.message + ')');
@@ -1631,6 +1694,26 @@ document.getElementById('trainerBtn').addEventListener('click', async ()=>{
     trainerRolling = false;
   }
 });
+
+// Redisplay a previously-rolled trainer team (e.g. after restoring state)
+// without re-rolling -- team entries already carry their resolved
+// stats/attack-type/tie-breaks, so buildMonRow is told to reuse them as-is.
+function renderTrainerResult(data){
+  document.getElementById('classDie1').textContent = data.classDie1;
+  document.getElementById('classDie2').textContent = data.classDie2;
+  document.getElementById('classSumBadge').textContent = data.classSum;
+  document.getElementById('trainerClassName').textContent = data.className;
+  document.getElementById('trainerLevelLine').innerHTML =
+    data.className + ' -- Team of ' + data.teamSize + ', all Level <b>' + data.trainerLevel + '</b>';
+  const teamEl = document.getElementById('trainerTeam');
+  teamEl.innerHTML = '';
+  data.team.forEach(m=>{
+    const built = buildMonRow(m.species, m.level, m.finalType, {adjStats: m.adjStats, highIdx: m.highIdx});
+    teamEl.appendChild(built.row);
+  });
+  document.getElementById('trainerResult').classList.add('show');
+  lastTrainerResult = data;
+}
 
 // ============ Gym Leader ============
 
@@ -1698,6 +1781,8 @@ document.getElementById('gymBtn').addEventListener('click', async ()=>{
 
   const teamEl = document.getElementById('gymTeam');
   teamEl.innerHTML = '';
+  const team = [];
+  let gymLeaderNameText, gymLevelLineHtml;
 
   if(selectedValue.startsWith('E4_') || selectedValue === 'CHAMPION'){
     // ---- Elite Four / Champion: fixed roster, fixed levels, no badge-gating ----
@@ -1706,8 +1791,10 @@ document.getElementById('gymBtn').addEventListener('click', async ()=>{
       : DATA.eliteFour.find(m => m.id === selectedValue);
 
     const label = selectedValue === 'CHAMPION' ? 'Champion' : 'Elite Four';
-    document.getElementById('gymLeaderName').textContent = label + ' -- ' + member.name + (member.type !== 'Mixed' ? ' (' + member.type + ')' : '');
-    document.getElementById('gymLevelLine').innerHTML = 'Always available at 8 badges -- fixed roster and levels.';
+    gymLeaderNameText = label + ' -- ' + member.name + (member.type !== 'Mixed' ? ' (' + member.type + ')' : '');
+    gymLevelLineHtml = 'Always available at 8 badges -- fixed roster and levels.';
+    document.getElementById('gymLeaderName').textContent = gymLeaderNameText;
+    document.getElementById('gymLevelLine').innerHTML = gymLevelLineHtml;
 
     // Display order: numbered slots first (1,2,3,4[,5]), Ace last.
     const slotKeys = Object.keys(member.slots).filter(k => k !== 'ace').sort((a,b)=>a-b);
@@ -1716,16 +1803,19 @@ document.getElementById('gymBtn').addEventListener('click', async ()=>{
       const level = member.levels[slotKey];
       const finalSpecies = pickStageForLevel(root, level);
       const forcedType = fixedAttackType(finalSpecies, slotKey);
-      teamEl.appendChild(buildMonRow(finalSpecies, level, forcedType));
+      const built = buildMonRow(finalSpecies, level, forcedType);
+      teamEl.appendChild(built.row);
+      team.push({species: finalSpecies, level, adjStats: built.adjStats, finalType: built.finalType, highIdx: built.highIdx});
     });
 
   } else {
     // ---- Regular Gym Leader: badge-gated slots, badge-based levels ----
     const leaderName = selectedValue;
     const info = DATA.gymLeaders[leaderName];
-    document.getElementById('gymLeaderName').textContent = leaderName + ' -- ' + info.town + ' (' + info.type + ')';
-    document.getElementById('gymLevelLine').innerHTML =
-      'Badges already claimed: <b>' + badges + '</b>';
+    gymLeaderNameText = leaderName + ' -- ' + info.town + ' (' + info.type + ')';
+    gymLevelLineHtml = 'Badges already claimed: <b>' + badges + '</b>';
+    document.getElementById('gymLeaderName').textContent = gymLeaderNameText;
+    document.getElementById('gymLevelLine').innerHTML = gymLevelLineHtml;
 
     // Slot unlock thresholds (badges already claimed before this fight) and level formulas:
     // 1 & 2 always unlocked. 3 needs 2+. 4 needs 4+. 5 needs 6+.
@@ -1746,11 +1836,14 @@ document.getElementById('gymBtn').addEventListener('click', async ()=>{
       const root = info.slots[String(slotNum)] || info.slots[slotNum];
       const finalSpecies = pickStageForLevel(root, def.level);
       const forcedType = fixedAttackType(finalSpecies, String(slotNum));
-      teamEl.appendChild(buildMonRow(finalSpecies, def.level, forcedType));
+      const built = buildMonRow(finalSpecies, def.level, forcedType);
+      teamEl.appendChild(built.row);
+      team.push({species: finalSpecies, level: def.level, adjStats: built.adjStats, finalType: built.finalType, highIdx: built.highIdx});
     });
   }
 
   document.getElementById('gymResult').classList.add('show');
+  lastGymResult = {selectedValue, gymLeaderNameText, gymLevelLineHtml, team};
 
   } catch (err) {
     showError('The gym team couldn\'t be built. (' + err.message + ')');
@@ -1760,6 +1853,23 @@ document.getElementById('gymBtn').addEventListener('click', async ()=>{
     gymRolling = false;
   }
 });
+
+// Redisplay a previously-rolled gym/E4/Champion team without re-rolling.
+function renderGymResult(data){
+  if(Array.from(gymSelect.options).some(o => o.value === data.selectedValue)){
+    gymSelect.value = data.selectedValue;
+  }
+  document.getElementById('gymLeaderName').textContent = data.gymLeaderNameText;
+  document.getElementById('gymLevelLine').innerHTML = data.gymLevelLineHtml;
+  const teamEl = document.getElementById('gymTeam');
+  teamEl.innerHTML = '';
+  data.team.forEach(m=>{
+    const built = buildMonRow(m.species, m.level, m.finalType, {adjStats: m.adjStats, highIdx: m.highIdx});
+    teamEl.appendChild(built.row);
+  });
+  document.getElementById('gymResult').classList.add('show');
+  lastGymResult = data;
+}
 
 // ============ Tabs ============
 
@@ -1789,6 +1899,7 @@ tabDexBtn.addEventListener('click', ()=> showTab('dex'));
 // ============ Region Map ============
 
 let mapBuilt = false;
+let selectedMapNodeId = null;
 const CELL = 42;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -1928,6 +2039,7 @@ function buildEncounterPreviewHtml(locationId){
 }
 
 function selectMapNode(id){
+  selectedMapNodeId = id;
   document.querySelectorAll('.map-node').forEach(el=>el.classList.remove('selected'));
   const el = document.querySelector('.map-node[data-id="'+id+'"]');
   if(el) el.classList.add('selected');
@@ -2118,6 +2230,125 @@ Object.keys(REGIONS).forEach(key=>{
 regionSelectEl.value = currentRegionKey;
 regionSelectEl.addEventListener('change', (e)=> switchRegion(e.target.value));
 updateRegionLabels();
+
+// ============ Send to Battle Sim / state round-trip ============
+
+// Snapshot everything needed to redisplay the field guide exactly as it is
+// right now: which region/tab/badges/selections are active, and the last
+// resolved wild/trainer/gym result (if any) -- redisplaying from saved data
+// rather than re-rolling means a restore can't accidentally re-randomize
+// a tie-break or attack-type roll into something different from what was
+// actually shown.
+function captureFieldGuideState(){
+  return {
+    v: 1,
+    region: currentRegionKey,
+    badges: badges,
+    tab: currentTab,
+    location: locSelect.value,
+    gymValue: gymSelect.value,
+    dexSearch: document.getElementById('dexSearch').value,
+    mapNode: selectedMapNodeId,
+    dice: {
+      d1: document.getElementById('die1').textContent,
+      d2: document.getElementById('die2').textContent,
+      sum: document.getElementById('sumBadge').textContent,
+      rerollNote: document.getElementById('rerollNote').textContent,
+      levelDie: document.getElementById('levelDie').textContent,
+      levelMath: document.getElementById('levelMath').innerHTML,
+    },
+    wild: lastWildResult,
+    trainer: lastTrainerResult,
+    gym: lastGymResult,
+  };
+}
+
+function restoreFieldGuideState(state){
+  if(state.region && REGIONS[state.region] && state.region !== currentRegionKey){
+    regionSelectEl.value = state.region;
+    switchRegion(state.region);
+  }
+  badges = state.badges || 0;
+  buildPips();
+  renderBadges();
+  if(typeof refreshGymOptions === 'function') refreshGymOptions();
+
+  if(state.location && Array.from(locSelect.options).some(o=>o.value===state.location)){
+    locSelect.value = state.location;
+    renderLocMeta();
+  }
+
+  if(state.dice){
+    document.getElementById('die1').textContent = state.dice.d1;
+    document.getElementById('die2').textContent = state.dice.d2;
+    document.getElementById('sumBadge').textContent = state.dice.sum;
+    document.getElementById('rerollNote').textContent = state.dice.rerollNote;
+    document.getElementById('levelDie').textContent = state.dice.levelDie;
+    document.getElementById('levelMath').innerHTML = state.dice.levelMath;
+  }
+
+  if(state.wild) renderWildResult(state.wild);
+  if(state.trainer) renderTrainerResult(state.trainer);
+  if(state.gym) renderGymResult(state.gym);
+  // renderGymResult already restores the dropdown when there's a result to show;
+  // otherwise fall back to whatever leader/E4/Champion was merely selected.
+  if(!state.gym && state.gymValue && Array.from(gymSelect.options).some(o=>o.value===state.gymValue)){
+    gymSelect.value = state.gymValue;
+  }
+
+  // Rebuild map/dex and reapply their selection/search regardless of which
+  // tab happens to be active on restore -- both are independent of the
+  // active tab (the user could select a map node, then switch to Roller
+  // and send a mon from there), so both need to be correct whenever the
+  // user later switches to that tab, not only when it's the one restored to.
+  if(state.mapNode){
+    if(!mapBuilt) buildMap();
+    selectMapNode(state.mapNode);
+  }
+  if(state.dexSearch){
+    if(!dexBuilt) buildDex();
+    const dexInput = document.getElementById('dexSearch');
+    dexInput.value = state.dexSearch;
+    dexInput.dispatchEvent(new Event('input'));
+  }
+
+  showTab(state.tab || 'roller');
+}
+
+function sendToBattleSim(btn){
+  const state = captureFieldGuideState();
+  const params = new URLSearchParams();
+  params.set('name', btn.dataset.name);
+  params.set('t1', btn.dataset.t1);
+  if(btn.dataset.t2) params.set('t2', btn.dataset.t2);
+  params.set('atk', btn.dataset.atk);
+  params.set('stats', btn.dataset.stats);
+  params.set('return', JSON.stringify(state));
+  window.location.href = 'battle_simulator.html?' + params.toString();
+}
+
+// Delegated (not per-button) so it works equally for freshly-rolled rows and
+// rows redrawn from restored state -- both use the same buildMonRow markup.
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.send-battle-btn');
+  if(!btn || !btn.dataset.name) return;
+  sendToBattleSim(btn);
+});
+
+// If we arrived here via a "Send to Battle Sim" round trip, restore the
+// exact state the user left instead of a fresh page load.
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('restore');
+  if(!raw) return;
+  try {
+    restoreFieldGuideState(JSON.parse(raw));
+  } catch(e){
+    console.error('Could not restore field guide state', e);
+  } finally {
+    history.replaceState(null, '', window.location.pathname);
+  }
+})();
 
 } catch (err) {
   document.body.innerHTML =
