@@ -41,7 +41,7 @@
 | 35 | Breloom | Grass/Fighting | Route 119 (8) | 3 | 7 | 5 | 3 | 3 | 4 |
 | 36 | Slakoth | Normal | Petalburg Woods (6) | 3 | 3 | 3 | 2 | 2 | 2 |
 | 37 | Vigoroth | Normal | Petalburg Woods (11) | 5 | 5 | 5 | 3 | 3 | 5 |
-| 38 | Slaking | Normal | Evolve from Vigoroth | 9 | 9 | 6 | 5 | 4 | 6 |
+| 38 | Slaking† | Normal | Evolve from Vigoroth | 7 | 8 | 5 | 4 | 3 | 5 |
 | 39 | Abra | Psychic | Route 116 (4) | 1 | 1 | 1 | 6 | 3 | 5 |
 | 40 | Kadabra | Psychic | Route 116 (5) | 2 | 2 | 2 | 7 | 4 | 6 |
 | 41 | Alakazam | Psychic | Route 116 (7) | 3 | 3 | 3 | 8 | 5 | 7 |
@@ -198,3 +198,5 @@
 | 198 | Kyogre | Water | Seafloor Cavern (12) | 6 | 6 | 5 | 9 | 8 | 5 |
 | 199 | Groudon | Ground | Seafloor Cavern (12) | 6 | 9 | 8 | 6 | 5 | 5 |
 | 200 | Rayquaza | Dragon/Flying | Sky Pillar (12) | 6 | 9 | 5 | 9 | 5 | 5 |
+
+† **Slaking homebrew adjustment:** all six base stats reduced by 20 from the real current-gen values (HP 150→130, Atk 160→140, Def 100→80, SpA 95→75, SpD 65→45, Spe 100→80; die-faces recalculated the normal way, ÷17.5 rounded). Reasoning: Slaking's real-world power level assumes its ability Truant (skips every other turn), which this dice system has no mechanic to represent — without it, Slaking's raw stats are overtuned for a mid-Hoenn Normal-type. To undo: restore the original values from `pokemon_base_stats.json`/`.csv` (dexNum 289) and change `REGIONS.hoenn.data.dice.Slaking` in `index.html` back to `[9, 9, 6, 5, 4, 6]`.

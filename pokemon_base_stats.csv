@@ -360,7 +360,7 @@ dexNum,name,baseName,type1,type2,total,hp,atk,def,spa,spd,spe
 286,Breloom,Breloom,Grass,Fighting,460,60,130,80,60,60,70
 287,Slakoth,Slakoth,Normal,,280,60,60,60,35,35,30
 288,Vigoroth,Vigoroth,Normal,,440,80,80,80,55,55,90
-289,Slaking,Slaking,Normal,,670,150,160,100,95,65,100
+289,Slaking,Slaking,Normal,,550,130,140,80,75,45,80
 290,Nincada,Nincada,Bug,Ground,266,31,45,90,30,30,40
 291,Ninjask,Ninjask,Bug,Flying,456,61,90,45,50,50,160
 292,Shedinja,Shedinja,Bug,Ghost,236,1,90,45,30,30,40

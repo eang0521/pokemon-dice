@@ -5064,13 +5064,13 @@
    "baseName": "Slaking",
    "type1": "Normal",
    "type2": null,
-   "total": 670,
-   "hp": 150,
-   "atk": 160,
-   "def": 100,
-   "spa": 95,
-   "spd": 65,
-   "spe": 100
+   "total": 550,
+   "hp": 130,
+   "atk": 140,
+   "def": 80,
+   "spa": 75,
+   "spd": 45,
+   "spe": 80
   },
   {
    "dexNum": 290,
