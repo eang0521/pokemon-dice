@@ -1479,7 +1479,8 @@ function renderWildResult(data){
   sendBtn.dataset.t1 = data.trueTypes[0] ? cap(data.trueTypes[0]) : '';
   sendBtn.dataset.t2 = data.trueTypes[1] ? cap(data.trueTypes[1]) : '';
   sendBtn.dataset.atk = cap(data.finalType);
-  sendBtn.dataset.stats = data.adjStats.join(',');
+  sendBtn.dataset.base = stats.join(',');
+  sendBtn.dataset.ev = data.adjStats.map((v,i)=> v - stats[i]).join(',');
 
   lastWildResult = data;
 }
@@ -1616,7 +1617,7 @@ function buildMonRow(finalSpecies, level, forcedType, precomputed){
     '</div>' +
     '<span class="tap-hint">Tap card to roll a stat (1-6)</span>' +
     '<span class="stat-roll-note"></span>' +
-    '<button type="button" class="send-battle-btn" data-name="' + finalSpecies + '" data-t1="' + sendT1 + '" data-t2="' + sendT2 + '" data-atk="' + cap(finalType) + '" data-stats="' + adjStats.join(',') + '">Send to Battle Sim &#9876;</button>';
+    '<button type="button" class="send-battle-btn" data-name="' + finalSpecies + '" data-t1="' + sendT1 + '" data-t2="' + sendT2 + '" data-atk="' + cap(finalType) + '" data-base="' + stats.join(',') + '" data-ev="' + adjStats.map((v,i)=> v - stats[i]).join(',') + '">Send to Battle Sim &#9876;</button>';
 
   let cardRolling = false;
   row.addEventListener('click', async (e)=>{
@@ -2322,7 +2323,8 @@ function sendToBattleSim(btn){
   params.set('t1', btn.dataset.t1);
   if(btn.dataset.t2) params.set('t2', btn.dataset.t2);
   params.set('atk', btn.dataset.atk);
-  params.set('stats', btn.dataset.stats);
+  params.set('base', btn.dataset.base);
+  params.set('ev', btn.dataset.ev);
   params.set('return', JSON.stringify(state));
   window.location.href = 'battle_simulator.html?' + params.toString();
 }

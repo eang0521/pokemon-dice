@@ -297,6 +297,66 @@
     color: var(--ink);
   }
 
+  .sim-blurb{
+    font-size:13px;
+    line-height:1.5;
+    color:#3c4f45;
+    margin: 0 0 14px;
+  }
+  .simulate-btn{
+    width:100%;
+    padding: 14px 18px;
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:17px;
+    background: var(--rust);
+    color: var(--paper);
+    border:none;
+    border-radius:2px;
+    cursor:pointer;
+    transition: background .15s ease, transform .08s ease;
+  }
+  .simulate-btn:hover:not(:disabled){ background:#a9481f; }
+  .simulate-btn:active:not(:disabled){ transform: translateY(1px); }
+  .simulate-btn:disabled{ opacity:0.55; cursor:default; }
+  .sim-winner{
+    display:none;
+    margin-top:16px;
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:21px;
+    text-align:center;
+    color: var(--redwood);
+  }
+  .sim-log{
+    margin-top:16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height: 360px;
+    overflow-y:auto;
+  }
+  .sim-round{
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius:4px;
+    padding: 10px 12px;
+    font-size:13px;
+    line-height:1.55;
+  }
+  .sim-round.decisive{ border-color: var(--gold); border-width:1.5px; }
+  .sim-round-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color: var(--redwood);
+    margin-bottom:4px;
+  }
+  .sim-side{ margin:2px 0; }
+  .sim-side .picks{ color:#3c4f45; }
+  .sim-verdict{ margin-top:6px; font-weight:600; }
+
   footer.page-footer{
     margin-top:26px;
     font-family:'IBM Plex Mono', monospace;
@@ -329,6 +389,14 @@
     <div class="matchup-notes" id="matchupNotes"></div>
     <div class="odds-bar" id="oddsBar"></div>
     <div class="odds-legend" id="oddsLegend"></div>
+  </div>
+
+  <div class="result-card">
+    <div class="result-title">Simulate an Actual Battle</div>
+    <p class="sim-blurb">Roll it out for real instead of just reading the odds -- each round both sides actually roll; a tie rerolls automatically until someone wins, exactly like the rule says.</p>
+    <button type="button" class="simulate-btn" id="simulateBtn">Roll the Battle!</button>
+    <div class="sim-winner" id="simWinner"></div>
+    <div class="sim-log" id="simLog"></div>
   </div>
 
   <footer class="page-footer">Pokemon Dice &mdash; <a href="index.html">Field Guide</a> &middot; base stats sourced from PokemonDB (<code>pokemon_base_stats.json</code>)</footer>
@@ -613,7 +681,91 @@ function recompute(){
   legend.innerHTML =
     '<span>'+(A.name||'Side A')+' wins: <b>'+pa.toFixed(1)+'%</b></span>'
     + '<span>'+(B.name||'Side B')+' wins: <b>'+pb.toFixed(1)+'%</b></span>';
+
+  // The matchup changed -- a stale battle log from the old matchup would be
+  // misleading, so clear it rather than leave it sitting under new odds.
+  document.getElementById('simLog').innerHTML = '';
+  document.getElementById('simWinner').style.display = 'none';
 }
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// One real roll for one side: cfg.n independent stat-index picks (repeats
+// allowed), kept by best/worst per cfg.mode, plus STAB. Mirrors
+// resultDistribution()'s math exactly, just as an actual single sample
+// instead of the full distribution.
+function rollSide(finalStats, cfg, stabBonus){
+  const picks = [];
+  let kept = null;
+  for(let i=0;i<cfg.n;i++){
+    const idx = Math.floor(Math.random()*6);
+    const val = finalStats[idx];
+    picks.push({stat: STAT_NAMES[idx], value: val});
+    kept = (kept===null) ? val : (cfg.mode==='worst' ? Math.min(kept,val) : Math.max(kept,val));
+  }
+  return {picks, kept, final: kept + stabBonus};
+}
+
+let simulating = false;
+async function simulateBattle(){
+  if(simulating) return;
+  simulating = true;
+  const btn = document.getElementById('simulateBtn');
+  btn.disabled = true;
+  const logEl = document.getElementById('simLog');
+  const winnerEl = document.getElementById('simWinner');
+  logEl.innerHTML = '';
+  winnerEl.style.display = 'none';
+
+  const A = state.A, B = state.B;
+  const finalA = A.base.map((b,i)=>b+A.ev[i]);
+  const finalB = B.base.map((b,i)=>b+B.ev[i]);
+  const cfgA = diceConfig(effectiveness(A.attackType, B.type1, B.type2));
+  const cfgB = diceConfig(effectiveness(B.attackType, A.type1, A.type2));
+  const stabA = (A.attackType===A.type1 || A.attackType===A.type2) ? 1 : 0;
+  const stabB = (B.attackType===B.type1 || B.attackType===B.type2) ? 1 : 0;
+  const nameA = A.name || 'Side A', nameB = B.name || 'Side B';
+
+  const picksStr = (r) => r.picks.map(p=>p.stat+':'+p.value).join(', ');
+
+  let round = 1;
+  let decided = false;
+  while(!decided && round <= 100){
+    const rA = rollSide(finalA, cfgA, stabA);
+    const rB = rollSide(finalB, cfgB, stabB);
+    let verdict;
+    if(rA.final > rB.final){ verdict = nameA + ' wins this round'; decided = true; }
+    else if(rB.final > rA.final){ verdict = nameB + ' wins this round'; decided = true; }
+    else verdict = 'Tie — both sides reroll';
+
+    const entry = document.createElement('div');
+    entry.className = 'sim-round' + (decided ? ' decisive' : '');
+    entry.innerHTML =
+      '<div class="sim-round-title">Round '+round+'</div>'
+      + '<div class="sim-side">'+nameA+': rolled <span class="picks">['+picksStr(rA)+']</span> &rarr; kept '+rA.kept+(stabA?' +1 STAB':'')+' = <b>'+rA.final+'</b></div>'
+      + '<div class="sim-side">'+nameB+': rolled <span class="picks">['+picksStr(rB)+']</span> &rarr; kept '+rB.kept+(stabB?' +1 STAB':'')+' = <b>'+rB.final+'</b></div>'
+      + '<div class="sim-verdict">'+verdict+'</div>';
+    logEl.appendChild(entry);
+    logEl.scrollTop = logEl.scrollHeight;
+
+    if(decided){
+      winnerEl.textContent = '🏆 ' + (rA.final>rB.final ? nameA : nameB) + ' wins the battle!';
+      winnerEl.style.display = 'block';
+      break;
+    }
+    round++;
+    await sleep(450);
+  }
+
+  if(!decided){
+    winnerEl.textContent = 'Perpetual tie — 100 rerolls in a row and still tied. This matchup can never resolve (see the odds panel above).';
+    winnerEl.style.display = '';
+  }
+
+  btn.disabled = false;
+  simulating = false;
+}
+document.getElementById('simulateBtn').addEventListener('click', simulateBattle);
 
 function wireSide(side){
   document.getElementById('species'+side).addEventListener('input', ()=>onSpeciesInput(side));
@@ -628,16 +780,21 @@ function wireSide(side){
 }
 
 // Populate a side directly from "Send to Battle Sim" params -- bypasses the
-// SPECIES lookup on purpose, since the incoming stats already include the
-// Pokemon's level bonus as encountered/rostered in the field guide, which
-// would be lost if we re-autofilled from the plain real-Pokemon base table.
-function applyIncomingSide(side, name, t1, t2, atk, statsStr){
+// SPECIES lookup on purpose, since the incoming base/EV split is exactly how
+// that Pokemon was actually encountered/rostered in the field guide (real
+// base die-faces plus whatever level bonus it had there), which would be
+// lost if we re-autofilled from the plain real-Pokemon base table instead.
+function applyIncomingSide(side, name, t1, t2, atk, baseStr, evStr){
   document.getElementById('species'+side).value = name;
   document.getElementById('type1'+side).value = t1;
   document.getElementById('type2'+side).value = t2 || '';
   document.getElementById('atk'+side).value = atk;
-  const nums = statsStr.split(',').map(n => parseInt(n,10) || 0);
-  for(let i=0;i<6;i++){ document.getElementById('base'+side+i).value = nums[i] || 0; }
+  const baseNums = baseStr.split(',').map(n => parseInt(n,10) || 0);
+  const evNums = evStr.split(',').map(n => parseInt(n,10) || 0);
+  for(let i=0;i<6;i++){
+    document.getElementById('base'+side+i).value = baseNums[i] || 0;
+    document.getElementById('ev'+side+i).value = evNums[i] || 0;
+  }
   const status = document.getElementById('status'+side);
   status.className = 'species-status matched';
   status.textContent = '✓ Sent from Field Guide: '+name+' ('+t1+(t2?'/'+t2:'')+')';
@@ -663,7 +820,7 @@ function init(){
 
   onSpeciesInput('A');
   if(incomingName){
-    applyIncomingSide('B', incomingName, params.get('t1')||'', params.get('t2')||'', params.get('atk')||'', params.get('stats')||'0,0,0,0,0,0');
+    applyIncomingSide('B', incomingName, params.get('t1')||'', params.get('t2')||'', params.get('atk')||'', params.get('base')||'0,0,0,0,0,0', params.get('ev')||'0,0,0,0,0,0');
     recompute();
   } else {
     onSpeciesInput('B');
