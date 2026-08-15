@@ -316,7 +316,7 @@
     </div>
   </div>
 
-  <p class="blurb">Pick any two Pokemon (real species autofill their type and stats -- everything stays editable, so you can also build a fully custom one), assign bonus points per stat -- their total becomes that Pokemon's effective level -- and an attack type. Each side rolls to pick one of its six stats; type effectiveness changes how many picks are rolled and whether the best or worst is kept, and STAB adds +1. See <code>Dice_Region_Ruleset.md</code> &sect;14 for the full mechanic.</p>
+  <p class="blurb">Pick any two Pokemon (real species autofill their type and stats -- everything stays editable, so you can also build a fully custom one), assign bonus points per stat -- their total becomes that Pokemon's effective level -- and an attack type. Each side rolls to pick one of its six stats; type effectiveness changes how many picks are rolled and whether the best or worst is kept, and STAB adds +1. Higher result wins the exchange; a tie means both sides reroll, so the odds below are the final resolved odds -- not a per-roll snapshot. See <code>Dice_Region_Ruleset.md</code> &sect;14 for the full mechanic.</p>
 
   <div class="battle-grid">
     <div class="side-card" id="sideA"></div>
@@ -410,6 +410,13 @@ function resultDistribution(finalStats, cfg, stabBonus){
   return dist;
 }
 
+// Ties reroll (both sides) rather than counting as a draw. Since every
+// reroll is an independent repeat of the same two distributions, the final
+// (post-reroll) odds are just the one-shot win probabilities renormalized
+// by 1/(1 - P(tie)) -- no need to actually simulate repeated rounds. The
+// only case that can never resolve is a "perpetual tie": every possible
+// pairing of outcomes ties (P(tie) = 1), which only happens when both
+// sides' results are deterministically identical on every conceivable roll.
 function crossOdds(distA, distB){
   let winA=0, winB=0, tie=0;
   for(const [a,pa] of distA){
@@ -420,7 +427,11 @@ function crossOdds(distA, distB){
       else tie += p;
     }
   }
-  return {winA, winB, tie};
+  const decided = winA + winB;
+  if(decided <= 1e-12){
+    return {winA:0, winB:0, tie:1, unbreakable:true};
+  }
+  return {winA: winA/decided, winB: winB/decided, tie:0, unbreakable:false};
 }
 
 function findSpecies(name){
@@ -588,15 +599,19 @@ function recompute(){
   document.getElementById('matchupNotes').innerHTML =
     renderMatchupNote('A','B',distA,cfgA) + renderMatchupNote('B','A',distB,cfgB);
 
-  const pa = (odds.winA*100), pb = (odds.winB*100), pt = (odds.tie*100);
   const bar = document.getElementById('oddsBar');
+  const legend = document.getElementById('oddsLegend');
+  if(odds.unbreakable){
+    bar.innerHTML = '<div class="odds-seg tie" style="width:100%;">PERPETUAL TIE</div>';
+    legend.innerHTML = '<span style="flex:1;text-align:center;">Every possible roll produces the same result for both sides — no reroll ever breaks this one. Change a stat or attack type to un-lock it.</span>';
+    return;
+  }
+  const pa = (odds.winA*100), pb = (odds.winB*100);
   bar.innerHTML =
     '<div class="odds-seg a" style="width:'+pa+'%;">'+(pa>=8?pa.toFixed(1)+'%':'')+'</div>'
-    + (pt>0.05 ? '<div class="odds-seg tie" style="width:'+pt+'%;">'+(pt>=6?pt.toFixed(1)+'%':'')+'</div>' : '')
     + '<div class="odds-seg b" style="width:'+pb+'%;">'+(pb>=8?pb.toFixed(1)+'%':'')+'</div>';
-  document.getElementById('oddsLegend').innerHTML =
+  legend.innerHTML =
     '<span>'+(A.name||'Side A')+' wins: <b>'+pa.toFixed(1)+'%</b></span>'
-    + '<span>Tie: <b>'+pt.toFixed(1)+'%</b></span>'
     + '<span>'+(B.name||'Side B')+' wins: <b>'+pb.toFixed(1)+'%</b></span>';
 }
 
