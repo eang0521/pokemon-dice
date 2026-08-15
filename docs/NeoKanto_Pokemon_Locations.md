@@ -20,7 +20,7 @@
 | 14 | Pidgeot | Route 1 (11) |
 | 15 | Magikarp | Route 21 (2); Route 1 (4); Route 20 (4) |
 | 16 | Gyarados | Route 20 (9); Route 1 (12) |
-| 17 | Ditto | Route 22 (3); Route 1 (5) |
+| 17 | Ditto | Route 1 (5) |
 | 18 | Caterpie | Route 2 (2); Viridian Forest (2) |
 | 19 | Metapod | Viridian Forest (3); Route 2 (6) |
 | 20 | Butterfree | Viridian Forest (7); Route 2 (10) |
@@ -30,7 +30,7 @@
 | 24 | Sandslash | Route 22 (7); Route 2 (8); Route 26 (8); Route 1 (10); Route 10 (10); Viridian Forest (10) |
 | 25 | Jigglypuff | Route 22 (4); Route 2 (5); Viridian Forest (5) |
 | 26 | Wigglytuff | Route 22 (8); Route 2 (9); Viridian Forest (9) |
-| 27 | Eevee | Route 26 (5); Route 2 (7) |
+| 27 | Eevee | Route 2 (7); Route 22 (3); Route 26 (5) |
 | 28 | Vaporeon | Route 26 (10); Route 25 (11) |
 | 29 | Jolteon | Route 22 (12) |
 | 30 | Flareon | Route 22 (10); Viridian Forest (11) |
@@ -56,11 +56,11 @@
 | 50 | Starmie | Route 25 (8); Seafoam Islands (11); Route 5 (12) |
 | 51 | Psyduck | Route 25 (3); Route 5 (3); Route 21 (4) |
 | 52 | Golduck | Route 25 (7); Route 21 (9); Route 5 (9) |
-| 53 | Poliwag | Route 24 (2); Route 25 (2); Route 5 (2); Route 9 (6) |
+| 53 | Poliwag | Route 24 (2); Route 5 (2); Route 9 (6) |
 | 54 | Poliwhirl | Route 24 (8); Route 5 (8); Route 9 (11) |
 | 55 | Poliwrath | *No wild encounter — evolve from Poliwhirl* |
 | 56 | Politoed | *No wild encounter — evolve from Poliwhirl* |
-| 57 | Slowpoke | Route 5 (7) |
+| 57 | Slowpoke | Route 5 (7); Route 25 (2) |
 | 58 | Slowbro | *No wild encounter — evolve from Slowpoke* |
 | 59 | Slowking | Route 25 (12) |
 | 60 | Shellder | Route 9 (3); Seafoam Islands (4); Route 21 (5); Route 25 (5) |
@@ -147,22 +147,22 @@
 | 141 | Whimsicott | Route 17 (7); Route 16 (8) |
 | 142 | Carnivine | Route 17 (5); Route 16 (6) |
 | 143 | Nidoran♀ | Kanto Wildlife Preserve (2); Route 13 (2); Route 17 (4); Route 12 (5) |
-| 144 | Nidorina | Route 13 (7); Route 17 (9); Route 12 (10) |
+| 144 | Nidorina | Route 12 (10); Route 13 (7); Route 17 (9); Kanto Wildlife Preserve (8) |
 | 145 | Nidoqueen | Route 13 (12) |
 | 146 | Nidoran♂ | Route 14 (2); Route 18 (2); Kanto Wildlife Preserve (3); Route 13 (3); Route 24 (5); Route 22 (6) |
-| 147 | Nidorino | Route 14 (7); Route 18 (7); Route 13 (8) |
+| 147 | Nidorino | Route 13 (8); Route 14 (7); Route 18 (7); Kanto Wildlife Preserve (10) |
 | 148 | Nidoking | Route 14 (12) |
 | 149 | Scyther | Route 17 (11); Kanto Wildlife Preserve (12); Route 12 (12) |
 | 150 | Scizor | Route 18 (12) |
 | 151 | Pinsir | Route 14 (3); Route 18 (4); Kanto Wildlife Preserve (5) |
 | 152 | Tauros | Kanto Wildlife Preserve (4); Route 14 (6); Route 15 (12) |
-| 153 | Chansey | Route 15 (2); Kanto Wildlife Preserve (6) |
+| 153 | Chansey | Route 15 (2) |
 | 154 | Blissey | Route 15 (8) |
 | 155 | Lickitung | Route 15 (3) |
 | 156 | Lickilicky | Route 15 (9) |
-| 157 | Farfetch'd | Route 15 (4); Route 14 (5); Kanto Wildlife Preserve (9); Route 18 (10) |
+| 157 | Farfetch'd | Route 14 (5); Route 15 (4); Route 18 (10) |
 | 158 | Sirfetch'd | Route 15 (10); Route 14 (11) |
-| 159 | Hitmonlee | Route 13 (6); Route 18 (6) |
+| 159 | Hitmonlee | Route 13 (6); Route 18 (6); Route 14 (4); Route 15 (11) |
 | 160 | Hitmonchan | Route 15 (5); Route 13 (11); Route 18 (11) |
 | 161 | Mankey | Route 18 (3); Route 13 (4); Route 24 (4); Kanto Wildlife Preserve (7) |
 | 162 | Primeape | Route 18 (8); Route 13 (9); Route 24 (10); Kanto Wildlife Preserve (11) |
@@ -171,7 +171,7 @@
 | 165 | Stunfisk | Route 14 (8) |
 | 166 | Illumise | Route 14 (9) |
 | 167 | Volbeat | Route 14 (10) |
-| 168 | Jynx | Route 14 (4); Route 15 (11) |
+| 168 | Jynx | Icefall Pass (5); Icefall Pass (7); Icefall Pass (10) |
 | 169 | Vulpix | Cinnabar Mansion / Geothermal Complex (2) |
 | 170 | Ninetales | Cinnabar Mansion / Geothermal Complex (7) |
 | 171 | Growlithe | Cinnabar Mansion / Geothermal Complex (3) |

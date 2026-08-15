@@ -20,7 +20,9 @@ At full threshold (7–8 badges), exact odds: 7 (16.7%) &gt; 6/8 (13.9% each) &g
 
 **Slot design, independent of roll probability:** low slot number → common/base-stage species; high slot number → rare/evolved species; slot 12 is always the location's single signature rare find (a Legendary/Mythical if one is tied there, otherwise the best non-legendary "trophy" catch). This is a species-tier ordering by slot number, not a claim about how often that slot gets rolled — slot 2 and slot 12 are equally rare *rolls* (both 2.8% at full threshold), but slot 2 still holds a common/weak species and slot 12 the location's best find, because low-badge play can only ever reach slot 2–4 and shouldn't hand out rare finds there.
 
-**Uniqueness policy:** every table below aims for 11 genuinely distinct species. Zones with a large dex pool hit this easily; a few locations pull light spillover from an immediately-adjacent zone to get there without feeling geographically dishonest (noted per-table where it happens). The one exception is Icefall Pass, a short, narrow, brand-new dungeon with only 3 native species — forcing 11 unique picks there would mean importing thematically-mismatched wildlife just to hit a number, so it repeats its native trio instead, which the ruleset explicitly endorses for low-diversity locations.
+**Uniqueness policy:** every table below aims for 11 genuinely distinct species. Zones with a large dex pool hit this easily; a few locations pull light spillover from an immediately-adjacent zone to get there without feeling geographically dishonest (noted per-table where it happens). The one exception is Icefall Pass, a short, narrow, brand-new dungeon with only 4 native species (Delibird, Snover/Abomasnow, and Jynx) — forcing 11 unique picks there would mean importing thematically-mismatched wildlife just to hit a number, so it repeats its native set instead, which the ruleset explicitly endorses for low-diversity locations.
+
+**Family-grouping policy (updated):** tables default to ~4–5 evolution families rather than 11 unrelated singles, with each family's stages strictly ordered low-slot-to-high-slot within the table (never an evolved form at or below its own pre-evolution's slot). Some locations still carry more true singleton species than that target — Kanto's dex has a genuinely large share of single-appearance species with no redundant placement elsewhere, so consolidating every table down to 4–5 families would mean either inventing new placements for those singletons or accepting real reachability gaps. Tables were tightened wherever a safe consolidation existed (i.e. the species being trimmed already has another placement elsewhere); locations that are still single-heavy after that pass are left as-is rather than risking a species' only obtain path.
 
 **Single-stage species and slot ordering:** a handful of species (Ditto, Absol, Lapras, Tauros, and other true one-stage "oddities") never evolve at all, so they aren't "weaker versions of themselves" the way an unevolved-but-evolvable Pokémon is. Where one of these sits at a high slot above another line's mid-evolved form, that's a deliberate read of the ruleset's stage-ordering rule as being about evolution *progression* (don't make a rare slot hand out something objectively unfinished while a common slot already has something evolved) rather than a blanket ban on one-stage species appearing anywhere but the bottom. Flagging this explicitly as a judgment call, not a hidden rule-bend.
 
@@ -52,7 +54,7 @@ At full threshold (7–8 badges), exact odds: 7 (16.7%) &gt; 6/8 (13.9% each) &g
 
 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Sandshrew | Ditto | Jigglypuff | Pikachu | Nidoran♂ | Sandslash | Wigglytuff | Raichu | Flareon | Espeon | **Jolteon** |
+| Sandshrew | Eevee | Jigglypuff | Pikachu | Nidoran♂ | Sandslash | Wigglytuff | Raichu | Flareon | Espeon | **Jolteon** |
 
 *Nidoran♂ is light spillover — open scrubland fits its Fuchsia-adjacent habitat just as well.*
 
@@ -107,7 +109,7 @@ At full threshold (7–8 badges), exact odds: 7 (16.7%) &gt; 6/8 (13.9% each) &g
 
 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Poliwag | Psyduck | Staryu | Shellder | Horsea | Golduck | Starmie | Cloyster | Seadra | Vaporeon | **Slowking** |
+| Slowpoke | Psyduck | Staryu | Shellder | Horsea | Golduck | Starmie | Cloyster | Seadra | Vaporeon | **Slowking** |
 
 ### Route 6 — Saffron City ↔ Vermilion City
 
@@ -151,13 +153,13 @@ At full threshold (7–8 badges), exact odds: 7 (16.7%) &gt; 6/8 (13.9% each) &g
 
 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Nidoran♂ | Pinsir | Jynx | Farfetch'd | Tauros | Nidorino | Stunfisk | Illumise | Volbeat | Sirfetch'd | **Nidoking** |
+| Nidoran♂ | Pinsir | Hitmonlee | Farfetch'd | Tauros | Nidorino | Stunfisk | Illumise | Volbeat | Sirfetch'd | **Nidoking** |
 
 ### Route 15 — Route 14 ↔ Fuchsia City
 
 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Chansey | Lickitung | Farfetch'd | Hitmonchan | Koffing | Weezing | Blissey | Lickilicky | Sirfetch'd | Jynx | **Tauros** |
+| Chansey | Lickitung | Farfetch'd | Hitmonchan | Koffing | Weezing | Blissey | Lickilicky | Sirfetch'd | Hitmonlee | **Tauros** |
 
 ### Route 16 — Celadon City ↔ Route 17 (Cycling Road, north end)
 
@@ -215,9 +217,9 @@ At full threshold (7–8 badges), exact odds: 7 (16.7%) &gt; 6/8 (13.9% each) &g
 
 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Delibird | Snover | Delibird | Abomasnow | Snover | Abomasnow | Delibird | Snover | Abomasnow | Delibird | **Abomasnow** |
+| Delibird | Snover | Delibird | Jynx | Snover | Jynx | Delibird | Abomasnow | Jynx | Abomasnow | **Abomasnow** |
 
-*Deliberately repeats its 3 native species — see the Uniqueness Policy note above.*
+*Jynx lives here now (moved from Route 14/15, where it had no real thematic home) — a fitting icy-pass resident, and it gives this short dungeon real variety instead of just two repeating lines. Still leans on repeats to fill 11 slots — see the Uniqueness Policy note above.*
 
 ### Mt. Moon
 
@@ -255,7 +257,7 @@ At full threshold (7–8 badges), exact odds: 7 (16.7%) &gt; 6/8 (13.9% each) &g
 
 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Nidoran♀ | Nidoran♂ | Tauros | Pinsir | Chansey | Mankey | Koffing | Farfetch'd | Weezing | Primeape | **Scyther** |
+| Nidoran♀ | Nidoran♂ | Tauros | Pinsir | Mankey | Koffing | Nidorina | Weezing | Nidorino | Primeape | **Scyther** |
 
 *Scyther as the Preserve's signature is a deliberate callback — a rare Safari-Zone-style bug catch is as close to a Neo Kanto tradition as it gets.*
 
