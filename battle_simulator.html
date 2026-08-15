@@ -182,6 +182,24 @@
   }
   .true-type-pills{ display:flex; gap:6px; margin-top:8px; }
 
+  .auto-ev-row{ display:flex; gap:8px; }
+  .auto-ev-row input{ flex:1; }
+  .auto-ev-btn{
+    flex:0 0 auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    font-weight:600;
+    padding: 8px 14px;
+    background: var(--sage);
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    border-radius:2px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .auto-ev-btn:hover{ background:#7a9389; }
+  .auto-ev-btn:active{ transform: translateY(1px); }
+
   .stat-table{ width:100%; border-collapse:collapse; margin-top:4px; }
   .stat-table th{
     font-family:'IBM Plex Mono', monospace;
@@ -460,6 +478,13 @@ function sideHTML(side){
     + '  <select id="atk'+side+'">'+typeOptions(s.attackType,false)+'</select>'
     + '</div>'
     + '<div class="field">'
+    + '  <label class="field-label" for="autoLevel'+side+'">Auto-set EVs by level</label>'
+    + '  <div class="auto-ev-row">'
+    + '    <input type="number" min="0" id="autoLevel'+side+'" placeholder="level, e.g. 10">'
+    + '    <button type="button" class="auto-ev-btn" id="autoBtn'+side+'">Distribute</button>'
+    + '  </div>'
+    + '</div>'
+    + '<div class="field">'
     + '  <label class="field-label">Base stat / bonus points (EVs)</label>'
     + '  <table class="stat-table">'
     + '    <thead><tr><th>Stat</th><th>Base</th><th>EV</th><th>=</th></tr></thead>'
@@ -488,6 +513,31 @@ function readSide(side){
   const level = s.ev.reduce((a,b)=>a+b,0);
   const warn = level > 20 ? ' <span class="level-warn">(beyond the usual 1–20 scale)</span>' : '';
   document.getElementById('level'+side).innerHTML = 'Effective level: <b>'+level+'</b>'+warn;
+}
+
+// Rank-order EV distribution (§12): 1 point to the highest stat, then the
+// next-highest, cycling through all six once exhausted, until `points` are
+// allocated. Ties broken randomly.
+function distributeEVs(baseStats, points){
+  const order = baseStats
+    .map((v,i)=>({i, v, r:Math.random()}))
+    .sort((a,b)=> b.v-a.v || b.r-a.r)
+    .map(o=>o.i);
+  const ev = [0,0,0,0,0,0];
+  for(let k=0;k<points;k++){
+    ev[order[k%6]] += 1;
+  }
+  return ev;
+}
+
+function autoSetEVs(side){
+  const base = [];
+  for(let i=0;i<6;i++){ base.push(parseInt(document.getElementById('base'+side+i).value,10) || 0); }
+  const points = Math.max(0, parseInt(document.getElementById('autoLevel'+side).value,10) || 0);
+  const ev = distributeEVs(base, points);
+  for(let i=0;i<6;i++){ document.getElementById('ev'+side+i).value = ev[i]; }
+  readSide(side);
+  recompute();
 }
 
 function onSpeciesInput(side){
@@ -552,6 +602,7 @@ function recompute(){
 
 function wireSide(side){
   document.getElementById('species'+side).addEventListener('input', ()=>onSpeciesInput(side));
+  document.getElementById('autoBtn'+side).addEventListener('click', ()=>autoSetEVs(side));
   document.getElementById('type1'+side).addEventListener('change', ()=>{ readSide(side); recompute(); });
   document.getElementById('type2'+side).addEventListener('change', ()=>{ readSide(side); recompute(); });
   document.getElementById('atk'+side).addEventListener('change', ()=>{ readSide(side); recompute(); });
