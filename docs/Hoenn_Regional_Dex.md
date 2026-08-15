@@ -187,7 +187,7 @@
 | 184 | Horsea | Water | Route 105 (5) | 2 | 2 | 4 | 4 | 1 | 3 |
 | 185 | Seadra | Water | Route 105 (11) | 3 | 4 | 5 | 5 | 3 | 5 |
 | 186 | Kingdra | Water/Dragon | Evolve from Seadra | 4 | 5 | 5 | 5 | 5 | 5 |
-| 187 | Bagon | Dragon | Routes 128–134 (shared table) (6) | 3 | 4 | 3 | 2 | 2 | 3 |
+| 187 | Bagon | Dragon | Meteor Falls (4) | 3 | 4 | 3 | 2 | 2 | 3 |
 | 188 | Shelgon | Dragon | Meteor Falls (11) | 4 | 5 | 6 | 3 | 3 | 3 |
 | 189 | Salamence | Dragon/Flying | Evolve from Shelgon | 5 | 8 | 5 | 6 | 5 | 6 |
 | 190 | Beldum | Steel/Psychic | Victory Road (5) | 2 | 3 | 5 | 2 | 3 | 2 |

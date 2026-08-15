@@ -68,7 +68,7 @@ Every entry lists every route/dungeon slot where that species can appear. Derive
 | 63 | Zubat | Route 114 (3); Route 115 (5); Rusturf Tunnel (2); Granite Cave (2); Meteor Falls (2); Shoal Cave (3); Seafloor Cavern (3); Sky Pillar (2); Victory Road (2) |
 | 64 | Golbat | Route 114 (8); Route 115 (9); Rusturf Tunnel (8); Granite Cave (8); Meteor Falls (7); Mt. Pyre (7); Shoal Cave (7); Seafloor Cavern (7); Sky Pillar (7); Victory Road (7) |
 | 65 | Crobat | Route 115 (12); Mt. Pyre (11); Shoal Cave (10); Seafloor Cavern (10); Victory Road (11) |
-| 66 | Tentacool | Route 105 (2); Route 107 (3); Route 108 (2); Route 109 (6); Route 115 (8); Route 122 (2); Routes 124–127 (shared table) (2); Shoal Cave (2); Seafloor Cavern (2) |
+| 66 | Tentacool | Route 105 (2); Route 107 (3); Route 108 (2); Route 109 (6); Route 115 (8); Route 122 (2); Routes 124–127 (shared table) (2); Routes 128–134 (shared table) (6); Shoal Cave (2); Seafloor Cavern (2) |
 | 67 | Tentacruel | Route 105 (8); Route 107 (9); Route 122 (8); Routes 124–127 (shared table) (8) |
 | 68 | Sableye | Granite Cave (12); Sky Pillar (3) |
 | 69 | Mawile | Granite Cave (10) |
@@ -187,7 +187,7 @@ Every entry lists every route/dungeon slot where that species can appear. Derive
 | 184 | Horsea | Route 105 (5); Route 106 (4); Route 108 (4); Route 122 (4); Routes 124–127 (shared table) (4); Meteor Falls (6) |
 | 185 | Seadra | Route 105 (11); Route 106 (10); Route 108 (9); Route 122 (9); Routes 124–127 (shared table) (10) |
 | 186 | Kingdra | *Evolve from Seadra — not a direct wild encounter* |
-| 187 | Bagon | Routes 128–134 (shared table) (6); Meteor Falls (4) |
+| 187 | Bagon | Meteor Falls (4) |
 | 188 | Shelgon | Meteor Falls (11); Sky Pillar (8) |
 | 189 | Salamence | *Evolve from Shelgon — not a direct wild encounter* |
 | 190 | Beldum | Victory Road (5) |

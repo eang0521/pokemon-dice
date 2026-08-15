@@ -438,7 +438,7 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 
 ### Routes 128–134 (shared table)
 
-*(Segments: 128, 129, 130, 131, 132, 133, 134. The long Pacifidlog/current stretch back to Slateport — hardy open-water swimmers, with a light Dragon presence since Route 131 is the approach to Sky Pillar. Seafloor Cavern (off 128/130) and Sky Pillar (off 131) have their own separate tables below.)*
+*(Segments: 128, 129, 130, 131, 132, 133, 134. The long Pacifidlog/current stretch back to Slateport — hardy open-water swimmers. Seafloor Cavern (off 128/130) and Sky Pillar (off 131) have their own separate tables below.)*
 
 | Sum | Species | Type(s) |
 |---|---|---|
@@ -446,7 +446,7 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 | 3 | Corphish | Water |
 | 4 | Barboach | Water/Ground |
 | 5 | Magikarp | Water |
-| 6 | Bagon | Dragon |
+| 6 | Tentacool | Water/Poison |
 | 7 | Pelipper | Water/Flying |
 | 8 | Whiscash | Water/Ground |
 | 9 | Crawdaunt | Water/Dark |
