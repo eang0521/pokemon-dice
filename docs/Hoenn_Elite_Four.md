@@ -1,72 +1,78 @@
 # Hoenn Region — Elite Four & Champion
 ### Ever Grande City
 
-Real Emerald's actual Elite Four and Champion, rosters and levels unchanged from canon — no reshuffling was needed the way Calli's homebrew Elite Four required, since Hoenn's official eight gyms and four Elite Four members never overlapped in type to begin with (Dark, Ghost, Ice, Dragon — none of the eight gym types). Fixed roster, fixed levels, no badge-gating: the full team is always exactly this, available once all 8 badges are earned. For die-face stats on any Pokémon named below, look it up by name in `Hoenn_Regional_Dex.md`.
+Real Emerald's actual Elite Four and Champion trainers and specialties, adapted two ways from strict canon: **levels follow the same fixed schedule as Calli's Elite Four** (not literal Emerald levels converted to this scale), and **every team fields five distinct species with no repeats** — real Emerald has Phoebe and Glacia each repeat two lines to fill out a five-Pokémon roster, but since Hoenn's Ghost- and Ice-type pools are genuinely thin (only three Ghost lines and two Ice lines exist in the whole regional dex), those repeats were swapped for thematically-fitting in-dex Pokémon instead of duplicating a line. Fixed roster, fixed levels, no badge-gating: the full team is always exactly this, available once all 8 badges are earned. For die-face stats on any Pokémon named below, look it up by name in `Hoenn_Regional_Dex.md`.
 
 ---
 
 ## Elite Four #1 — Sidney — Dark
 
-| Slot | Pokémon |
-|---|---|
-| 1 | Mightyena |
-| 2 | Shiftry |
-| 3 | Cacturne |
-| 4 | Crawdaunt |
-| **Ace** | **Absol** |
+| Slot | Pokémon | Level |
+|---|---|---|
+| 1 | Mightyena | 11 |
+| 2 | Shiftry | 12 |
+| 3 | Cacturne | 12 |
+| 4 | Crawdaunt | 13 |
+| **Ace** | **Absol** | **13** |
+
+Unchanged from canon — Sidney's real team already has five distinct lines.
 
 ---
 
 ## Elite Four #2 — Phoebe — Ghost
 
-| Slot | Pokémon |
-|---|---|
-| 1 | Dusclops |
-| 2 | Banette |
-| 3 | Sableye |
-| 4 | Banette |
-| **Ace** | **Dusclops** |
+| Slot | Pokémon | Level |
+|---|---|---|
+| 1 | Sableye | 12 |
+| 2 | Banette | 12 |
+| 3 | Chimecho | 13 |
+| 4 | Absol | 13 |
+| **Ace** | **Dusclops** | **14** |
 
-*Phoebe's real Emerald team repeats two lines (Dusclops, Banette) rather than fielding five distinct species — this project keeps that exactly as-is, since Hoenn's Ghost-type pool is genuinely this thin (only Duskull, Shuppet, and Sableye's lines exist in the whole regional dex).*
+*Real Emerald: Dusclops/Banette/Sableye/Banette/Dusclops. Kept Sableye and both Ghost lines (Banette, Dusclops as ace), and replaced the two repeats with Chimecho (mystical wind-chime spirit — a natural fit for a Ghost specialist even off-type) and Absol (ominous disaster-omen Pokémon, same logic).*
 
 ---
 
 ## Elite Four #3 — Glacia — Ice
 
-| Slot | Pokémon |
-|---|---|
-| 1 | Sealeo |
-| 2 | Glalie |
-| 3 | Sealeo |
-| 4 | Glalie |
-| **Ace** | **Walrein** |
+| Slot | Pokémon | Level |
+|---|---|---|
+| 1 | Glalie | 12 |
+| 2 | Relicanth | 13 |
+| 3 | Corsola | 13 |
+| 4 | Milotic | 14 |
+| **Ace** | **Walrein** | **14** |
 
-*Same situation as Phoebe — Glacia's real team repeats Sealeo and Glalie rather than using five distinct lines, since Hoenn's Ice-type pool outside her own Spheal/Snorunt lines is essentially nonexistent.*
+*Real Emerald: Sealeo/Glalie/Sealeo/Glalie/Walrein. Kept both true Ice lines (Glalie, Walrein as ace), and replaced the two repeated Sealeo with Relicanth and Corsola (ancient/reef deep-water species — the closest thing to "glacial ocean" flavor Hoenn's dex has outside her own two lines) plus Milotic for elegant cold-water presence.*
 
 ---
 
 ## Elite Four #4 — Drake — Dragon
 
-| Slot | Pokémon |
-|---|---|
-| 1 | Shelgon |
-| 2 | Altaria |
-| 3 | Kingdra |
-| 4 | Flygon |
-| **Ace** | **Salamence** |
+| Slot | Pokémon | Level |
+|---|---|---|
+| 1 | Metagross | 13 |
+| 2 | Altaria | 13 |
+| 3 | Kingdra | 14 |
+| 4 | Flygon | 14 |
+| **Ace** | **Salamence** | **15** |
+
+*Real Emerald: Shelgon/Altaria/Kingdra/Flygon/Salamence — Shelgon and Salamence are the same line at two stages, which now counts as a repeat under the no-duplicates rule. Replaced Shelgon with Metagross (Beldum's line) — a suitably powerful, vaguely draconic-feeling Steel/Psychic pick that keeps the roster's "ancient and formidable" character.*
 
 ---
 
 ## Champion — Wallace — Water
 
-| Slot | Pokémon |
-|---|---|
-| 1 | Wailord |
-| 2 | Tentacruel |
-| 3 | Ludicolo |
-| 4 | Whiscash |
-| 5 | Gyarados |
-| **Ace** | **Milotic** |
+| Slot | Pokémon | Level |
+|---|---|---|
+| 1 | Wailord | 13 |
+| 2 | Tentacruel | 13 |
+| 3 | Ludicolo | 14 |
+| 4 | Whiscash | 14 |
+| 5 | Gyarados | 15 |
+| **Ace** | **Milotic** | **15** |
+
+Unchanged from canon — Wallace's real team already has six distinct lines.
 
 ---
 
@@ -80,4 +86,6 @@ Real Emerald's actual Elite Four and Champion, rosters and levels unchanged from
 | E4 #4 | Drake | Dragon | Salamence |
 | Champion | Wallace | Water | Milotic |
 
-**Why no changes were needed:** unlike Calli (a homebrew region where gym-type reassignments could collide with the Elite Four's original specialties), Hoenn's eight real gym types — Rock, Fighting, Electric, Fire, Normal, Flying, Psychic, Water (Roxanne through Juan) — never included Dark, Ghost, Ice, or Dragon in the first place. The real Elite Four's specialties were already the region's "leftover" types by design in the source game, so this project just keeps them as Game Freak wrote them, canon rosters and canon levels, with no padding or substitution needed anywhere in this file (contrast with the gym leaders, several of whom needed in-dex substitutes to fill out the project's 5-slot format — see `Hoenn_Gym_Leaders.md`).
+**Levels:** follow the exact same escalating schedule as Calli's Elite Four (E4 #1 lowest, each subsequent member a notch stronger, Champion highest) — `{1:11, 2:12, 3:12, 4:13, ace:13}` for #1, up through `{1:13, 2:13, 3:14, 4:14, ace:15}` for #4, and `{1:13, 2:13, 3:14, 4:14, 5:15, ace:15}` for the Champion — rather than Emerald's own (much higher, and mutually inconsistent across members) real levels converted to this scale.
+
+**No-duplicates rule:** every roster above fields five (or six, for the Champion) genuinely distinct species. Where real Emerald repeats a line to pad out a roster (Phoebe, Glacia, and — once same-line-different-stage counts as a repeat — Drake), this adaptation swaps the repeat for a different, thematically-appropriate in-dex Pokémon rather than showing the same line twice. Sidney and Wallace needed no changes, since their real teams were already fully distinct.
