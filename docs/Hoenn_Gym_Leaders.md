@@ -1,6 +1,6 @@
 # Hoenn Region — The Eight Gym Leaders
 
-Gyms can be challenged in **any order**, per the project's standard house rule. Each leader is real (Roxanne, Brawly, Wattson, Flannery, Norman, Winona, Tate & Liza, Juan — Emerald's actual eight), but their teams are restructured into this project's fixed 5-slot format: the same **two core Pokémon** (one is their **ace**) from badge 1 onward; a 3rd teammate joins at your 3rd/4th badge, a 4th at your 5th/6th, and a 5th at your 7th/8th, each entering at base stage and evolving a step per tier after joining. Real Emerald teams are only 3–4 Pokémon (5 for Juan) — the extra slots are filled with in-dex substitutes, since Emerald's own rematch teams draw from outside the Hoenn regional dex and can't be used directly here. See `Hoenn_Dungeons.md` and this project's build notes for why each substitute was picked.
+Gyms can be challenged in **any order**, per the project's standard house rule. Each leader is real (Roxanne, Brawly, Wattson, Flannery, Norman, Winona, Tate & Liza, Wallace), but their teams are restructured into this project's fixed 5-slot format: the same **two core Pokémon** (one is their **ace**) from badge 1 onward; a 3rd teammate joins at your 3rd/4th badge, a 4th at your 5th/6th, and a 5th at your 7th/8th, each entering at base stage and evolving a step per tier after joining. Real Emerald teams are only 3–4 Pokémon (5 for the Sootopolis leader) — the extra slots are filled with in-dex substitutes, since Emerald's own rematch teams draw from outside the Hoenn regional dex and can't be used directly here. See `Hoenn_Dungeons.md` and this project's build notes for why each substitute was picked. **Sootopolis's leader is Wallace, using his real Ruby/Sapphire gym roster** rather than Emerald's Juan — see that entry below for why.
 
 Every leader's table is followed by an **evolution key** — the level (on Hoenn's 1–20 scale) or method each of their Pokémon's lines uses, in the order the evolutions happen. For die-face stats on any Pokémon named below, look it up by name in `Hoenn_Regional_Dex.md`.
 
@@ -104,16 +104,16 @@ Every leader's table is followed by an **evolution key** — the level (on Hoenn
 
 ---
 
-## 8. Juan — Sootopolis City — Water Gym
-**Core:** Horsea line (**Ace**) · Corphish line
+## 8. Wallace — Sootopolis City — Water Gym
+**Core:** Feebas line (**Ace**) · Barboach line
+
+*Wallace, not Juan — this project uses his real Ruby/Sapphire Sootopolis Gym roster rather than Emerald's (where Juan takes over the gym and Wallace becomes Champion instead). Doing it this way means the Champion isn't also a Water specialist — see `Hoenn_Elite_Four.md` for the matching swap (Steven in place of Emerald's Champion Wallace).*
 
 | Battled as your... | Team |
 |---|---|
-| 1st/2nd | **Horsea (Ace)**, Corphish |
-| 3rd/4th | **Horsea (Ace)**, Corphish, **+ Barboach** |
-| 5th/6th | **Seadra (Ace)**, Crawdaunt, Whiscash, **+ Spheal** |
-| 7th/8th | **Seadra (Ace)**, Crawdaunt, Walrein, **+ Luvdisc** *(single-stage)* |
+| 1st/2nd | **Feebas (Ace)**, Barboach |
+| 3rd/4th | **Milotic (Ace)**, Barboach, **+ Goldeen** |
+| 5th/6th | **Milotic (Ace)**, Whiscash, Goldeen, **+ Spheal** |
+| 7th/8th | **Milotic (Ace)**, Whiscash, Seaking, Walrein, **+ Luvdisc** *(single-stage)* |
 
-**Evolutions:** Horsea: 9, Trade (Dragon Scale) · Corphish: 8 · Barboach: 8 · Spheal: 9, 11 · Luvdisc: Does not evolve
-
-*(Juan's Ace stays at Seadra even at 7th/8th badge — Kingdra's trade evolution sits at level 12 on the compressed scale, just above what the Ace slot's level formula reaches at these illustrative snapshots. A player who keeps fighting Juan past 8 badges will see Kingdra in actual play, once badges push the computed level past 12 — these four rows are illustrative checkpoints, not the complete set of levels the live tool can produce.)*
+**Evolutions:** Feebas: 7, Trade (Prism Scale) · Barboach: 8 · Goldeen: 9 · Spheal: 9, 11 · Luvdisc: Does not evolve
