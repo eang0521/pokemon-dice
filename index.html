@@ -3040,6 +3040,19 @@ function typeOptions(selected, includeNone){
   return html;
 }
 
+// Attack-type selects (My Pokemon, Battle Sim) are ordered around the
+// attack-type wheel itself (Dragon -> ... -> Water, WHEEL/§13) rather than
+// alphabetically, so the dropdown order matches the mechanic that moves
+// through it.
+function atkTypeOptions(selected){
+  let html = '';
+  for(const t of WHEEL){
+    const label = cap(t);
+    html += '<option value="'+label+'"'+(label===selected?' selected':'')+'>'+label+'</option>';
+  }
+  return html;
+}
+
 // Same 2d6 attack-type wheel roll used for wild/trainer Pokemon (§13): pick
 // a random true type as the base, then shift around WHEEL by wheelShift(sum)
 // of a 2d6 roll. Reuses the existing WHEEL/wheelShift/rand rather than
@@ -3090,7 +3103,7 @@ function sideHTML(side){
     + '</div>'
     + '<div class="field">'
     + '  <label class="field-label">Attack type</label>'
-    + '  <select id="atk'+side+'" class="plain-select">'+typeOptions(s.attackType,false)+'</select>'
+    + '  <select id="atk'+side+'" class="plain-select">'+atkTypeOptions(s.attackType)+'</select>'
     + '</div>'
     + '<div class="field">'
     + '  <label class="field-label" for="autoLevel'+side+'">Auto-set EVs by level</label>'
@@ -3447,7 +3460,7 @@ function monCardHtml(entry, idx){
   const editing = editingIds.has(entry.id);
 
   const atkHtml = editing
-    ? '<select class="atk-select plain-select" data-idx="'+idx+'">'+typeOptions(entry.atk, false)+'</select>'
+    ? '<select class="atk-select plain-select" data-idx="'+idx+'">'+atkTypeOptions(entry.atk)+'</select>'
     : trainerStylePill(entry.atk, 'trainer-atk-pill');
   const typesRowHtml = '<div class="trainer-type-block">'
     + '<span class="trainer-type-label">Type</span>'
@@ -3640,6 +3653,9 @@ document.getElementById('monList').addEventListener('click', (e)=>{
     entry.t1 = types[0] || null;
     entry.t2 = types[1] || null;
     entry.base = (DATA.dice[target] || [0,0,0,0,0,0]).slice();
+    if(confirm('Reroll attack type for '+target+"'s types using the attack wheel?")){
+      entry.atk = randomAttackType(entry.t1, entry.t2);
+    }
     saveMyPokemonList(list);
     renderMyPokemonList();
     return;
@@ -3699,7 +3715,7 @@ function resetAddForm(){
 function initAddForm(){
   document.getElementById('addType1').innerHTML = typeOptions('', false);
   document.getElementById('addType2').innerHTML = typeOptions('', true);
-  document.getElementById('addAtk').innerHTML = typeOptions('', false);
+  document.getElementById('addAtk').innerHTML = atkTypeOptions('');
 
   const body = document.getElementById('addStatBody');
   body.innerHTML = STAT_NAMES.map((label,i)=>
