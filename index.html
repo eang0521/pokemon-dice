@@ -1348,7 +1348,9 @@
   }
   .ev-step-btn:hover{ background: var(--paper-deep); }
   .ev-step-btn:active{ transform: translateY(1px); }
-  .mon-stat-strip{ display:flex; align-items:center; gap:4px; margin-top:6px; flex-wrap:wrap; }
+  .ev-step-btn-sm{ width:16px; font-size:11px; padding:0; align-self:stretch; }
+  .mon-stat-strip{ display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap; }
+  .mon-stat-cell{ display:flex; align-items:stretch; gap:2px; }
   .mon-stat-chip{
     flex:1 1 auto;
     min-width:38px;
@@ -3400,10 +3402,16 @@ function monCardHtml(entry, idx){
       + '</table>'
       + '<div class="level-readout">Total: <b id="total-'+idx+'">'+total+'</b></div>';
   } else {
-    // Thin, read-only strip: final value on top, its EV contribution below,
-    // same "Total" placement as the Roller's trainer/gym rows.
+    // Thin, read-only strip -- but each stat still gets its own -/+ so an EV
+    // can be nudged without opening the full edit form. Unlike the edit
+    // view's stepper (which just adjusts a pending input), these apply and
+    // save immediately, since there's no "Save Changes" step out here.
     statsHtml = '<div class="mon-stat-strip">' + STAT_NAMES.map((label,i) =>
-      '<div class="mon-stat-chip"><span class="v">'+finalStats[i]+'</span><span class="e">+'+entry.ev[i]+'</span><span class="l">'+label+'</span></div>'
+      '<div class="mon-stat-cell">'
+      + '<button type="button" class="ev-step-btn ev-step-btn-sm" data-action="evStepQuick" data-stat="'+i+'" data-dir="-1" aria-label="Decrease '+label+' EV">&minus;</button>'
+      + '<div class="mon-stat-chip"><span class="v">'+finalStats[i]+'</span><span class="e">+'+entry.ev[i]+'</span><span class="l">'+label+'</span></div>'
+      + '<button type="button" class="ev-step-btn ev-step-btn-sm" data-action="evStepQuick" data-stat="'+i+'" data-dir="1" aria-label="Increase '+label+' EV">+</button>'
+      + '</div>'
     ).join('') + '<span class="stat-mini-total">Total: '+total+'</span></div>';
   }
 
@@ -3503,6 +3511,19 @@ document.getElementById('monList').addEventListener('click', (e)=>{
       input.value = Math.max(0, (parseInt(input.value, 10) || 0) + delta);
       input.dispatchEvent(new Event('input', {bubbles:true}));
     }
+    return;
+  }
+  if(btn.dataset.action === 'evStepQuick'){
+    // Same +-1 nudge as evStep, but from the compact (non-editing) view --
+    // there's no pending form to hold it in, so this writes straight to
+    // storage and re-renders immediately.
+    const statIdx = parseInt(btn.dataset.stat, 10);
+    const delta = parseInt(btn.dataset.dir, 10);
+    const newEv = entry.ev.slice();
+    newEv[statIdx] = Math.max(0, newEv[statIdx] + delta);
+    entry.ev = newEv;
+    saveMyPokemonList(list);
+    renderMyPokemonList();
     return;
   }
   if(btn.dataset.action === 'edit'){ editingIds.add(entry.id); renderMyPokemonList(); return; }
