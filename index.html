@@ -1331,6 +1331,23 @@
     flex-wrap:wrap;
   }
   .atk-select{ width:auto; flex:0 0 auto; padding:5px 8px; font-size:12.5px; }
+  .ev-stepper{ display:flex; align-items:stretch; gap:3px; }
+  .ev-stepper .ev-input{ width:40px; text-align:center; padding:5px 2px; }
+  .ev-step-btn{
+    flex:0 0 auto;
+    width:22px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    font-weight:600;
+    line-height:1;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .ev-step-btn:hover{ background: var(--paper-deep); }
+  .ev-step-btn:active{ transform: translateY(1px); }
   .mon-stat-strip{ display:flex; align-items:center; gap:4px; margin-top:6px; flex-wrap:wrap; }
   .mon-stat-chip{
     flex:1 1 auto;
@@ -3369,7 +3386,11 @@ function monCardHtml(entry, idx){
       '<tr>'
       + '<td class="stat-name">'+label+'</td>'
       + '<td class="base-cell">'+entry.base[i]+'</td>'
-      + '<td><input type="number" min="0" class="ev-input" data-idx="'+idx+'" data-stat="'+i+'" value="'+entry.ev[i]+'"></td>'
+      + '<td><div class="ev-stepper">'
+      +   '<button type="button" class="ev-step-btn" data-action="evStep" data-stat="'+i+'" data-dir="-1" aria-label="Decrease '+label+' EV">&minus;</button>'
+      +   '<input type="number" min="0" class="ev-input" data-idx="'+idx+'" data-stat="'+i+'" value="'+entry.ev[i]+'">'
+      +   '<button type="button" class="ev-step-btn" data-action="evStep" data-stat="'+i+'" data-dir="1" aria-label="Increase '+label+' EV">+</button>'
+      + '</div></td>'
       + '<td class="final-cell" id="final-'+idx+'-'+i+'">'+finalStats[i]+'</td>'
       + '</tr>'
     ).join('');
@@ -3472,6 +3493,18 @@ document.getElementById('monList').addEventListener('click', (e)=>{
   const entry = list[idx];
   if(!entry) return;
 
+  if(btn.dataset.action === 'evStep'){
+    // Nudge one EV up/down by 1, then replay it through the normal ev-input
+    // 'input' handler (final-stat/Total/Level live update) instead of
+    // duplicating that math here.
+    const input = card.querySelector('.ev-input[data-stat="'+btn.dataset.stat+'"]');
+    if(input){
+      const delta = parseInt(btn.dataset.dir, 10);
+      input.value = Math.max(0, (parseInt(input.value, 10) || 0) + delta);
+      input.dispatchEvent(new Event('input', {bubbles:true}));
+    }
+    return;
+  }
   if(btn.dataset.action === 'edit'){ editingIds.add(entry.id); renderMyPokemonList(); return; }
   if(btn.dataset.action === 'cancel'){ editingIds.delete(entry.id); renderMyPokemonList(); return; }
   if(btn.dataset.action === 'save'){
