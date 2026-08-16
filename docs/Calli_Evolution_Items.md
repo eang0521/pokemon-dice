@@ -1,10 +1,10 @@
-# Calli Region — Evolution Items & Trade Hub
+# Calli Region — Evolution Items
 
-Every evolution in Calli that isn't a plain level-up needs either an **item** (a stone the Pokémon uses directly, or one it holds while traded) or a **trade with no item at all**. This doc places each of those in a specific city — somewhere the player can actually go buy or find it — so no evolution is a dead end. Cross-reference: `Calli_Evolution_Guide.md` for the full evolution list this is drawn from.
+Every evolution in Calli that isn't a plain level-up needs an **item** — a stone the Pokémon uses directly, or one it holds while traded. This doc places each of those in a specific city — somewhere the player can actually go buy or find it — so no evolution is a dead end. Cross-reference: `Calli_Evolution_Guide.md` for the full evolution list this is drawn from.
 
 Every item is sold or found by an NPC in its listed city; none require backtracking through a dungeon to obtain.
 
-## Evolution Items (13)
+## Evolution Items (14)
 
 | Item | Needed By | Found In | Why here |
 |---|---|---|---|
@@ -21,16 +21,10 @@ Every item is sold or found by an NPC in its listed city; none require backtrack
 | **Protector** *(hold, trade)* | Rhydon → Rhyperior | **Crag Town** | Bishop's volcanic tablelands are rugged, rock-plated country — a blacksmith here forges these from tableland ore. |
 | **Whipped Dream** *(hold, trade)* | Swirlix → Slurpuff | **Mission Town** | A mission-era bakery tradition — the same sweet-shop the Fairy gym's trainers all seem to visit. |
 | **Dragon Scale** *(hold, trade)* | Seadra → Kingdra | **Shoreline City** | A San Diego harbor sailor's superstition — old sea-serpent tales, and a scale to prove it, sold dockside. |
-
-## Trade Hub — Skyline City
-
-Calli has five evolutions that need nothing but a trade — no item at all: **Haunter → Gengar**, **Machoke → Machamp**, **Boldore → Gigalith**, **Graveler → Golem**, and **Kadabra → Alakazam**.
-
-**Skyline City** is the region's trade hub. As the biggest metropolis in Calli — freeways, studio backlots, a city where everyone passing through has someone else's Pokémon they're looking to swap — it's the natural single place to point a player with any of these five toward, rather than scattering trade NPCs across the map. A trainers' exchange near the Studio Backlot Storm Drains handles the actual swap (in-game trade NPC, second player, or whatever trade-simulation feature the final build implements — same mechanism the held-item trades above use, just without an item changing hands first).
+| **Linking Cord** *(hold, trade)* | Haunter → Gengar · Machoke → Machamp · Boldore → Gigalith · Graveler → Golem · Kadabra → Alakazam | **Skyline City** | A trainers' exchange near the Studio Backlot Storm Drains sells these to anyone trading through — as the region's biggest metropolis, Skyline is where a player with any of these five is naturally pointed, rather than scattering trade NPCs across the map. |
 
 ## Quick Reference
 
 - **8 stones:** Leaf (Redwood), Water (Tidepool), Dusk (Baymist), Thunder (Capitol), Sun (Dunebreak), Dawn (Mission), Fire (Basin), Moon (Canyon).
-- **5 held-trade items:** Metal Coat (Capitol), Razor Claw (Alpine), Protector (Crag), Whipped Dream (Mission), Dragon Scale (Shoreline).
-- **5 pure-trade evolutions**, all handled at the **Skyline City** trade hub: Haunter, Machoke, Boldore, Graveler, Kadabra.
-- **Towns with no evolution item:** Vinehaven, Vista, Skyline (the trade hub itself), Shoreline (item-only for Dragon Scale, no stone) — not every town needs one; these just didn't have a fit as strong as the ones above.
+- **6 held-trade items:** Metal Coat (Capitol), Razor Claw (Alpine), Protector (Crag), Whipped Dream (Mission), Dragon Scale (Shoreline), Linking Cord (Skyline) — Linking Cord covers all five otherwise-plain trade evolutions (Haunter, Machoke, Boldore, Graveler, Kadabra).
+- **Towns with no evolution item:** Vinehaven, Vista — not every town needs one; these just didn't have a fit as strong as the ones above.

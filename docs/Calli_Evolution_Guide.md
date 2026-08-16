@@ -58,7 +58,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Pidgeotto → Pidgeot | Level 10 |
 | Meowth → Persian | Level 8 |
 | Gastly → Haunter | Level 7 |
-| Haunter → Gengar | Trade |
+| Haunter → Gengar | Trade holding Linking Cord |
 | Drifloon → Drifblim | Level 8 |
 | Litwick → Lampent | Level 11 |
 | Lampent → Chandelure | Dusk Stone |
@@ -86,10 +86,10 @@ All level-up evolutions below are converted from their standard mainline require
 | Psyduck → Golduck | Level 9 |
 | Magikarp → Gyarados | Level 6 |
 | Machop → Machoke | Level 8 |
-| Machoke → Machamp | Trade |
+| Machoke → Machamp | Trade holding Linking Cord |
 | Onix → Steelix | Trade holding Metal Coat |
 | Roggenrola → Boldore | Level 7 |
-| Boldore → Gigalith | Trade |
+| Boldore → Gigalith | Trade holding Linking Cord |
 | Drilbur → Excadrill | Level 9 |
 
 ## Alpine Town
@@ -111,7 +111,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Evolution | Method |
 |---|---|
 | Geodude → Graveler | Level 7 |
-| Graveler → Golem | Trade |
+| Graveler → Golem | Trade holding Linking Cord |
 | Rhyhorn → Rhydon | Level 11 |
 | Rhydon → Rhyperior | Trade holding Protector |
 | Larvitar → Pupitar | Level 8 |
@@ -178,7 +178,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Evolution | Method |
 |---|---|
 | Abra → Kadabra | Level 5 |
-| Kadabra → Alakazam | Trade |
+| Kadabra → Alakazam | Trade holding Linking Cord |
 | Drowzee → Hypno | Level 8 |
 | Natu → Xatu | Level 7 |
 | Riolu → Lucario | High friendship, during the day |
@@ -204,6 +204,6 @@ All level-up evolutions below are converted from their standard mainline require
 ---
 
 ## Notes
-- **Trade evolutions** (Machoke, Haunter, Graveler, Kadabra, and the held-item trades like Onix/Sneasel/Rhydon/Seadra/Swirlix) work the same as mainline games — you'll need a second player, an in-game trade NPC, or whatever trade-simulation feature the final game builds in.
+- **Trade evolutions** (Machoke, Haunter, Graveler, Kadabra, Onix, Sneasel, Rhydon, Seadra, Swirlix — all of which hold an item while trading, including the plain-trade four which need a Linking Cord) work the same as mainline games — you'll need a second player, an in-game trade NPC, or whatever trade-simulation feature the final game builds in.
 - **Friendship evolutions** (Golden Vein Mine's Golbat→Crobat, Igglybuff→Jigglypuff, Riolu→Lucario) trigger on level-up once friendship is high enough, same as always.
 - **Magnezone's location-based evolution** is a nod to the dungeon it's associated with (Delta Hydro Station) — a nice reason to bring a mid-level Magneton there specifically.
