@@ -1525,8 +1525,19 @@ function renderWildResult(data){
     b.dataset.ev = data.adjStats.map((v,i)=> v - stats[i]).join(',');
   });
   catchBtn.dataset.note = note;
+  updateWildCatchBtnState(!!data.caught);
 
   lastWildResult = data;
+}
+
+// A wild encounter can only be caught once -- catching again would just be
+// the same specific encounter, not a new one. Fresh rolls (data.caught not
+// set) re-enable the button; restoring a state where it was already caught
+// keeps it disabled instead of quietly reopening the opportunity.
+function updateWildCatchBtnState(caught){
+  const btn = document.getElementById('wildCatchBtn');
+  btn.disabled = caught;
+  btn.textContent = caught ? 'Caught ✓' : 'Catch! ⚑';
 }
 
 let wildStatRolling = false;
@@ -2386,6 +2397,13 @@ function catchMon(btn){
     ev: btn.dataset.ev.split(',').map(Number),
     note: btn.dataset.note || '',
   });
+  if(btn.id === 'wildCatchBtn'){
+    // This specific wild encounter is now caught -- stays disabled (even
+    // across a state restore) until the next roll produces a new encounter.
+    if(lastWildResult) lastWildResult.caught = true;
+    updateWildCatchBtnState(true);
+    return;
+  }
   const original = btn.textContent;
   btn.textContent = 'Added ✓';
   btn.disabled = true;
