@@ -474,22 +474,26 @@
 
   .tab-row{
     display:flex;
-    flex-wrap:wrap;
-    gap:8px;
+    gap:6px;
     margin-bottom: 16px;
   }
   .tab-btn{
-    flex:1 1 30%;
-    min-width:96px;
-    padding: 10px 12px;
+    flex:1;
+    min-width:0;
+    padding: 9px 4px;
     font-family:'Fraunces', serif;
     font-weight:600;
-    font-size: 15px;
+    font-size: 14px;
+    line-height:1.15;
+    text-align:center;
     background: var(--paper);
     color: var(--ink);
     border: 1.5px solid var(--ink);
     border-radius: 4px;
     cursor:pointer;
+  }
+  @media (max-width: 560px){
+    .tab-btn{ font-size: 11.5px; padding: 8px 2px; }
   }
   .tab-btn.active{
     background: var(--redwood);
@@ -1301,41 +1305,43 @@
     border: 1px dashed var(--line);
     border-radius:4px;
   }
-  .mon-list{ display:flex; flex-direction:column; gap:14px; }
+  .mon-list{ display:flex; flex-direction:column; gap:8px; }
   .mon-card{
     background: var(--paper-deep);
     border: 1px solid var(--line);
     border-radius: 4px;
-    padding: 16px 18px 18px;
+    padding: 10px 14px 12px;
     position:relative;
+  }
+  .mon-card.editing{
+    padding: 14px 16px 16px;
   }
   .mon-card::before{
     content:"";
     position:absolute;
-    top:8px; left:8px; right:8px; bottom:8px;
-    border: 1px dashed rgba(31,46,61,0.14);
+    top:6px; left:6px; right:6px; bottom:6px;
+    border: 1px dashed rgba(31,46,61,0.1);
     pointer-events:none;
   }
   .mon-card-top{
     display:flex;
     justify-content:space-between;
-    align-items:flex-start;
+    align-items:baseline;
     gap:10px;
     flex-wrap:wrap;
   }
   .mon-name{
     font-family:'Fraunces', serif;
     font-weight:600;
-    font-size:20px;
+    font-size:17px;
   }
   .mon-total{
     font-family:'IBM Plex Mono', monospace;
-    font-size:12.5px;
+    font-size:11.5px;
     color: var(--redwood);
     white-space:nowrap;
-    padding-top:4px;
   }
-  .mon-types-row{ display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap; }
+  .mon-types-row{ display:flex; gap:6px; align-items:center; margin-top:5px; flex-wrap:wrap; }
   .mon-atk-label{
     font-family:'IBM Plex Mono', monospace;
     font-size:10.5px;
@@ -1344,18 +1350,31 @@
     letter-spacing:0.06em;
   }
   .atk-select{ width:auto; flex:0 0 auto; padding:5px 8px; font-size:12.5px; }
+  .mon-stat-strip{ display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+  .mon-stat-chip{
+    flex:1 1 auto;
+    min-width:38px;
+    text-align:center;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius:3px;
+    padding:3px 2px 2px;
+  }
+  .mon-stat-chip .v{ display:block; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:600; }
+  .mon-stat-chip .e{ display:block; font-family:'IBM Plex Mono', monospace; font-size:9px; color: var(--redwood); }
+  .mon-stat-chip .l{ display:block; font-family:'IBM Plex Mono', monospace; font-size:7.5px; color: var(--sage); text-transform:uppercase; letter-spacing:0.03em; }
   .mon-note{
-    margin-top:10px;
-    font-size:12.5px;
+    margin-top:6px;
+    font-size:11.5px;
     font-style:italic;
     color:#3c4f45;
   }
-  .myp-actions{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .myp-actions{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
   .myp-actions button{
     font-family:'IBM Plex Mono', monospace;
-    font-size:11.5px;
+    font-size:11px;
     font-weight:600;
-    padding: 8px 12px;
+    padding: 6px 10px;
     color: var(--ink);
     border: 1.5px solid var(--ink);
     border-radius: 3px;
@@ -1579,7 +1598,10 @@
       </div>
       <div class="field">
         <label class="field-label">Attack type</label>
-        <select id="addAtk" class="plain-select"></select>
+        <div class="auto-ev-row">
+          <select id="addAtk" class="plain-select"></select>
+          <button type="button" id="addRandomAtkBtn" class="auto-ev-btn">&#127922; Random</button>
+        </div>
       </div>
       <div class="field">
         <label class="field-label" for="addAutoLevel">Auto-set EVs by level</label>
@@ -2954,6 +2976,20 @@ function typeOptions(selected, includeNone){
   return html;
 }
 
+// Same 2d6 attack-type wheel roll used for wild/trainer Pokemon (§13): pick
+// a random true type as the base, then shift around WHEEL by wheelShift(sum)
+// of a 2d6 roll. Reuses the existing WHEEL/wheelShift/rand rather than
+// inventing a second version for the manual-add form.
+function randomAttackType(t1, t2){
+  const types = [t1, t2].filter(Boolean).map(t=>t.toLowerCase());
+  const baseType = types[Math.floor(Math.random()*types.length)];
+  const sum = rand(6) + rand(6);
+  const shift = wheelShift(sum);
+  const baseIdx = WHEEL.indexOf(baseType);
+  const finalIdx = ((baseIdx + shift) % WHEEL.length + WHEEL.length) % WHEEL.length;
+  return cap(WHEEL[finalIdx]);
+}
+
 const battleState = {
   A: { name:'Charizard', type1:'', type2:null, base:[0,0,0,0,0,0], ev:[0,0,0,0,0,0], attackType:'' },
   B: { name:'Venusaur', type1:'', type2:null, base:[0,0,0,0,0,0], ev:[0,0,0,0,0,0], attackType:'' },
@@ -3317,38 +3353,65 @@ function fmtDate(iso){
   } catch(e){ return ''; }
 }
 
+// Which caught entries currently have their edit form open, keyed by the
+// entry's own persistent id rather than its list position -- a release
+// elsewhere in the list would silently shift raw array indices out from
+// under a Set keyed by index, reopening (or hiding) the wrong card.
+const editingIds = new Set();
+
 function monCardHtml(entry, idx){
   const finalStats = entry.base.map((b,i)=> b + (entry.ev[i]||0));
   const total = finalStats.reduce((a,b)=>a+b,0);
-  const rows = STAT_NAMES.map((label,i)=>
-    '<tr>'
-    + '<td class="stat-name">'+label+'</td>'
-    + '<td class="base-cell">'+entry.base[i]+'</td>'
-    + '<td><input type="number" min="0" class="ev-input" data-idx="'+idx+'" data-stat="'+i+'" value="'+entry.ev[i]+'"></td>'
-    + '<td class="final-cell" id="final-'+idx+'-'+i+'">'+finalStats[i]+'</td>'
-    + '</tr>'
-  ).join('');
-  return '<div class="mon-card" data-idx="'+idx+'" data-name="'+entry.name.toLowerCase()+'">'
+  const editing = editingIds.has(entry.id);
+
+  const typesRowHtml = typePill(entry.t1) + typePill(entry.t2)
+    + '<span class="mon-atk-label">Atk</span>'
+    + (editing
+        ? '<select class="atk-select plain-select" data-idx="'+idx+'">'+typeOptions(entry.atk, false)+'</select>'
+        : typePill(entry.atk));
+
+  let statsHtml;
+  if(editing){
+    const rows = STAT_NAMES.map((label,i)=>
+      '<tr>'
+      + '<td class="stat-name">'+label+'</td>'
+      + '<td class="base-cell">'+entry.base[i]+'</td>'
+      + '<td><input type="number" min="0" class="ev-input" data-idx="'+idx+'" data-stat="'+i+'" value="'+entry.ev[i]+'"></td>'
+      + '<td class="final-cell" id="final-'+idx+'-'+i+'">'+finalStats[i]+'</td>'
+      + '</tr>'
+    ).join('');
+    statsHtml = '<table class="stat-table">'
+      + '<thead><tr><th>Stat</th><th>Base</th><th>EV</th><th>=</th></tr></thead>'
+      + '<tbody>'+rows+'</tbody>'
+      + '</table>';
+  } else {
+    // Thin, read-only strip: final value on top, its EV contribution below.
+    statsHtml = '<div class="mon-stat-strip">' + STAT_NAMES.map((label,i) =>
+      '<div class="mon-stat-chip"><span class="v">'+finalStats[i]+'</span><span class="e">+'+entry.ev[i]+'</span><span class="l">'+label+'</span></div>'
+    ).join('') + '</div>';
+  }
+
+  const actionsHtml = editing
+    ? '<div class="myp-actions">'
+      +   '<button type="button" class="save-btn" data-action="save">Save Changes</button>'
+      +   '<button type="button" class="release-btn" data-action="cancel">Cancel</button>'
+      + '</div>'
+    : '<div class="myp-actions">'
+      +   '<button type="button" class="save-btn" data-action="edit">Edit</button>'
+      +   '<button type="button" class="send-a-btn" data-action="sendA">&rarr; Side A</button>'
+      +   '<button type="button" class="send-b-btn" data-action="sendB">&rarr; Side B</button>'
+      +   '<button type="button" class="release-btn" data-action="release">Release</button>'
+      + '</div>';
+
+  return '<div class="mon-card'+(editing?' editing':'')+'" data-idx="'+idx+'" data-name="'+entry.name.toLowerCase()+'">'
     + '<div class="mon-card-top">'
     +   '<div class="mon-name">'+entry.name+'</div>'
     +   '<div class="mon-total" id="total-'+idx+'">Total: '+total+'</div>'
     + '</div>'
-    + '<div class="mon-types-row">'
-    +   typePill(entry.t1) + typePill(entry.t2)
-    +   '<span class="mon-atk-label">Atk</span>'
-    +   '<select class="atk-select plain-select" data-idx="'+idx+'">'+typeOptions(entry.atk, false)+'</select>'
-    + '</div>'
-    + '<table class="stat-table">'
-    +   '<thead><tr><th>Stat</th><th>Base</th><th>EV</th><th>=</th></tr></thead>'
-    +   '<tbody>'+rows+'</tbody>'
-    + '</table>'
+    + '<div class="mon-types-row">'+typesRowHtml+'</div>'
+    + statsHtml
     + (entry.note || entry.caughtAt ? '<div class="mon-note">'+(entry.note||'')+(entry.caughtAt ? ' &middot; caught '+fmtDate(entry.caughtAt) : '')+'</div>' : '')
-    + '<div class="myp-actions">'
-    +   '<button type="button" class="save-btn" data-action="save">Save Changes</button>'
-    +   '<button type="button" class="send-a-btn" data-action="sendA">&rarr; Side A</button>'
-    +   '<button type="button" class="send-b-btn" data-action="sendB">&rarr; Side B</button>'
-    +   '<button type="button" class="release-btn" data-action="release">Release</button>'
-    + '</div>'
+    + actionsHtml
     + '</div>';
 }
 
@@ -3412,6 +3475,8 @@ document.getElementById('monList').addEventListener('click', (e)=>{
   const entry = list[idx];
   if(!entry) return;
 
+  if(btn.dataset.action === 'edit'){ editingIds.add(entry.id); renderMyPokemonList(); return; }
+  if(btn.dataset.action === 'cancel'){ editingIds.delete(entry.id); renderMyPokemonList(); return; }
   if(btn.dataset.action === 'save'){
     const newEv = entry.ev.slice();
     card.querySelectorAll('.ev-input').forEach(el=>{
@@ -3420,6 +3485,7 @@ document.getElementById('monList').addEventListener('click', (e)=>{
     entry.ev = newEv;
     entry.atk = card.querySelector('.atk-select').value;
     saveMyPokemonList(list);
+    editingIds.delete(entry.id);
     renderMyPokemonList();
     return;
   }
@@ -3429,6 +3495,7 @@ document.getElementById('monList').addEventListener('click', (e)=>{
     if(!confirm('Release '+entry.name+'? This can\'t be undone.')) return;
     list.splice(idx, 1);
     saveMyPokemonList(list);
+    editingIds.delete(entry.id);
     renderMyPokemonList();
   }
 });
@@ -3498,6 +3565,12 @@ function initAddForm(){
     const points = Math.max(0, parseInt(document.getElementById('addAutoLevel').value, 10) || 0);
     const ev = distributeEVs(base, points);
     for(let i=0;i<6;i++){ document.getElementById('addEv'+i).value = ev[i]; }
+  });
+
+  document.getElementById('addRandomAtkBtn').addEventListener('click', ()=>{
+    const t1 = document.getElementById('addType1').value;
+    const t2 = document.getElementById('addType2').value || null;
+    document.getElementById('addAtk').value = randomAttackType(t1, t2);
   });
 
   document.getElementById('toggleAddForm').addEventListener('click', ()=>{
