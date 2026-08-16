@@ -99,7 +99,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Piloswine → Mamoswine | Must know the move Ancient Power, then level up |
 | Snover → Abomasnow | Level 10 |
 | Snorunt → Glalie | Level 11 |
-| Snorunt → Froslass | Dawn Stone (female only, alt. branch) → Level 11 |
+| Snorunt → Froslass | Dawn Stone (alt. branch) → Level 11 |
 | Sneasel → Weavile | Trade holding Razor Claw |
 | Spheal → Sealeo | Level 9 |
 | Sealeo → Walrein | Level 11 |
@@ -134,7 +134,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Sandygast → Palossand | Level 11 |
 | Baltoy → Claydol | Level 10 |
 | Darumaka → Darmanitan | Level 9 |
-| Salandit → Salazzle | Level 9 (female only) |
+| Salandit → Salazzle | Level 9 |
 | Helioptile → Heliolisk | Sun Stone |
 | Scraggy → Scrafty | Level 10 |
 
@@ -167,7 +167,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Jigglypuff → Wigglytuff | Moon Stone |
 | Ralts → Kirlia | Level 6 |
 | Kirlia → Gardevoir | Level 8 |
-| Kirlia → Gallade | Dawn Stone (male only, alt. branch) → Level 8 |
+| Kirlia → Gallade | Dawn Stone (alt. branch) → Level 8 |
 | Bronzor → Bronzong | Level 9 |
 | Litleo → Pyroar | Level 9 |
 | Sunkern → Sunflora | Sun Stone |
@@ -181,7 +181,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Kadabra → Alakazam | Trade holding Linking Cord |
 | Drowzee → Hypno | Level 8 |
 | Natu → Xatu | Level 7 |
-| Riolu → Lucario | High friendship, during the day |
+| Riolu → Lucario | High friendship |
 | Deino → Zweilous | Level 12 |
 | Zweilous → Hydreigon | Level 15 |
 | Elgyem → Beheeyem | Level 11 |

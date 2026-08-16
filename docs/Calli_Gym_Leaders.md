@@ -30,7 +30,7 @@ Every leader's table is followed by an **evolution key** — the level (on Calli
 | 5th/6th | **Gengar (Ace)**, Drifblim, Lampent, **+ Snorunt** |
 | 7th/8th | **Gengar (Ace)**, Drifblim, Chandelure, Snorunt → Froslass, **+ Frillish** |
 
-**Evolutions:** Gastly: 7, Trade (Linking Cord) · Drifloon: 8 · Litwick: 11, Dusk Stone · Snorunt: Dawn Stone (→ Froslass, female only) · Frillish: 10
+**Evolutions:** Gastly: 7, Trade (Linking Cord) · Drifloon: 8 · Litwick: 11, Dusk Stone · Snorunt: Dawn Stone (→ Froslass, alt. branch) · Frillish: 10
 
 ---
 
@@ -90,7 +90,7 @@ Every leader's table is followed by an **evolution key** — the level (on Calli
 | 5th/6th | **Darmanitan (Ace)**, Arcanine, Rapidash, **+ Salandit** |
 | 7th/8th | **Darmanitan (Ace)**, Arcanine, Rapidash, Salazzle, **+ Litleo** |
 
-**Evolutions:** Darumaka: 9 · Growlithe: Fire Stone · Ponyta: 10 · Salandit: 9 (female only) · Litleo: 9
+**Evolutions:** Darumaka: 9 · Growlithe: Fire Stone · Ponyta: 10 · Salandit: 9 · Litleo: 9
 
 ---
 

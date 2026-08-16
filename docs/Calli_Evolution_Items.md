@@ -13,7 +13,7 @@ Every item is sold or found by an NPC in its listed city; none require backtrack
 | **Dusk Stone** | Lampent → Chandelure | **Baymist City** | A fog-shrouded curio shop down a brick alley, fittingly run by the same city that hosts the Ghost gym. |
 | **Thunder Stone** | Pikachu → Raichu | **Capitol City** | The region's best-stocked general store, a short ride from the derelict Delta Hydro Station's still-live capacitors — where the stock actually comes from. |
 | **Sun Stone** | Gloom → Bellossom · Helioptile → Heliolisk · Sunkern → Sunflora | **Dunebreak City** | Death Valley's salt flats bake under more direct sun than anywhere else in Calli — a prospector sells stones "cooked" out there. |
-| **Dawn Stone** | Snorunt → Froslass (female) · Kirlia → Gallade (male) | **Mission Town** | The mission gardens' caretaker rings the bells at first light and keeps whatever the sunrise-colored stones the garden turns up. |
+| **Dawn Stone** | Snorunt → Froslass (alt. branch) · Kirlia → Gallade (alt. branch) | **Mission Town** | The mission gardens' caretaker rings the bells at first light and keeps whatever the sunrise-colored stones the garden turns up. |
 | **Fire Stone** | Growlithe → Arcanine | **Basin Town** | Bakersfield-style oil country — a driller pulled one out from among the derricks and never could explain the heat it still gives off. |
 | **Moon Stone** | Jigglypuff → Wigglytuff · Clefairy → Clefable | **Canyon City** | Joshua Tree's boulder fields are one of the best dark-sky spots in the region; stargazers occasionally find one glinting among the rock piles at night. |
 | **Metal Coat** *(hold, trade)* | Onix → Steelix | **Capitol City** | Gold Country mining heritage — Sacramento's old mineshafts still turn up ore-slicked scraps like this. |

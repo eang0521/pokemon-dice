@@ -52,8 +52,8 @@
 | Eevee → Vaporeon | Water Stone → Level 7 |
 | Eevee → Jolteon | Thunder Stone → Level 7 |
 | Eevee → Flareon | Fire Stone → Level 7 |
-| Eevee → Espeon | High friendship, daytime → Level 7 |
-| Eevee → Umbreon | High friendship, nighttime → Level 7 |
+| Eevee → Espeon | Sun Stone → Level 7 |
+| Eevee → Umbreon | Moon Stone → Level 7 |
 | Snover → Abomasnow | Level 10 |
 | Delibird | Does not evolve |
 
