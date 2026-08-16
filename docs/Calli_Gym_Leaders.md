@@ -104,7 +104,7 @@ Every leader's table is followed by an **evolution key** — the level (on Calli
 | 5th/6th | **Clefable (Ace)**, Gardevoir, Jigglypuff, **+ Swirlix** |
 | 7th/8th | **Clefable (Ace)**, Gardevoir, Wigglytuff, Slurpuff, **+ Sunkern** |
 
-**Evolutions:** Clefairy: Moon Stone · Ralts: 6, 8 · Igglybuff: Friendship, Moon Stone · Swirlix: Trade (Whipped Dream) · Sunkern: Sun Stone
+**Evolutions:** Clefairy: Moon Stone · Ralts: 6, 8 · Igglybuff: Friendship (catch Lv +4), Moon Stone · Swirlix: Trade (Whipped Dream) · Sunkern: Sun Stone
 
 ---
 

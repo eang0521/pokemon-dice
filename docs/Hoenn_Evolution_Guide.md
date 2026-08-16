@@ -58,7 +58,7 @@ Non-level evolutions (stone, trade, friendship) get a "proper level" via the buf
 | 58 | Graveler → Golem | Trade | 10 *(buffer: prior +3)* |
 | 61 | Skitty → Delcatty | Moon Stone | 7 *(buffer: base +6)* |
 | 63 | Zubat → Golbat | Level 22 | 7 |
-| 64 | Golbat → Crobat | Level up with high friendship | 10 *(buffer: prior +3)* |
+| 64 | Golbat → Crobat | Friendship (catch Lv +4) | 10 *(buffer: prior +3)* |
 | 66 | Tentacool → Tentacruel | Level 30 | 8 |
 | 70 | Aron → Lairon | Level 32 | 9 |
 | 71 | Lairon → Aggron | Level 42 | 11 |
@@ -122,6 +122,6 @@ Everything else in the 194-species list is either genuinely single-stage in the 
 ## Notes
 
 - **Trade evolutions** work the same as Calli's and Neo Kanto's precedent — an in-game trade-kiosk NPC stands in for a second physical copy.
-- **Friendship evolutions** (Golbat) trigger on level-up once friendship is high enough, same as always.
+- **Friendship evolutions** (Golbat) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11).
 - **Wurmple's split** (Silcoon/Cascoon, and consequently Beautifly/Dustox) is randomized by an internal personality value in the source game, not a player choice — this project rolls it randomly the same way, same convention as any other branching evolution (ruleset §11).
 - **Sibling-level-borrowing example:** none of Hoenn's non-level splits happen to have a level-based sibling in the same split (Gloom's two branches are both stone-based, Clamperl's two branches are both trade-based), so the buffer rule's exception clause isn't exercised anywhere in this dex — every non-level evolution above uses the plain base+6 / prior+3 buffer.

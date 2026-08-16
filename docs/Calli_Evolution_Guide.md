@@ -142,7 +142,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Evolution | Method |
 |---|---|
 | Zubat → Golbat | Level 7 |
-| Golbat → Crobat | High friendship, then level up |
+| Golbat → Crobat | Friendship (catch Lv +4) |
 | Sableye | Does not evolve |
 | Absol | Does not evolve |
 | Houndour → Houndoom | Level 7 |
@@ -163,7 +163,7 @@ All level-up evolutions below are converted from their standard mainline require
 ## Mission Town
 | Evolution | Method |
 |---|---|
-| Igglybuff → Jigglypuff | High friendship |
+| Igglybuff → Jigglypuff | Friendship (catch Lv +4) |
 | Jigglypuff → Wigglytuff | Moon Stone |
 | Ralts → Kirlia | Level 6 |
 | Kirlia → Gardevoir | Level 8 |
@@ -181,7 +181,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Kadabra → Alakazam | Trade holding Linking Cord |
 | Drowzee → Hypno | Level 8 |
 | Natu → Xatu | Level 7 |
-| Riolu → Lucario | High friendship |
+| Riolu → Lucario | Friendship (catch Lv +4) |
 | Deino → Zweilous | Level 12 |
 | Zweilous → Hydreigon | Level 15 |
 | Elgyem → Beheeyem | Level 11 |
@@ -205,5 +205,5 @@ All level-up evolutions below are converted from their standard mainline require
 
 ## Notes
 - **Trade evolutions** (Machoke, Haunter, Graveler, Kadabra, Onix, Sneasel, Rhydon, Seadra, Swirlix — all of which hold an item while trading, including the plain-trade four which need a Linking Cord) work the same as mainline games — you'll need a second player, an in-game trade NPC, or whatever trade-simulation feature the final game builds in.
-- **Friendship evolutions** (Golden Vein Mine's Golbat→Crobat, Igglybuff→Jigglypuff, Riolu→Lucario) trigger on level-up once friendship is high enough, same as always.
+- **Friendship evolutions** (Golden Vein Mine's Golbat→Crobat, Igglybuff→Jigglypuff, Riolu→Lucario) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11).
 - **Magnezone's location-based evolution** is a nod to the dungeon it's associated with (Delta Hydro Station) — a nice reason to bring a mid-level Magneton there specifically.

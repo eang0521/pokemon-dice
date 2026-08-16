@@ -167,7 +167,7 @@
 | Scyther → Scizor | Trade holding Metal Coat → Level 7 |
 | Pinsir | Does not evolve |
 | Tauros | Does not evolve |
-| Chansey → Blissey | High friendship → Level 7 |
+| Chansey → Blissey | Friendship (catch Lv +4) → Level 7 |
 | Lickitung → Lickilicky | Level 9 |
 | Farfetch'd → Sirfetch'd | Special battle condition → Level 7 |
 | Hitmonlee | Does not evolve |
@@ -207,7 +207,7 @@
 ## Notes
 
 - **Trade evolutions** are treated as a standard NPC-trade-kiosk mechanic somewhere in the region (matching Calli's precedent) rather than requiring a second physical copy of the game — narratively, Neo Kanto's League runs a public trade-evolution service in every gym city.
-- **Friendship evolutions** (Chansey→Blissey, Eevee→Espeon/Umbreon) use the same buffered "proper level" as stone evolutions from a base stage, since friendship has no more inherent level than a stone does.
+- **Friendship evolutions** (Chansey→Blissey) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11); it still gets the same buffered "proper level" as a stone evolution from a base stage for trainer-roster purposes. Eevee→Espeon/Umbreon use Sun Stone/Moon Stone instead of friendship.
 - **Location-based evolutions** (Magneton→Magnezone) get the same treatment as trade evolutions — a buffered level from their pre-evolution, with the location itself (a specific route/dungeon) as flavor rather than a hard gameplay gate.
 - **Legendaries/Mythicals don't evolve** and aren't listed above — see `NeoKanto_Regional_Dex.md`'s closing section for the full list of seven.
 - **Every species not listed under its zone's "Does not evolve" rows and not appearing as an evolution target elsewhere is a base, unevolved Pokémon** with no further stages of its own (e.g., Alakazam, Gengar, Golem — all reached via trade evolution above, all endpoints).
