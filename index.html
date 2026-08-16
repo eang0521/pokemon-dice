@@ -1330,13 +1330,6 @@
     gap:10px;
     flex-wrap:wrap;
   }
-  .mon-card-top .trainer-mon-name{ flex:0 0 auto; }
-  .mon-card-top .myp-actions{ flex:0 0 auto; }
-  .mon-card-top .mon-stat-strip{
-    flex:1 1 auto;
-    justify-content:center;
-    margin-top:0;
-  }
   .atk-select{ width:auto; flex:0 0 auto; padding:5px 8px; font-size:12.5px; }
   .ev-stepper{ display:flex; align-items:stretch; gap:3px; }
   .ev-stepper .ev-input{ width:40px; text-align:center; padding:5px 2px; }
@@ -3433,20 +3426,13 @@ function monCardHtml(entry, idx){
       +   '<button type="button" class="release-btn" data-action="release">Release</button>'
       + '</div>';
 
-  const nameHtml = '<span class="trainer-mon-name">'+entry.name+' <span class="trainer-mon-level" id="level-'+idx+'">Lv '+level+'</span></span>';
-
-  // Editing needs the full Base/EV/= table, which can't be squeezed into one
-  // row -- that stays on its own line below Type. The compact view's stats
-  // are just a thin chip strip, so they fit right in the name/buttons row,
-  // leaving Type as the only other row on the card.
-  const topRowHtml = editing
-    ? '<div class="mon-card-top">' + nameHtml + actionsHtml + '</div>'
-    : '<div class="mon-card-top">' + nameHtml + statsHtml + actionsHtml + '</div>';
-
   return '<div class="mon-card'+(editing?' editing':'')+'" data-idx="'+idx+'" data-name="'+entry.name.toLowerCase()+'">'
-    + topRowHtml
+    + '<div class="mon-card-top">'
+    +   '<span class="trainer-mon-name">'+entry.name+' <span class="trainer-mon-level" id="level-'+idx+'">Lv '+level+'</span></span>'
+    +   actionsHtml
+    + '</div>'
     + typesRowHtml
-    + (editing ? statsHtml : '')
+    + statsHtml
     + (entry.note || entry.caughtAt ? '<div class="mon-note">'+(entry.note||'')+(entry.caughtAt ? ' &middot; caught '+fmtDate(entry.caughtAt) : '')+'</div>' : '')
     + '</div>';
 }
