@@ -1326,31 +1326,12 @@
   .mon-card-top{
     display:flex;
     justify-content:space-between;
-    align-items:baseline;
+    align-items:center;
     gap:10px;
     flex-wrap:wrap;
   }
-  .mon-name{
-    font-family:'Fraunces', serif;
-    font-weight:600;
-    font-size:17px;
-  }
-  .mon-total{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11.5px;
-    color: var(--redwood);
-    white-space:nowrap;
-  }
-  .mon-types-row{ display:flex; gap:6px; align-items:center; margin-top:5px; flex-wrap:wrap; }
-  .mon-atk-label{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:10.5px;
-    color: var(--sage);
-    text-transform:uppercase;
-    letter-spacing:0.06em;
-  }
   .atk-select{ width:auto; flex:0 0 auto; padding:5px 8px; font-size:12.5px; }
-  .mon-stat-strip{ display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+  .mon-stat-strip{ display:flex; align-items:center; gap:4px; margin-top:6px; flex-wrap:wrap; }
   .mon-stat-chip{
     flex:1 1 auto;
     min-width:38px;
@@ -1363,13 +1344,14 @@
   .mon-stat-chip .v{ display:block; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:600; }
   .mon-stat-chip .e{ display:block; font-family:'IBM Plex Mono', monospace; font-size:9px; color: var(--redwood); }
   .mon-stat-chip .l{ display:block; font-family:'IBM Plex Mono', monospace; font-size:7.5px; color: var(--sage); text-transform:uppercase; letter-spacing:0.03em; }
+  .mon-stat-strip .stat-mini-total{ margin-left:4px; white-space:nowrap; }
   .mon-note{
     margin-top:6px;
     font-size:11.5px;
     font-style:italic;
     color:#3c4f45;
   }
-  .myp-actions{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .myp-actions{ display:flex; gap:6px; flex-wrap:wrap; }
   .myp-actions button{
     font-family:'IBM Plex Mono', monospace;
     font-size:11px;
@@ -1379,14 +1361,13 @@
     border: 1.5px solid var(--ink);
     border-radius: 3px;
     cursor:pointer;
+    white-space:nowrap;
   }
   .myp-actions button:active{ transform: translateY(1px); }
   .save-btn{ background: var(--gold); }
   .save-btn:hover{ background:#c4923a; }
-  .send-a-btn{ background: var(--sage); }
-  .send-a-btn:hover{ background:#7a9389; }
-  .send-b-btn{ background: var(--rust); color: var(--paper); }
-  .send-b-btn:hover{ background:#a9481f; }
+  .to-battle-btn{ background: var(--sage); }
+  .to-battle-btn:hover{ background:#7a9389; }
   .release-btn{ background: var(--paper); }
   .release-btn:hover{ background:#e8bdb0; }
 </style>
@@ -2968,6 +2949,14 @@ function typePill(type){
   const c = TYPE_COLOR[type.toLowerCase()] || '#888';
   return '<span class="mini-type-pill" style="background:'+c+';">'+type+'</span>';
 }
+// Same visual language as the Roller's trainer/gym rows (.trainer-type-pill),
+// for My Pokemon cards that are meant to read the same way -- pass
+// 'trainer-atk-pill' as extraClass for the gold emphasis ring on attack type.
+function trainerStylePill(type, extraClass){
+  if(!type) return '';
+  const c = TYPE_COLOR[type.toLowerCase()] || '#888';
+  return '<span class="trainer-type-pill'+(extraClass?' '+extraClass:'')+'" style="background:'+c+';">'+type+'</span>';
+}
 function typeOptions(selected, includeNone){
   let html = includeNone ? '<option value="">— None —</option>' : '';
   for(const t of TYPES){
@@ -3362,13 +3351,17 @@ const editingIds = new Set();
 function monCardHtml(entry, idx){
   const finalStats = entry.base.map((b,i)=> b + (entry.ev[i]||0));
   const total = finalStats.reduce((a,b)=>a+b,0);
+  const level = entry.ev.reduce((a,b)=>a+b,0); // effective level = sum of EVs, same rule as everywhere else
   const editing = editingIds.has(entry.id);
 
-  const typesRowHtml = typePill(entry.t1) + typePill(entry.t2)
-    + '<span class="mon-atk-label">Atk</span>'
-    + (editing
-        ? '<select class="atk-select plain-select" data-idx="'+idx+'">'+typeOptions(entry.atk, false)+'</select>'
-        : typePill(entry.atk));
+  const atkHtml = editing
+    ? '<select class="atk-select plain-select" data-idx="'+idx+'">'+typeOptions(entry.atk, false)+'</select>'
+    : trainerStylePill(entry.atk, 'trainer-atk-pill');
+  const typesRowHtml = '<div class="trainer-type-block">'
+    + '<span class="trainer-type-label">Type</span>'
+    + '<span class="trainer-mon-types">'+trainerStylePill(entry.t1)+trainerStylePill(entry.t2)+'</span>'
+    + '<span class="trainer-atk-paren">(<span class="trainer-type-label">Atk</span> '+atkHtml+')</span>'
+    + '</div>';
 
   let statsHtml;
   if(editing){
@@ -3383,12 +3376,14 @@ function monCardHtml(entry, idx){
     statsHtml = '<table class="stat-table">'
       + '<thead><tr><th>Stat</th><th>Base</th><th>EV</th><th>=</th></tr></thead>'
       + '<tbody>'+rows+'</tbody>'
-      + '</table>';
+      + '</table>'
+      + '<div class="level-readout">Total: <b id="total-'+idx+'">'+total+'</b></div>';
   } else {
-    // Thin, read-only strip: final value on top, its EV contribution below.
+    // Thin, read-only strip: final value on top, its EV contribution below,
+    // same "Total" placement as the Roller's trainer/gym rows.
     statsHtml = '<div class="mon-stat-strip">' + STAT_NAMES.map((label,i) =>
       '<div class="mon-stat-chip"><span class="v">'+finalStats[i]+'</span><span class="e">+'+entry.ev[i]+'</span><span class="l">'+label+'</span></div>'
-    ).join('') + '</div>';
+    ).join('') + '<span class="stat-mini-total">Total: '+total+'</span></div>';
   }
 
   const actionsHtml = editing
@@ -3398,20 +3393,18 @@ function monCardHtml(entry, idx){
       + '</div>'
     : '<div class="myp-actions">'
       +   '<button type="button" class="save-btn" data-action="edit">Edit</button>'
-      +   '<button type="button" class="send-a-btn" data-action="sendA">&rarr; Side A</button>'
-      +   '<button type="button" class="send-b-btn" data-action="sendB">&rarr; Side B</button>'
+      +   '<button type="button" class="to-battle-btn" data-action="toBattle">&rarr; Battle Sim</button>'
       +   '<button type="button" class="release-btn" data-action="release">Release</button>'
       + '</div>';
 
   return '<div class="mon-card'+(editing?' editing':'')+'" data-idx="'+idx+'" data-name="'+entry.name.toLowerCase()+'">'
     + '<div class="mon-card-top">'
-    +   '<div class="mon-name">'+entry.name+'</div>'
-    +   '<div class="mon-total" id="total-'+idx+'">Total: '+total+'</div>'
+    +   '<span class="trainer-mon-name">'+entry.name+' <span class="trainer-mon-level" id="level-'+idx+'">Lv '+level+'</span></span>'
+    +   actionsHtml
     + '</div>'
-    + '<div class="mon-types-row">'+typesRowHtml+'</div>'
+    + typesRowHtml
     + statsHtml
     + (entry.note || entry.caughtAt ? '<div class="mon-note">'+(entry.note||'')+(entry.caughtAt ? ' &middot; caught '+fmtDate(entry.caughtAt) : '')+'</div>' : '')
-    + actionsHtml
     + '</div>';
 }
 
@@ -3458,12 +3451,16 @@ document.getElementById('monList').addEventListener('input', (e)=>{
   if(!entry) return;
   const val = parseInt(inp.value, 10) || 0;
   document.getElementById('final-'+idx+'-'+statIdx).textContent = entry.base[statIdx] + val;
-  let total = 0;
+  let total = 0, level = 0;
   document.querySelectorAll('.ev-input[data-idx="'+idx+'"]').forEach(el=>{
     const si = parseInt(el.dataset.stat, 10);
-    total += entry.base[si] + (parseInt(el.value, 10) || 0);
+    const evVal = parseInt(el.value, 10) || 0;
+    total += entry.base[si] + evVal;
+    level += evVal;
   });
-  document.getElementById('total-'+idx).textContent = 'Total: ' + total;
+  document.getElementById('total-'+idx).textContent = total;
+  const levelEl = document.getElementById('level-'+idx);
+  if(levelEl) levelEl.textContent = 'Lv ' + level;
 });
 
 document.getElementById('monList').addEventListener('click', (e)=>{
@@ -3489,8 +3486,7 @@ document.getElementById('monList').addEventListener('click', (e)=>{
     renderMyPokemonList();
     return;
   }
-  if(btn.dataset.action === 'sendA'){ sendMonToBattleSim('A', entry.name, entry.t1, entry.t2, entry.atk, entry.base, entry.ev, true); return; }
-  if(btn.dataset.action === 'sendB'){ sendMonToBattleSim('B', entry.name, entry.t1, entry.t2, entry.atk, entry.base, entry.ev, true); return; }
+  if(btn.dataset.action === 'toBattle'){ sendMonToBattleSim('A', entry.name, entry.t1, entry.t2, entry.atk, entry.base, entry.ev, true); return; }
   if(btn.dataset.action === 'release'){
     if(!confirm('Release '+entry.name+'? This can\'t be undone.')) return;
     list.splice(idx, 1);
