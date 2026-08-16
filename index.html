@@ -1399,6 +1399,27 @@
   .to-battle-btn:hover{ background:#7a9389; }
   .release-btn{ background: var(--paper); }
   .release-btn:hover{ background:#e8bdb0; }
+  .evo-row{ display:flex; gap:6px; flex-wrap:wrap; margin: 8px 0; }
+  .evolve-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    padding: 6px 10px;
+    color: var(--paper);
+    background: var(--nogym-green);
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .evolve-btn:hover{ background:#4a7440; }
+  .evolve-btn:active{ transform: translateY(1px); }
+  .evo-hint{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--sage);
+    margin: 6px 0;
+  }
 </style>
 </head>
 <body>
@@ -3402,6 +3423,23 @@ function fmtDate(iso){
 // under a Set keyed by index, reopening (or hiding) the wrong card.
 const editingIds = new Set();
 
+// Only methods with an explicit "Level N" have a level this app can check
+// (item/trade/friendship conditions aren't something the app can verify, so
+// those branches are always offered and left to the player's judgment).
+function evoRequiredLevel(method){
+  const m = method.match(/Level (\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function evolutionChoices(species, level){
+  const info = DATA.evoInfo[species];
+  if(!info || !info.evolvesInto || !info.evolvesInto.length) return [];
+  return info.evolvesInto.map(e=>{
+    const reqLevel = evoRequiredLevel(e.method);
+    return { species: e.species, method: e.method, reqLevel, ready: reqLevel===null || level>=reqLevel };
+  });
+}
+
 function monCardHtml(entry, idx){
   const finalStats = entry.base.map((b,i)=> b + (entry.ev[i]||0));
   const total = finalStats.reduce((a,b)=>a+b,0);
@@ -3450,6 +3488,23 @@ function monCardHtml(entry, idx){
     ).join('') + '<span class="stat-mini-total">Total: '+total+'</span></div>';
   }
 
+  let evolveHtml = '';
+  if(!editing){
+    const choices = evolutionChoices(entry.name, level);
+    const ready = choices.filter(c=>c.ready);
+    const notReady = choices.filter(c=>!c.ready);
+    if(ready.length){
+      evolveHtml += '<div class="evo-row">' + ready.map(c=>
+        '<button type="button" class="evolve-btn" data-action="evolve" data-target="'+c.species+'">Evolve &rarr; '+c.species+'</button>'
+      ).join('') + '</div>';
+    }
+    if(notReady.length){
+      evolveHtml += '<div class="evo-hint">' + notReady.map(c=>
+        '&rarr; '+c.species+' at Lv '+c.reqLevel
+      ).join(' &middot; ') + '</div>';
+    }
+  }
+
   const actionsHtml = editing
     ? '<div class="myp-actions">'
       +   '<button type="button" class="save-btn" data-action="save">Save Changes</button>'
@@ -3468,6 +3523,7 @@ function monCardHtml(entry, idx){
     + '</div>'
     + typesRowHtml
     + statsHtml
+    + evolveHtml
     + (entry.note || entry.caughtAt ? '<div class="mon-note">'+(entry.note||'')+(entry.caughtAt ? ' &middot; caught '+fmtDate(entry.caughtAt) : '')+'</div>' : '')
     + '</div>';
 }
@@ -3576,6 +3632,18 @@ document.getElementById('monList').addEventListener('click', (e)=>{
     return;
   }
   if(btn.dataset.action === 'toBattle'){ sendMonToBattleSim('A', entry.name, entry.t1, entry.t2, entry.atk, entry.base, entry.ev, true); return; }
+  if(btn.dataset.action === 'evolve'){
+    const target = btn.dataset.target;
+    if(!confirm('Evolve '+entry.name+' into '+target+'?')) return;
+    entry.name = target;
+    const types = DATA.types[target] || [null, null];
+    entry.t1 = types[0] || null;
+    entry.t2 = types[1] || null;
+    entry.base = (DATA.dice[target] || [0,0,0,0,0,0]).slice();
+    saveMyPokemonList(list);
+    renderMyPokemonList();
+    return;
+  }
   if(btn.dataset.action === 'release'){
     if(!confirm('Release '+entry.name+'? This can\'t be undone.')) return;
     list.splice(idx, 1);
