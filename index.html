@@ -3653,8 +3653,9 @@ document.getElementById('monList').addEventListener('click', (e)=>{
     entry.t1 = types[0] || null;
     entry.t2 = types[1] || null;
     entry.base = (DATA.dice[target] || [0,0,0,0,0,0]).slice();
-    if(confirm('Reroll attack type for '+target+"'s types using the attack wheel?")){
-      entry.atk = randomAttackType(entry.t1, entry.t2);
+    const rolledAtk = randomAttackType(entry.t1, entry.t2);
+    if(rolledAtk !== entry.atk && confirm('Change attack type from '+entry.atk+' to '+rolledAtk+'?')){
+      entry.atk = rolledAtk;
     }
     saveMyPokemonList(list);
     renderMyPokemonList();
