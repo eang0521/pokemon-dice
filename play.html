@@ -187,20 +187,30 @@
     cursor:pointer;
   }
   .town-btn.selected{ background: var(--gold); }
-  .mon-pick-btn{
-    display:block;
+  .plain-select{
     width:100%;
-    text-align:left;
     font-family:'IBM Plex Mono', monospace;
     font-size: 12.5px;
-    padding: 9px 11px;
-    margin-bottom: 6px;
+    padding: 9px 10px;
     border: 1.5px solid var(--ink);
     border-radius: 5px;
     background: var(--paper);
+    color: var(--ink);
     cursor:pointer;
   }
-  .mon-pick-btn:hover{ background: var(--sage); }
+  .mon-detail-card{
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 10px;
+  }
+  .mon-detail-name{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
   .opp-team-row{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 12px; }
   .opp-chip{
     font-family:'IBM Plex Mono', monospace;
@@ -313,6 +323,30 @@
     margin-top: 8px;
     min-height: 16px;
   }
+  .map-tooltip{
+    display:none;
+    position: fixed;
+    transform: translate(-50%, -100%);
+    margin-top: -10px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 6px;
+    padding: 8px 11px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    line-height:1.5;
+    max-width: 220px;
+    z-index: 20;
+    pointer-events:none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .tooltip-title{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 13px;
+    margin-bottom: 3px;
+    color: var(--paper);
+  }
 </style>
 </head>
 <body>
@@ -334,6 +368,7 @@
   </div>
   <div id="app"></div>
 </div>
+<div id="mapTooltip" class="map-tooltip"></div>
 
 <script>
 try {
@@ -496,8 +531,10 @@ function rollSide(finalStats, cfg, stabBonus){
   return { kept, final: kept + stabBonus };
 }
 function resolveBattle(statsA, typesA, atkA, statsB, typesB, atkB){
-  const cfgA = diceConfig(effectiveness(atkA, typesA[0], typesA[1]));
-  const cfgB = diceConfig(effectiveness(atkB, typesB[0], typesB[1]));
+  // Dice count/keep-best-or-worst depends on how effective each side's OWN attack
+  // type is against the OTHER side's defending types -- not against its own.
+  const cfgA = diceConfig(effectiveness(atkA, typesB[0], typesB[1]));
+  const cfgB = diceConfig(effectiveness(atkB, typesA[0], typesA[1]));
   const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? 1 : 0;
   const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? 1 : 0;
   let rounds = 0;
@@ -602,6 +639,24 @@ function locationFlavor(node){
   if(!locId) return null;
   return DATA.locations.find(l=>l.id===locId) || null;
 }
+// Every (owned Pokemon, evolution branch) pair this town's own evolution item(s)
+// can trigger -- same method-text substring match the Field Guide uses to link
+// an evolution to the town it's found in.
+function evolveOptionsForTown(node){
+  const townId = node.kind === 'combo' ? node.townId : node.id;
+  const items = (DATA.evoItems && DATA.evoItems[townId]) || [];
+  if(!items.length) return [];
+  const options = [];
+  loadGamePokemon().forEach(m=>{
+    const info = DATA.evoInfo[m.name];
+    if(!info || !info.evolvesInto) return;
+    info.evolvesInto.forEach(e=>{
+      const item = items.find(it => e.method.indexOf(it) !== -1);
+      if(item) options.push({ monId: m.id, monName: m.name, targetSpecies: e.species, item });
+    });
+  });
+  return options;
+}
 
 /* ============ Visual map (adapted from index.html's Region Map tab) ============ */
 const CELL = 42;
@@ -615,6 +670,37 @@ function nodeXY(n){
   return { x: (n.col - 0.5) * CELL, y: (n.row - 0.5) * CELL };
 }
 let mapBuilt = false;
+let hoverTimer = null;
+function townInfoLines(node){
+  const parts = [];
+  if(node.gymLeader){
+    const beaten = gameState.defeatedGymLeaders.includes(node.gymLeader);
+    parts.push('Gym Leader: ' + node.gymLeader + (beaten ? ' (beaten)' : ''));
+  }
+  if(node.kind === 'combo'){
+    parts.push('Dungeon: ' + node.dungeonName);
+  }
+  const townId = node.kind === 'combo' ? node.townId : node.id;
+  const items = (DATA.evoItems && DATA.evoItems[townId]) || [];
+  if(items.length){
+    parts.push('Evolution item' + (items.length>1?'s':'') + ': ' + items.join(', '));
+  }
+  if(!parts.length) parts.push('Nothing special here.');
+  return parts;
+}
+function showTownTooltip(node, targetEl){
+  const tooltip = document.getElementById('mapTooltip');
+  const rect = targetEl.getBoundingClientRect();
+  tooltip.innerHTML = '<div class="tooltip-title">'+nodeDisplayName(node)+'</div>' +
+    townInfoLines(node).map(p=>'<div>'+p+'</div>').join('');
+  tooltip.style.left = (rect.left + rect.width/2) + 'px';
+  tooltip.style.top = rect.top + 'px';
+  tooltip.style.display = 'block';
+}
+function hideTownTooltip(){
+  clearTimeout(hoverTimer);
+  document.getElementById('mapTooltip').style.display = 'none';
+}
 function buildGameMap(){
   mapBuilt = true;
   const maxRow = Math.max(...DATA.mapNodes.map(n=>n.row));
@@ -664,6 +750,13 @@ function buildGameMap(){
     }
 
     g.addEventListener('click', ()=> handleMapNodeClick(n.id));
+    if(n.kind === 'town' || n.kind === 'combo'){
+      g.addEventListener('mouseenter', ()=>{
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(()=> showTownTooltip(n, g), 2000);
+      });
+      g.addEventListener('mouseleave', hideTownTooltip);
+    }
     svg.appendChild(g);
   });
 }
@@ -822,6 +915,7 @@ let movement = null;      // { total } -- while the player is choosing a tile to
 let pendingForfeit = 0;   // spaces forfeited by the movement that just resolved (route roll adjust)
 let encounter = null;     // active battle state
 let pendingMessage = '';  // for the generic message screen
+let pendingEvolveOptions = []; // for the evolve-a-Pokemon-with-a-town-item screen
 let startPick = { starter:null, town:null };
 
 /* ============ Rendering ============ */
@@ -857,6 +951,7 @@ function render(){
   else if(view === 'moving') app.innerHTML = renderMovingScreen();
   else if(view === 'townMenu') app.innerHTML = renderTownMenuScreen();
   else if(view === 'routeRoll') app.innerHTML = renderRouteRollScreen();
+  else if(view === 'evolveChoice') app.innerHTML = renderEvolveChoiceScreen();
   else if(view === 'encounter') app.innerHTML = renderEncounterScreen();
   else if(view === 'catchOrDefeat') app.innerHTML = renderCatchOrDefeatScreen();
   else if(view === 'message') app.innerHTML = renderMessageScreen();
@@ -920,9 +1015,9 @@ function renderTownMenuScreen(){
   if(node.kind === 'combo'){
     options.push('<button type="button" class="btn btn-wild" data-action="townAction" data-choice="dungeon">Dungeon Wild Encounter -- '+node.dungeonName+'</button>');
   }
-  const items = (DATA.evoItems && DATA.evoItems[node.kind==='combo' ? node.townId : node.id]) || [];
-  if(items.length){
-    options.push('<button type="button" class="btn" data-action="townAction" data-choice="item">Get Evolution Item</button>');
+  const evolveOptions = evolveOptionsForTown(node);
+  if(evolveOptions.length){
+    options.push('<button type="button" class="btn" data-action="townAction" data-choice="evolveItem">Evolve a Pokemon</button>');
   }
   let beatenGymNote = '';
   if(node.gymLeader){
@@ -939,6 +1034,18 @@ function renderTownMenuScreen(){
     (options.length
       ? '<div class="field-label">What would you like to do?</div><div class="choice-grid">'+options.join('')+'</div>'
       : '<div class="empty-note">Nothing to do here right now.</div><div class="choice-grid"><button type="button" class="btn" data-action="endTurn">Continue</button></div>') +
+  '</div>';
+}
+
+function renderEvolveChoiceScreen(){
+  const options = pendingEvolveOptions.map(o=>
+    '<button type="button" class="btn btn-wild" data-action="chooseEvolveOption" data-mon="'+o.monId+'" data-target="'+o.targetSpecies+'">Evolve '+o.monName+' into '+o.targetSpecies+' ('+o.item+')</button>'
+  ).join('');
+  return '<div class="card">' +
+    '<div class="card-title">Evolve a Pokemon</div>' +
+    '<div class="card-sub">Using an item found here</div>' +
+    '<div class="choice-grid">'+options+'</div>' +
+    '<div class="choice-grid" style="margin-top:10px;"><button type="button" class="btn" data-action="backToTownMenu">Back</button></div>' +
   '</div>';
 }
 
@@ -964,15 +1071,41 @@ function renderRouteRollScreen(){
   '</div>';
 }
 
+// Which My-Pokemon id is currently highlighted in the send-out dropdown (its
+// full stat card is what's shown below the dropdown) -- reset whenever the
+// previously-selected one is no longer a valid choice (lost this encounter,
+// released, etc.) rather than left dangling.
+let pickerSelectedId = null;
+
 function ownedMonPickerHtml(excludeIds){
   const mons = loadGamePokemon().filter(m=>!excludeIds.has(m.id));
   if(!mons.length) return '<div class="empty-note">No available Pokemon left to send out.</div>';
-  return mons.map(m=>{
+  if(!pickerSelectedId || !mons.some(m=>m.id===pickerSelectedId)){
+    pickerSelectedId = mons[0].id;
+  }
+  const options = mons.map(m=>{
     const level = m.ev.reduce((a,b)=>a+b,0);
-    return '<button type="button" class="mon-pick-btn" data-action="pickPlayerMon" data-id="'+m.id+'">' +
-      '<b>'+m.name+'</b> Lv '+level+' -- '+typePillHtml(m.t1)+typePillHtml(m.t2)+' (Atk '+m.atk+')' +
-      '</button>';
+    const total = statTotal(m.base.map((b,i)=>b+m.ev[i]));
+    const types = [m.t1, m.t2].filter(Boolean).join('/');
+    const label = m.name+' Lv'+level+' -- '+types+' (Atk '+m.atk+') -- Total '+total+' -- XP '+(m.xp||0);
+    return '<option value="'+m.id+'"'+(m.id===pickerSelectedId?' selected':'')+'>'+label+'</option>';
   }).join('');
+
+  const sel = mons.find(m=>m.id===pickerSelectedId);
+  const finalStats = sel.base.map((b,i)=>b+sel.ev[i]);
+  const level = sel.ev.reduce((a,b)=>a+b,0);
+
+  return '<select class="plain-select" data-change-action="pickerSelect">'+options+'</select>' +
+    '<div class="mon-detail-card">' +
+      '<div class="mon-detail-name">'+sel.name+' Lv'+level+'</div>' +
+      typePillHtml(sel.t1) + typePillHtml(sel.t2) +
+      ' <span class="type-pill" style="background:var(--rust);">Atk '+sel.atk+'</span>' +
+      statRowHtml(finalStats) +
+      '<div class="stat-row"><span class="stat-chip">XP <b>'+(sel.xp||0)+'</b> / '+(level*10)+' to next level</span></div>' +
+    '</div>' +
+    '<div class="choice-grid" style="margin-top:10px;">' +
+      '<button type="button" class="btn btn-primary" data-action="pickPlayerMon" data-id="'+sel.id+'">Send Out '+sel.name+'</button>' +
+    '</div>';
 }
 
 function opponentDisplayHtml(opp, statusClass){
@@ -1100,15 +1233,39 @@ function townAction(choice){
   const node = nodesById[gameState.currentNodeId];
   if(choice === 'dungeon'){
     beginEncounter('wild', { locationId: node.dungeonLocationId });
-  } else if(choice === 'item'){
-    const items = DATA.evoItems[node.kind==='combo' ? node.townId : node.id] || [];
-    pendingMessage = 'You found ' + (items.length>1 ? 'some items' : 'an item') + ': ' + items.join(', ') + '!';
-    view = 'message';
+  } else if(choice === 'evolveItem'){
+    pendingEvolveOptions = evolveOptionsForTown(node);
+    if(!pendingEvolveOptions.length) return; // shouldn't be reachable via the UI, but don't allow it even so
+    view = 'evolveChoice';
     render();
   } else if(choice === 'gym'){
     if(gameState.defeatedGymLeaders.includes(node.gymLeader)) return; // already beaten -- shouldn't be reachable via the UI, but don't allow it even so
     beginEncounter('gym', { leaderName: node.gymLeader });
   }
+}
+
+function chooseEvolveOption(monId, targetSpecies){
+  const list = loadGamePokemon();
+  const entry = list.find(m=>m.id===monId);
+  if(!entry) return;
+  if(!confirm('Evolve '+entry.name+' into '+targetSpecies+'?')) return;
+  entry.name = targetSpecies;
+  const types = DATA.types[targetSpecies] || [null, null];
+  entry.t1 = types[0] || null;
+  entry.t2 = types[1] || null;
+  entry.base = (DATA.dice[targetSpecies] || [0,0,0,0,0,0]).slice();
+  const rolledAtk = randomAttackType(entry.t1, entry.t2);
+  if(rolledAtk !== entry.atk && confirm('Change attack type from '+entry.atk+' to '+rolledAtk+'?')){
+    entry.atk = rolledAtk;
+  }
+  saveGamePokemonList(list);
+  pendingMessage = entry.name + ' evolved!';
+  view = 'message';
+  render();
+}
+function backToTownMenu(){
+  view = 'townMenu';
+  render();
 }
 
 function rollRoute(adjust){
@@ -1123,6 +1280,7 @@ function rollRoute(adjust){
 }
 
 function beginEncounter(type, ctx){
+  pickerSelectedId = null;
   let opponents, extra = {};
   if(type === 'wild'){
     opponents = [rollWildEncounter(ctx.locationId)];
@@ -1263,12 +1421,20 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'beginAdventure') beginAdventure();
   else if(action === 'rollMovement') rollMovement();
   else if(action === 'townAction') townAction(btn.dataset.choice);
+  else if(action === 'chooseEvolveOption') chooseEvolveOption(btn.dataset.mon, btn.dataset.target);
+  else if(action === 'backToTownMenu') backToTownMenu();
   else if(action === 'rollRoute') rollRoute(parseInt(btn.dataset.adjust, 10));
   else if(action === 'pickPlayerMon') pickPlayerMon(btn.dataset.id);
   else if(action === 'fight') fight();
   else if(action === 'chooseCatch') chooseCatch();
   else if(action === 'chooseDefeat') chooseDefeat();
   else if(action === 'endTurn') endTurn();
+});
+document.getElementById('app').addEventListener('change', (e)=>{
+  const sel = e.target.closest('[data-change-action="pickerSelect"]');
+  if(!sel) return;
+  pickerSelectedId = sel.value;
+  render();
 });
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
   const btn = e.target.closest('[data-action="resetGame"]');
