@@ -1008,6 +1008,54 @@ function grantXP(entry, xpGain, highIdx){
 }
 function statTotal(statsArr){ return statsArr.reduce((a,b)=>a+b,0); }
 
+// Only methods with an explicit "Level N" have a level this can check directly
+// (friendship's threshold is relative to catch level, handled separately).
+function evoRequiredLevel(method){
+  const m = method.match(/Level (\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+// Level-up (and friendship) evolution -- checked right after XP is granted,
+// separate from the town-item evolve flow (which only ever handles item/trade
+// branches). Triggers automatically, no confirmation, matching mainline: a
+// friendship branch's threshold is "level >= level caught at + 4" (SS11 of the
+// ruleset); a plain level branch just needs an explicit "Level N" in its
+// method text. Loops in case evolving lands it on another already-eligible
+// stage. Returns an array of "X evolved into Y!" messages for the caller to
+// surface (e.g. into the encounter log).
+function checkAndApplyLevelEvolution(entry){
+  const messages = [];
+  while(true){
+    const info = DATA.evoInfo[entry.name];
+    if(!info || !info.evolvesInto || !info.evolvesInto.length) break;
+    const level = entry.ev.reduce((a,b)=>a+b,0);
+    let target = null;
+    for(const branch of info.evolvesInto){
+      if(branch.method.indexOf('Friendship') !== -1){
+        if(level >= (entry.catchLevel||0) + 4){ target = branch.species; break; }
+      } else {
+        const req = evoRequiredLevel(branch.method);
+        if(req !== null && level >= req){ target = branch.species; break; }
+      }
+    }
+    if(!target) break;
+
+    const oldName = entry.name;
+    entry.name = target;
+    const types = DATA.types[target] || [null, null];
+    entry.t1 = types[0] || null;
+    entry.t2 = types[1] || null;
+    entry.base = (DATA.dice[target] || [0,0,0,0,0,0]).slice();
+    messages.push(oldName + ' evolved into ' + target + '!');
+
+    const rolledAtk = randomAttackType(entry.t1, entry.t2);
+    if(rolledAtk !== entry.atk && confirm('Change attack type from '+entry.atk+' to '+rolledAtk+'?')){
+      entry.atk = rolledAtk;
+    }
+  }
+  return messages;
+}
+
 /* ============ Rolling opponents ============ */
 function rollOneDieWithThreshold(T){
   let v = rand(6);
@@ -1396,6 +1444,7 @@ function beginAdventure(){
     atk: randomAttackType(types[0], types[1]),
     base: base,
     ev: ev,
+    catchLevel: ev.reduce((a,b)=>a+b,0),
     note: 'Starter',
   });
   gameState = { started:true, starterSpecies: sp, currentNodeId: startPick.town, defeatedGymLeaders: [], turnCount: 0 };
@@ -1545,8 +1594,13 @@ function fight(){
       const mon = list.find(x=>x.id===id);
       if(mon) grantXP(mon, xp, opp.highIdx);
     });
+    splits.forEach(s=>{
+      const m=list.find(x=>x.id===s.id);
+      if(!m) return;
+      e.log.push(m.name+' gained '+s.xp+' XP.');
+      checkAndApplyLevelEvolution(m).forEach(msg => e.log.push(msg));
+    });
     saveGamePokemonList(list);
-    splits.forEach(s=>{ const m=list.find(x=>x.id===s.id); if(m) e.log.push(m.name+' gained '+s.xp+' XP.'); });
 
     e.oppIdx += 1;
     e.currentOpponentParticipants = [];
@@ -1590,6 +1644,7 @@ function chooseCatch(){
     atk: opp.atk,
     base: opp.base,
     ev: opp.levelBonus.slice(),
+    catchLevel: opp.levelBonus.reduce((a,b)=>a+b,0),
     note: 'Caught in the wild',
   });
   pendingMessage = 'Caught '+opp.species+'!';
@@ -1602,13 +1657,17 @@ function chooseDefeat(){
   const opp = e.opponents[0];
   const splits = splitXP(e.pendingXP.total, e.pendingXP.participants);
   const list = loadGamePokemon();
+  const evoMessages = [];
   splits.forEach(({id, xp})=>{
     const mon = list.find(x=>x.id===id);
-    if(mon) grantXP(mon, xp, e.pendingXP.highIdx);
+    if(!mon) return;
+    grantXP(mon, xp, e.pendingXP.highIdx);
+    checkAndApplyLevelEvolution(mon).forEach(msg => evoMessages.push(msg));
   });
   saveGamePokemonList(list);
   pendingMessage = 'Defeated the wild '+opp.species+'. ' +
-    splits.map(s=>{ const m=list.find(x=>x.id===s.id); return m ? (m.name+' +'+s.xp+' XP') : ''; }).join(', ');
+    splits.map(s=>{ const m=list.find(x=>x.id===s.id); return m ? (m.name+' +'+s.xp+' XP') : ''; }).join(', ') +
+    (evoMessages.length ? ' ' + evoMessages.join(' ') : '');
   view = 'message';
   encounter = null;
   render();
