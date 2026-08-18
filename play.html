@@ -693,6 +693,59 @@ function resolveBattle(statsA, typesA, atkA, statsB, typesB, atkB){
   return { winner: 'tie', finalA:null, finalB:null };
 }
 
+// Exact result distribution for one side: Map<finalValue, probability> --
+// full enumeration (6^n outcomes for n dice), not sampling.
+function resultDistribution(finalStats, cfg, stabBonus){
+  const n = cfg.n;
+  const counts = new Map();
+  const total = Math.pow(6, n);
+  function rec(depth, kept){
+    if(depth === n){
+      const v = kept + stabBonus;
+      counts.set(v, (counts.get(v)||0) + 1);
+      return;
+    }
+    for(let i=0;i<6;i++){
+      const val = finalStats[i];
+      const nextKept = (kept === null) ? val
+        : (cfg.mode === 'worst' ? Math.min(kept, val) : Math.max(kept, val));
+      rec(depth+1, nextKept);
+    }
+  }
+  rec(0, null);
+  const dist = new Map();
+  for(const [v,c] of counts) dist.set(v, c/total);
+  return dist;
+}
+// Ties reroll rather than counting as a draw -- since every reroll repeats
+// the same two distributions, the post-reroll odds are just the one-shot
+// win probabilities renormalized by 1/(1-P(tie)). A "perpetual tie" (every
+// pairing ties) can never resolve -- flagged via `unbreakable`.
+function crossOdds(distA, distB){
+  let winA=0, winB=0, tie=0;
+  for(const [a,pa] of distA){
+    for(const [b,pb] of distB){
+      const p = pa*pb;
+      if(a>b) winA += p;
+      else if(b>a) winB += p;
+      else tie += p;
+    }
+  }
+  const decided = winA + winB;
+  if(decided <= 1e-12) return {winA:0, winB:0, unbreakable:true};
+  return {winA: winA/decided, winB: winB/decided, unbreakable:false};
+}
+// Exact post-reroll odds that A beats B in one exchange (§14) -- same STAB
+// and attacker-vs-opponent-types wiring as resolveBattle, just computing the
+// full distribution instead of rolling once.
+function winOdds(statsA, typesA, atkA, statsB, typesB, atkB){
+  const cfgA = diceConfig(effectiveness(atkA, typesB[0], typesB[1]));
+  const cfgB = diceConfig(effectiveness(atkB, typesA[0], typesA[1]));
+  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? 1 : 0;
+  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? 1 : 0;
+  return crossOdds(resultDistribution(statsA, cfgA, stabA), resultDistribution(statsB, cfgB, stabB));
+}
+
 /* ============ In-game Pokemon collection -- its own key, separate from the Field
    Guide's "My Pokemon" (pokemonDiceMyPokemonV1). Catching/leveling a Pokemon in
    the game does not touch the Field Guide's collection, and vice versa. ============ */
@@ -1417,14 +1470,24 @@ function monStatCardHtml(m, actionHtml){
   '</div>';
 }
 
-function ownedMonPickerHtml(excludeIds){
+function ownedMonPickerHtml(excludeIds, opp){
   const mons = loadGamePokemon().filter(m=>!excludeIds.has(m.id));
   if(!mons.length) return '<div class="empty-note">No available Pokemon left to send out.</div>';
-  return mons.map(m=>
-    monStatCardHtml(m, '<div class="choice-grid" style="margin-top:8px;">' +
-      '<button type="button" class="btn btn-primary" data-action="pickPlayerMon" data-id="'+m.id+'">Send Out '+m.name+'</button>' +
-    '</div>')
-  ).join('');
+  const ranked = mons.map(m=>{
+    const finalStats = m.base.map((b,i)=>b+m.ev[i]);
+    const odds = winOdds(finalStats, [m.t1, m.t2], m.atk, opp.statsArr, opp.types, opp.atk);
+    return { m, odds };
+  }).sort((a,b) => b.odds.winA - a.odds.winA); // best odds first
+  return ranked.map(({m, odds})=>{
+    const oddsText = odds.unbreakable ? 'Tied forever -- identical matchup' : Math.round(odds.winA*100)+'% to win this exchange';
+    const oddsBg = odds.unbreakable ? 'var(--sage)' : (odds.winA >= 0.5 ? '#d7ecd2' : '#f3d9ce');
+    return monStatCardHtml(m,
+      '<div class="stat-row"><span class="stat-chip" style="background:'+oddsBg+';">Win odds <b>'+oddsText+'</b></span></div>' +
+      '<div class="choice-grid" style="margin-top:8px;">' +
+        '<button type="button" class="btn btn-primary" data-action="pickPlayerMon" data-id="'+m.id+'">Send Out '+m.name+'</button>' +
+      '</div>'
+    );
+  }).join('');
 }
 
 function opponentDisplayHtml(opp, statusClass){
@@ -1451,7 +1514,7 @@ function renderEncounterScreen(){
     actionHtml = '<div class="field-label">Currently battling: '+(m?m.name:'?')+'</div>' +
       '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="fight">Fight!</button></div>';
   } else {
-    actionHtml = '<div class="field-label">Choose a Pokemon to send out</div>' + ownedMonPickerHtml(e.lostIds);
+    actionHtml = '<div class="field-label">Choose a Pokemon to send out (best odds first)</div>' + ownedMonPickerHtml(e.lostIds, current);
   }
 
   const logHtml = e.log.length
