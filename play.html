@@ -2040,14 +2040,14 @@ async function fight(){
       rollingBattle = { nA: cfgA.n, nB: cfgB.n, statsA: displayStatsA, statsB: displayStatsB };
       render();
       await Promise.all([
-        ...rA.picks.map((face,i)=>tumble(document.getElementById('battleDieA'+i), 900, displayStatsA, face)),
-        ...rB.picks.map((face,i)=>tumble(document.getElementById('battleDieB'+i), 900, displayStatsB, face)),
+        ...rA.picks.map((face,i)=>tumble(document.getElementById('battleDieA'+i), 600, displayStatsA, face)),
+        ...rB.picks.map((face,i)=>tumble(document.getElementById('battleDieB'+i), 600, displayStatsB, face)),
       ]);
       const dieA = document.getElementById('battleDieA'+rA.keptIdx);
       const dieB = document.getElementById('battleDieB'+rB.keptIdx);
       if(dieA) dieA.classList.add('die-kept');
       if(dieB) dieB.classList.add('die-kept');
-      await sleep(rA.final === rB.final ? 900 : 500);
+      await sleep(rA.final === rB.final ? 600 : 330);
       if(roundNum >= 8) animate = false; // an extreme tie streak stops animating and fast-forwards
     }
   } while(rA.final === rB.final && roundNum < 300);
