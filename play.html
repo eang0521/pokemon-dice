@@ -439,6 +439,7 @@
     <a class="nav-link" href="index.html">&larr; Field Guide</a>
   </div>
   <div class="status-strip" id="statusStrip"></div>
+  <div id="app"></div>
   <div class="card" id="mapCard" style="display:none;">
     <div class="map-legend">
       <span><span class="legend-swatch legend-town"></span>Gym town</span>
@@ -454,7 +455,6 @@
     <button type="button" class="section-toggle" id="myPokemonToggle"></button>
     <div id="myPokemonList" style="display:none;"></div>
   </div>
-  <div id="app"></div>
 </div>
 
 <script>
@@ -1147,7 +1147,7 @@ function renderMovingScreen(){
   return '<div class="card">' +
     '<div class="card-title">Rolled a '+movement.total+'</div>' +
     '<div class="card-sub">Currently at '+nodeDisplayName(node)+' -- you must move</div>' +
-    '<div class="empty-note">Click a glowing tile on the map above to move there. Closer tiles use less of the roll and forfeit the rest.</div>' +
+    '<div class="empty-note">Click a glowing tile on the map below to move there. Closer tiles use less of the roll and forfeit the rest.</div>' +
   '</div>';
 }
 
