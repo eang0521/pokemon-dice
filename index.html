@@ -1608,7 +1608,7 @@
   </div>
 
   <div id="myPokemonPanel" style="display:none;">
-    <p class="blurb">Every Pokemon you've caught or saved. Add more from the Roller -- a "Catch!" button sits next to every wild encounter, trainer team member, and gym/Elite Four/Champion team member (a wild encounter can only be caught once) -- from the Battle Sim's "Save to My Pokemon" button on either side, or by hand below (for a starter, say). Bonus points (EVs) and attack type stay editable right here; base stats don't change once caught, same as everywhere else in this tool.</p>
+    <p class="blurb">Every Pokemon you've caught or saved. Add more from the Roller -- a "Catch!" button sits next to every wild encounter (only that specific encounter, so it can only be caught once; a trainer's or gym leader's own Pokemon can't be caught) -- from the Battle Sim's "Save to My Pokemon" button on either side, or by hand below (for a starter, say). Bonus points (EVs) and attack type stay editable right here; base stats don't change once caught, same as everywhere else in this tool.</p>
 
     <div class="add-toggle-row">
       <button type="button" id="toggleAddForm" class="toggle-add-btn">+ Add a Pokemon</button>
@@ -2178,7 +2178,7 @@ let trainerRolling = false;
 // exact values instead -- used when redisplaying a previously-rolled row
 // (e.g. after restoring state) so a re-roll's tie-breaks can't silently
 // change what's shown.
-function buildMonRow(finalSpecies, level, forcedType, precomputed, note){
+function buildMonRow(finalSpecies, level, forcedType, precomputed){
   const stats = DATA.dice[finalSpecies] || [0,0,0,0,0,0];
   let adjStats;
   if(precomputed && precomputed.adjStats){
@@ -2236,7 +2236,6 @@ function buildMonRow(finalSpecies, level, forcedType, precomputed, note){
     '<span class="stat-roll-note"></span>' +
     '<div class="mon-actions">' +
       '<button type="button" class="send-battle-btn" data-name="' + finalSpecies + '" data-t1="' + sendT1 + '" data-t2="' + sendT2 + '" data-atk="' + cap(finalType) + '" data-base="' + stats.join(',') + '" data-ev="' + adjStats.map((v,i)=> v - stats[i]).join(',') + '">Send to Battle Sim &#9876;</button>' +
-      '<button type="button" class="catch-btn" data-name="' + finalSpecies + '" data-t1="' + sendT1 + '" data-t2="' + sendT2 + '" data-atk="' + cap(finalType) + '" data-base="' + stats.join(',') + '" data-ev="' + adjStats.map((v,i)=> v - stats[i]).join(',') + '" data-note="' + (note||'') + '">Catch! &#9974;</button>' +
     '</div>';
 
   let cardRolling = false;
@@ -2299,7 +2298,7 @@ document.getElementById('trainerBtn').addEventListener('click', async ()=>{
     const msum = mv1 + mv2;
     const root = table[msum-2];
     const finalSpecies = pickStageForLevel(root, trainerLevel);
-    const built = buildMonRow(finalSpecies, trainerLevel, null, null, 'Trainer -- ' + className + ' (' + REGIONS[currentRegionKey].label + ')');
+    const built = buildMonRow(finalSpecies, trainerLevel, null, null);
     teamEl.appendChild(built.row);
     team.push({species: finalSpecies, level: trainerLevel, adjStats: built.adjStats, finalType: built.finalType, highIdx: built.highIdx});
   }
@@ -2329,7 +2328,7 @@ function renderTrainerResult(data){
   const teamEl = document.getElementById('trainerTeam');
   teamEl.innerHTML = '';
   data.team.forEach(m=>{
-    const built = buildMonRow(m.species, m.level, m.finalType, {adjStats: m.adjStats, highIdx: m.highIdx}, 'Trainer -- ' + data.className + ' (' + REGIONS[currentRegionKey].label + ')');
+    const built = buildMonRow(m.species, m.level, m.finalType, {adjStats: m.adjStats, highIdx: m.highIdx});
     teamEl.appendChild(built.row);
   });
   document.getElementById('trainerResult').classList.add('show');
@@ -2424,7 +2423,7 @@ document.getElementById('gymBtn').addEventListener('click', async ()=>{
       const level = member.levels[slotKey];
       const finalSpecies = pickStageForLevel(root, level);
       const forcedType = fixedAttackType(finalSpecies, slotKey);
-      const built = buildMonRow(finalSpecies, level, forcedType, null, 'Gym -- ' + gymLeaderNameText + ' (' + REGIONS[currentRegionKey].label + ')');
+      const built = buildMonRow(finalSpecies, level, forcedType, null);
       teamEl.appendChild(built.row);
       team.push({species: finalSpecies, level, adjStats: built.adjStats, finalType: built.finalType, highIdx: built.highIdx});
     });
@@ -2457,7 +2456,7 @@ document.getElementById('gymBtn').addEventListener('click', async ()=>{
       const root = info.slots[String(slotNum)] || info.slots[slotNum];
       const finalSpecies = pickStageForLevel(root, def.level);
       const forcedType = fixedAttackType(finalSpecies, String(slotNum));
-      const built = buildMonRow(finalSpecies, def.level, forcedType, null, 'Gym -- ' + gymLeaderNameText + ' (' + REGIONS[currentRegionKey].label + ')');
+      const built = buildMonRow(finalSpecies, def.level, forcedType, null);
       teamEl.appendChild(built.row);
       team.push({species: finalSpecies, level: def.level, adjStats: built.adjStats, finalType: built.finalType, highIdx: built.highIdx});
     });
@@ -2485,7 +2484,7 @@ function renderGymResult(data){
   const teamEl = document.getElementById('gymTeam');
   teamEl.innerHTML = '';
   data.team.forEach(m=>{
-    const built = buildMonRow(m.species, m.level, m.finalType, {adjStats: m.adjStats, highIdx: m.highIdx}, 'Gym -- ' + data.gymLeaderNameText + ' (' + REGIONS[currentRegionKey].label + ')');
+    const built = buildMonRow(m.species, m.level, m.finalType, {adjStats: m.adjStats, highIdx: m.highIdx});
     teamEl.appendChild(built.row);
   });
   document.getElementById('gymResult').classList.add('show');
