@@ -267,12 +267,14 @@
     letter-spacing:0.03em;
   }
   .trainer-atk-pill{ box-shadow: 0 0 0 2px var(--gold); }
-  .battle-sprite-row{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:16px;
-    margin: 4px 0 10px;
+  .battle-type-pills{ display:flex; justify-content:center; gap:4px; margin-top:4px; }
+  .battle-eff-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:700;
+    color: var(--redwood);
+    text-align:center;
+    margin-top:3px;
   }
   .sprite-battle{ width:108px; height:108px; object-fit:contain; image-rendering:pixelated; transform: translateY(-20%); }
   .opp-team-row{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 12px; }
@@ -766,12 +768,12 @@ function effectiveness(atkType, defType1, defType2){
   return m;
 }
 function diceConfig(mult){
-  if(mult >= 4) return {n:3, mode:'best'};
-  if(mult === 2) return {n:2, mode:'best'};
-  if(mult === 1) return {n:1, mode:'single'};
-  if(mult === 0.5) return {n:2, mode:'worst'};
-  if(mult === 0.25) return {n:3, mode:'worst'};
-  return {n:3, mode:'worst'};
+  if(mult >= 4) return {n:3, mode:'best', label:'4× doubly super effective'};
+  if(mult === 2) return {n:2, mode:'best', label:'2× super effective'};
+  if(mult === 1) return {n:1, mode:'single', label:'1× normal'};
+  if(mult === 0.5) return {n:2, mode:'worst', label:'0.5× not very effective'};
+  if(mult === 0.25) return {n:3, mode:'worst', label:'0.25× doubly resisted'};
+  return {n:3, mode:'worst', label:'0× immune'};
 }
 // One die per cfg.n: its displayed face is the value of whichever of the 6 stats
 // (including EVs) got picked, PLUS this side's STAB bonus baked in on every die (not
@@ -1669,13 +1671,33 @@ function opponentDisplayHtml(opp, statusClass){
   return '<span class="opp-chip'+(statusClass?(' '+statusClass):'')+'">'+opp.species+' Lv'+opp.level+'</span>';
 }
 
-// Sprite directly above each side's name -- sits right above the dice stage (or the
-// Fight button, when not yet rolling), so it's always the header of "who's fighting."
-function battleHeaderHtml(nameA, nameB){
+function fmtEffMult(mult){
+  if(mult >= 4) return '×4';
+  if(mult === 2) return '×2';
+  if(mult === 1) return '×1';
+  if(mult === 0.5) return '×½';
+  if(mult === 0.25) return '×¼';
+  return '×0';
+}
+// One side's whole column: sprite, name, types, attack type, and how effective its
+// attack is against the OTHER side -- all stacked in one column so the two sides can
+// never drift out of alignment with each other the way two separately-centered rows can.
+function battleSideHtml(name, t1, t2, atk, effMult){
+  return '<div class="dice-side">' +
+    spriteImgHtml(name, 'sprite-battle') +
+    '<div class="dice-group-label">'+name+'</div>' +
+    '<div class="battle-type-pills">'+typePillHtml(t1)+typePillHtml(t2)+'</div>' +
+    '<div class="battle-type-pills">'+typePillHtml(atk)+'</div>' +
+    (effMult != null ? '<div class="battle-eff-label">'+fmtEffMult(effMult)+'</div>' : '') +
+  '</div>';
+}
+// Sits right above the dice stage (or the Fight button, when not yet rolling), so it's
+// always the header of "who's fighting, with what, and how well it'll work."
+function battlePanelHtml(nameA, t1A, t2A, atkA, effA, nameB, t1B, t2B, atkB, effB){
   return '<div class="dice-stage">' +
-    '<div class="dice-side">' + spriteImgHtml(nameA, 'sprite-battle') + '<div class="dice-group-label">'+nameA+'</div></div>' +
+    battleSideHtml(nameA, t1A, t2A, atkA, effA) +
     '<span class="vs-label">vs</span>' +
-    '<div class="dice-side">' + spriteImgHtml(nameB, 'sprite-battle') + '<div class="dice-group-label">'+nameB+'</div></div>' +
+    battleSideHtml(nameB, t1B, t2B, atkB, effB) +
   '</div>';
 }
 function diceStageHtml(rb){
@@ -1722,9 +1744,15 @@ function renderEncounterScreen(){
   let actionHtml;
   if(e.currentPlayerId){
     const m = loadGamePokemon().find(x=>x.id===e.currentPlayerId);
-    // The player's and opponent's sprites sit directly above their names, right above
-    // wherever the dice are about to roll (or the Fight button, before rolling starts).
-    const header = battleHeaderHtml(m?m.name:'?', current.species);
+    // Sprite, name, types, attack type, and effectiveness -- one column per side, sitting
+    // directly above wherever the dice are about to roll (or the Fight button, before
+    // rolling starts).
+    const effA = m ? effectiveness(m.atk, current.types[0], current.types[1]) : null;
+    const effB = m ? effectiveness(current.atk, m.t1, m.t2) : null;
+    const header = battlePanelHtml(
+      m?m.name:'?', m?m.t1:null, m?m.t2:null, m?m.atk:null, effA,
+      current.species, current.types[0], current.types[1], current.atk, effB
+    );
     actionHtml = rollingBattle
       ? header + diceStageHtml(rollingBattle)
       : header + '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="fight">Fight!</button></div>';
@@ -2047,7 +2075,7 @@ async function fight(){
       const dieB = document.getElementById('battleDieB'+rB.keptIdx);
       if(dieA) dieA.classList.add('die-kept');
       if(dieB) dieB.classList.add('die-kept');
-      await sleep(rA.final === rB.final ? 600 : 330);
+      await sleep(600);
       if(roundNum >= 8) animate = false; // an extreme tie streak stops animating and fast-forwards
     }
   } while(rA.final === rB.final && roundNum < 300);
