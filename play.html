@@ -732,16 +732,18 @@ function diceConfig(mult){
   if(mult === 0.25) return {n:3, mode:'worst'};
   return {n:3, mode:'worst'};
 }
-// One die per cfg.n: its face is the actual value of whichever of the 6 stats
-// (including EVs, since finalStats already has them added in) got picked, and the
-// kept die (best-or-worst per cfg.mode) is flagged by index so the UI can highlight it.
+// One die per cfg.n: its displayed face is the value of whichever of the 6 stats
+// (including EVs) got picked, PLUS this side's STAB bonus baked in on every die (not
+// just the kept one) -- since STAB is a flat +1 either way, showing it pre-added lets
+// the two sides' dice be compared face-to-face to see who's ahead, no mental math
+// needed. The kept die (best-or-worst per cfg.mode) is flagged by index for the UI.
 function rollSide(finalStats, cfg, stabBonus){
   const picks = [];
   let kept = null, keptIdx = 0;
   for(let i=0;i<cfg.n;i++){
     const idx = Math.floor(Math.random()*6);
     const val = finalStats[idx];
-    picks.push(val);
+    picks.push(val + stabBonus);
     if(kept===null || (cfg.mode==='worst' ? val<kept : val>kept)){
       kept = val;
       keptIdx = i;
@@ -1934,6 +1936,11 @@ async function fight(){
   const cfgB = diceConfig(effectiveness(atkB, typesA[0], typesA[1]));
   const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? 1 : 0;
   const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? 1 : 0;
+  // STAB is baked into every die face shown (not just the kept one) so the two sides'
+  // dice can be compared face-to-face -- the cycling animation shows the same
+  // STAB-inclusive numbers the dice will actually land on, not a mismatched raw value.
+  const displayStatsA = stabA ? statsA.map(v=>v+stabA) : statsA;
+  const displayStatsB = stabB ? statsB.map(v=>v+stabB) : statsB;
 
   // The dice you see ARE the actual roll -- animate real rounds (including real ties,
   // paused on-screen so the player can see what happened) rather than faking a replay.
@@ -1943,11 +1950,11 @@ async function fight(){
     rA = rollSide(statsA, cfgA, stabA);
     rB = rollSide(statsB, cfgB, stabB);
     if(animate){
-      rollingBattle = { nA: cfgA.n, nB: cfgB.n, statsA, statsB };
+      rollingBattle = { nA: cfgA.n, nB: cfgB.n, statsA: displayStatsA, statsB: displayStatsB };
       render();
       await Promise.all([
-        ...rA.picks.map((face,i)=>tumble(document.getElementById('battleDieA'+i), 900, statsA, face)),
-        ...rB.picks.map((face,i)=>tumble(document.getElementById('battleDieB'+i), 900, statsB, face)),
+        ...rA.picks.map((face,i)=>tumble(document.getElementById('battleDieA'+i), 900, displayStatsA, face)),
+        ...rB.picks.map((face,i)=>tumble(document.getElementById('battleDieB'+i), 900, displayStatsB, face)),
       ]);
       const dieA = document.getElementById('battleDieA'+rA.keptIdx);
       const dieB = document.getElementById('battleDieB'+rB.keptIdx);
