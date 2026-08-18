@@ -1056,6 +1056,24 @@ function checkAndApplyLevelEvolution(entry){
   return messages;
 }
 
+// Level-up evolution is checked once the WHOLE encounter is over, not after
+// each individual opponent's XP grant -- a Pokemon that levels up against
+// opponent 2 of 5 keeps fighting the rest of that battle as its pre-evolution
+// self, only evolving once there's no more of the encounter left for the
+// change to affect. `recipientIds` is every Pokemon that gained XP anywhere
+// during the encounter, tracked as it happens and resolved here at the end.
+function resolveDeferredEvolutions(recipientIds){
+  if(!recipientIds || !recipientIds.size) return '';
+  const list = loadGamePokemon();
+  const messages = [];
+  recipientIds.forEach(id=>{
+    const mon = list.find(x=>x.id===id);
+    if(mon) checkAndApplyLevelEvolution(mon).forEach(msg => messages.push(msg));
+  });
+  saveGamePokemonList(list);
+  return messages.length ? (' ' + messages.join(' ')) : '';
+}
+
 /* ============ Rolling opponents ============ */
 function rollOneDieWithThreshold(T){
   let v = rand(6);
@@ -1557,6 +1575,7 @@ function beginEncounter(type, ctx){
     lostIds: new Set(),
     sentOutIds: [],
     currentOpponentParticipants: [],
+    xpRecipientIds: new Set(), // who to check for level-up evolution once the WHOLE encounter ends, not mid-battle
     log: [],
   }, extra);
   view = 'encounter';
@@ -1598,7 +1617,7 @@ function fight(){
       const m=list.find(x=>x.id===s.id);
       if(!m) return;
       e.log.push(m.name+' gained '+s.xp+' XP.');
-      checkAndApplyLevelEvolution(m).forEach(msg => e.log.push(msg));
+      e.xpRecipientIds.add(s.id); // evolution check deferred until the whole encounter ends, not mid-battle
     });
     saveGamePokemonList(list);
 
@@ -1614,6 +1633,7 @@ function fight(){
       } else {
         pendingMessage = 'You defeated the trainer\'s whole team!';
       }
+      pendingMessage += resolveDeferredEvolutions(e.xpRecipientIds);
       view = 'message';
       encounter = null;
     }
@@ -1629,6 +1649,7 @@ function fight(){
   const remainingOwned = loadGamePokemon().filter(m=>!e.lostIds.has(m.id));
   if(e.sentOutIds.length >= 6 || remainingOwned.length === 0){
     pendingMessage = (e.type==='wild') ? 'The wild '+opp.species+' got away.' : 'You had no Pokemon left and had to withdraw.';
+    pendingMessage += resolveDeferredEvolutions(e.xpRecipientIds);
     view = 'message';
     encounter = null;
   }
