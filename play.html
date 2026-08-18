@@ -1223,7 +1223,7 @@ function monStatCardHtml(m, actionHtml){
   return '<div class="mon-detail-card">' +
     '<div class="mon-detail-name">'+m.name+' Lv'+level+'</div>' +
     typePillHtml(m.t1) + typePillHtml(m.t2) +
-    ' (<span class="type-pill" style="background:var(--rust);">Atk '+m.atk+'</span>)' +
+    ' (Atk ' + typePillHtml(m.atk) + ')' +
     statRowHtml(finalStats) +
     '<div class="stat-row"><span class="stat-chip">XP <b>'+(m.xp||0)+'</b> / '+(level*10)+' to next level</span></div>' +
     (actionHtml || '') +
@@ -1256,7 +1256,7 @@ function renderEncounterScreen(){
   const oppCard =
     '<div class="card-title">'+current.species+' Lv'+current.level+'</div>' +
     typePillHtml(current.types[0]) + typePillHtml(current.types[1]) +
-    ' (<span class="type-pill" style="background:var(--rust);">Atk '+current.atk+'</span>)' +
+    ' (Atk ' + typePillHtml(current.atk) + ')' +
     statRowHtml(current.statsArr);
 
   let actionHtml;
