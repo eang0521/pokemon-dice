@@ -511,27 +511,29 @@ function resolveBattle(statsA, typesA, atkA, statsB, typesB, atkB){
   return { winner: 'tie', finalA:null, finalB:null };
 }
 
-/* ============ My Pokemon collection (shared localStorage key with index.html) ============ */
-const MY_POKEMON_KEY = 'pokemonDiceMyPokemonV1';
-function loadMyPokemon(){
+/* ============ In-game Pokemon collection -- its own key, separate from the Field
+   Guide's "My Pokemon" (pokemonDiceMyPokemonV1). Catching/leveling a Pokemon in
+   the game does not touch the Field Guide's collection, and vice versa. ============ */
+const GAME_POKEMON_KEY = 'pokemonDiceGamePokemonV1';
+function loadGamePokemon(){
   try {
-    const list = JSON.parse(localStorage.getItem(MY_POKEMON_KEY) || '[]');
+    const list = JSON.parse(localStorage.getItem(GAME_POKEMON_KEY) || '[]');
     return Array.isArray(list) ? list : [];
   } catch(e){ return []; }
 }
-function saveMyPokemonList(list){
-  try { localStorage.setItem(MY_POKEMON_KEY, JSON.stringify(list)); }
-  catch(e){ console.error('Could not save My Pokemon', e); }
+function saveGamePokemonList(list){
+  try { localStorage.setItem(GAME_POKEMON_KEY, JSON.stringify(list)); }
+  catch(e){ console.error('Could not save game Pokemon', e); }
 }
-function addMyPokemon(entry){
-  const list = loadMyPokemon();
+function addGamePokemon(entry){
+  const list = loadGamePokemon();
   const full = Object.assign({
     id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
     caughtAt: new Date().toISOString(),
     xp: 0,
   }, entry);
   list.push(full);
-  saveMyPokemonList(list);
+  saveGamePokemonList(list);
   return full;
 }
 
@@ -560,6 +562,26 @@ function neighborsOf(nodeId){
     else if(b===nodeId) out.push(a);
   });
   return out;
+}
+// Every node reachable within 1..maxDist steps of startId, shortest-path distance,
+// as a Map<nodeId, distance> -- startId itself is never included, since a move
+// always has to go somewhere (no staying put and "using" the roll on nothing).
+function reachableWithin(startId, maxDist){
+  const dist = new Map();
+  let frontier = [startId];
+  dist.set(startId, 0);
+  for(let d=1; d<=maxDist; d++){
+    const next = [];
+    frontier.forEach(id=>{
+      neighborsOf(id).forEach(nid=>{
+        if(!dist.has(nid)){ dist.set(nid, d); next.push(nid); }
+      });
+    });
+    frontier = next;
+    if(!frontier.length) break;
+  }
+  dist.delete(startId);
+  return dist;
 }
 function nodeDisplayName(node){
   return node.kind === 'combo' ? (node.townName + ' / ' + node.dungeonName) : node.name;
@@ -651,9 +673,14 @@ function handleMapNodeClick(nodeId){
     hintEl.textContent = 'Roll movement first to move around the map.';
     return;
   }
-  if(neighborsOf(gameState.currentNodeId).includes(nodeId)){
+  const reachable = reachableWithin(gameState.currentNodeId, movement.total);
+  if(reachable.has(nodeId)){
     hintEl.textContent = '';
-    stepTo(nodeId);
+    const spacesUsed = reachable.get(nodeId);
+    const forfeited = movement.total - spacesUsed;
+    gameState.currentNodeId = nodeId;
+    saveGameState();
+    resolveLanding(nodeId, forfeited);
   } else {
     hintEl.textContent = "Can't move there from here -- pick a glowing tile.";
   }
@@ -670,11 +697,11 @@ function renderGameMap(){
 
   const hintEl = document.getElementById('mapHint');
   if(view === 'moving' && movement){
-    neighborsOf(gameState.currentNodeId).forEach(nid=>{
+    reachableWithin(gameState.currentNodeId, movement.total).forEach((dist, nid)=>{
       const el = document.querySelector('.map-node[data-id="'+nid+'"]');
       if(el) el.classList.add('can-move');
     });
-    hintEl.textContent = 'Click a glowing tile to move there.';
+    hintEl.textContent = 'Click a glowing tile to move there -- closer tiles forfeit more of the roll.';
   } else if(view === 'board'){
     hintEl.textContent = 'Roll movement to see where you can go.';
   } else {
@@ -791,7 +818,8 @@ function rollGymTeam(leaderName){
 
 /* ============ Transient (non-persisted) UI/turn state ============ */
 let view = gameState.started ? 'board' : 'start';
-let movement = null;      // { total, remaining }
+let movement = null;      // { total } -- while the player is choosing a tile to move to
+let pendingForfeit = 0;   // spaces forfeited by the movement that just resolved (route roll adjust)
 let encounter = null;     // active battle state
 let pendingMessage = '';  // for the generic message screen
 let startPick = { starter:null, town:null };
@@ -881,11 +909,8 @@ function renderMovingScreen(){
   const node = nodesById[gameState.currentNodeId];
   return '<div class="card">' +
     '<div class="card-title">Rolled a '+movement.total+'</div>' +
-    '<div class="card-sub">'+movement.remaining+' space'+(movement.remaining===1?'':'s')+' left -- currently at '+nodeDisplayName(node)+'</div>' +
-    '<div class="empty-note">Click a glowing tile on the map above to move there.</div>' +
-    '<div class="choice-grid">' +
-      '<button type="button" class="btn btn-danger" data-action="stopMoving">Stop Here (forfeit '+movement.remaining+')</button>' +
-    '</div>' +
+    '<div class="card-sub">Currently at '+nodeDisplayName(node)+' -- you must move</div>' +
+    '<div class="empty-note">Click a glowing tile on the map above to move there. Closer tiles use less of the roll and forfeit the rest.</div>' +
   '</div>';
 }
 
@@ -899,12 +924,18 @@ function renderTownMenuScreen(){
   if(items.length){
     options.push('<button type="button" class="btn" data-action="townAction" data-choice="item">Get Evolution Item</button>');
   }
+  let beatenGymNote = '';
   if(node.gymLeader){
-    options.push('<button type="button" class="btn btn-primary" data-action="townAction" data-choice="gym">Gym Battle -- '+node.gymLeader+'</button>');
+    if(gameState.defeatedGymLeaders.includes(node.gymLeader)){
+      beatenGymNote = '<div class="empty-note">You\'ve already beaten '+node.gymLeader+'\'s gym.</div>';
+    } else {
+      options.push('<button type="button" class="btn btn-primary" data-action="townAction" data-choice="gym">Gym Battle -- '+node.gymLeader+'</button>');
+    }
   }
   return '<div class="card">' +
     '<div class="card-title">'+nodeDisplayName(node)+'</div>' +
     '<div class="card-sub">'+nodeKindLabel(node)+'</div>' +
+    beatenGymNote +
     (options.length
       ? '<div class="field-label">What would you like to do?</div><div class="choice-grid">'+options.join('')+'</div>'
       : '<div class="empty-note">Nothing to do here right now.</div><div class="choice-grid"><button type="button" class="btn" data-action="endTurn">Continue</button></div>') +
@@ -913,7 +944,7 @@ function renderTownMenuScreen(){
 
 function renderRouteRollScreen(){
   const node = nodesById[gameState.currentNodeId];
-  const forfeited = movement ? movement.forfeited || 0 : 0;
+  const forfeited = pendingForfeit || 0;
   let adjustHtml = '';
   if(forfeited > 0){
     adjustHtml =
@@ -934,7 +965,7 @@ function renderRouteRollScreen(){
 }
 
 function ownedMonPickerHtml(excludeIds){
-  const mons = loadMyPokemon().filter(m=>!excludeIds.has(m.id));
+  const mons = loadGamePokemon().filter(m=>!excludeIds.has(m.id));
   if(!mons.length) return '<div class="empty-note">No available Pokemon left to send out.</div>';
   return mons.map(m=>{
     const level = m.ev.reduce((a,b)=>a+b,0);
@@ -965,7 +996,7 @@ function renderEncounterScreen(){
 
   let actionHtml;
   if(e.currentPlayerId){
-    const m = loadMyPokemon().find(x=>x.id===e.currentPlayerId);
+    const m = loadGamePokemon().find(x=>x.id===e.currentPlayerId);
     actionHtml = '<div class="field-label">Currently battling: '+(m?m.name:'?')+'</div>' +
       '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="fight">Fight!</button></div>';
   } else {
@@ -1016,7 +1047,8 @@ function beginAdventure(){
   const base = DATA.dice[sp] || [0,0,0,0,0,0];
   const ev = [0,0,0,0,0,0];
   for(let i=0;i<2;i++){ ev[rand(6)-1] += 1; }
-  addMyPokemon({
+  saveGamePokemonList([]); // a new game starts with a clean team, no carryover from a previous playthrough
+  addGamePokemon({
     name: sp,
     t1: types[0] || null,
     t2: types[1] || null,
@@ -1032,8 +1064,9 @@ function beginAdventure(){
 }
 
 function resetGame(){
-  if(!confirm('Reset your adventure? Your caught Pokemon collection is not affected.')) return;
+  if(!confirm('Reset your adventure? This clears your map progress, badges, and in-game Pokemon team. Your Field Guide My Pokemon collection is a separate list and is not affected.')) return;
   localStorage.removeItem(GAME_KEY);
+  saveGamePokemonList([]);
   gameState = loadGameState();
   startPick = { starter:null, town:null };
   view = 'start';
@@ -1044,28 +1077,14 @@ function resetGame(){
 
 function rollMovement(){
   const n = rand(6);
-  movement = { total:n, remaining:n, forfeited:0 };
+  movement = { total:n };
   view = 'moving';
   render();
 }
-function stepTo(nodeId){
-  movement.remaining -= 1;
-  gameState.currentNodeId = nodeId;
-  saveGameState();
-  if(movement.remaining <= 0){
-    resolveLanding(nodeId, 0);
-  } else {
-    render();
-  }
-}
-function stopMoving(){
-  const forfeited = movement.remaining;
-  movement.remaining = 0;
-  resolveLanding(gameState.currentNodeId, forfeited);
-}
 function resolveLanding(nodeId, forfeited){
   const node = nodesById[nodeId];
-  if(movement) movement.forfeited = forfeited;
+  pendingForfeit = forfeited;
+  movement = null;
   if(node.kind === 'dungeon'){
     beginEncounter('wild', { locationId: node.locationId });
   } else if(node.kind === 'route'){
@@ -1087,6 +1106,7 @@ function townAction(choice){
     view = 'message';
     render();
   } else if(choice === 'gym'){
+    if(gameState.defeatedGymLeaders.includes(node.gymLeader)) return; // already beaten -- shouldn't be reachable via the UI, but don't allow it even so
     beginEncounter('gym', { leaderName: node.gymLeader });
   }
 }
@@ -1135,7 +1155,7 @@ function pickPlayerMon(id){
 
 function fight(){
   const e = encounter;
-  const entry = loadMyPokemon().find(x=>x.id===e.currentPlayerId);
+  const entry = loadGamePokemon().find(x=>x.id===e.currentPlayerId);
   const opp = e.opponents[e.oppIdx];
   e.currentOpponentParticipants.push(e.currentPlayerId);
 
@@ -1153,12 +1173,12 @@ function fight(){
     }
     const xpTotal = Math.floor(statTotal(opp.statsArr) * 1.5);
     const splits = splitXP(xpTotal, e.currentOpponentParticipants);
-    const list = loadMyPokemon();
+    const list = loadGamePokemon();
     splits.forEach(({id, xp})=>{
       const mon = list.find(x=>x.id===id);
       if(mon) grantXP(mon, xp, opp.highIdx);
     });
-    saveMyPokemonList(list);
+    saveGamePokemonList(list);
     splits.forEach(s=>{ const m=list.find(x=>x.id===s.id); if(m) e.log.push(m.name+' gained '+s.xp+' XP.'); });
 
     e.oppIdx += 1;
@@ -1185,7 +1205,7 @@ function fight(){
   e.lostIds.add(e.currentPlayerId);
   e.currentPlayerId = null;
 
-  const remainingOwned = loadMyPokemon().filter(m=>!e.lostIds.has(m.id));
+  const remainingOwned = loadGamePokemon().filter(m=>!e.lostIds.has(m.id));
   if(e.sentOutIds.length >= 6 || remainingOwned.length === 0){
     pendingMessage = (e.type==='wild') ? 'The wild '+opp.species+' got away.' : 'You had no Pokemon left and had to withdraw.';
     view = 'message';
@@ -1196,7 +1216,7 @@ function fight(){
 
 function chooseCatch(){
   const opp = encounter.opponents[0];
-  addMyPokemon({
+  addGamePokemon({
     name: opp.species,
     t1: opp.types[0] || null,
     t2: opp.types[1] || null,
@@ -1214,12 +1234,12 @@ function chooseDefeat(){
   const e = encounter;
   const opp = e.opponents[0];
   const splits = splitXP(e.pendingXP.total, e.pendingXP.participants);
-  const list = loadMyPokemon();
+  const list = loadGamePokemon();
   splits.forEach(({id, xp})=>{
     const mon = list.find(x=>x.id===id);
     if(mon) grantXP(mon, xp, e.pendingXP.highIdx);
   });
-  saveMyPokemonList(list);
+  saveGamePokemonList(list);
   pendingMessage = 'Defeated the wild '+opp.species+'. ' +
     splits.map(s=>{ const m=list.find(x=>x.id===s.id); return m ? (m.name+' +'+s.xp+' XP') : ''; }).join(', ');
   view = 'message';
@@ -1242,8 +1262,6 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'pickTown') pickTown(btn.dataset.node);
   else if(action === 'beginAdventure') beginAdventure();
   else if(action === 'rollMovement') rollMovement();
-  else if(action === 'stepTo') stepTo(btn.dataset.node);
-  else if(action === 'stopMoving') stopMoving();
   else if(action === 'townAction') townAction(btn.dataset.choice);
   else if(action === 'rollRoute') rollRoute(parseInt(btn.dataset.adjust, 10));
   else if(action === 'pickPlayerMon') pickPlayerMon(btn.dataset.id);
