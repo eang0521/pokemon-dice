@@ -81,8 +81,30 @@
     border-radius: 4px;
     padding: 4px 9px;
     font-weight:600;
+    cursor:pointer;
   }
-  .status-gyms{ color: var(--redwood); }
+  .status-badges:hover{ background:#c4923a; }
+  .badge-panel{
+    background: var(--paper-deep);
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    padding: 12px;
+    margin: -6px 0 16px;
+  }
+  .badge-panel-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+  .badge-box{
+    width: 46px;
+    height: 46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:700;
+    border: 1.5px solid var(--ink);
+    border-radius: 5px;
+    letter-spacing:0.02em;
+  }
   .status-turns{
     background: var(--sage);
     color: var(--paper);
@@ -474,6 +496,7 @@
     <a class="nav-link" href="index.html">&larr; Field Guide</a>
   </div>
   <div class="status-strip" id="statusStrip"></div>
+  <div class="badge-panel" id="badgePanel" style="display:none;"></div>
   <div id="app"></div>
   <div class="card" id="mapCard" style="display:none;">
     <div class="map-legend">
@@ -1171,6 +1194,7 @@ let pendingMessage = '';  // for the generic message screen
 let pendingEvolveOptions = []; // for the evolve-a-Pokemon-with-a-town-item screen
 let startPick = { starter:null, town:null };
 let myPokemonOpen = false; // collapsed/expanded state of the "My Pokemon" roster section
+let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
 
 /* ============ Rendering ============ */
 const STARTERS = ['Sprigatito','Fennekin','Popplio'];
@@ -1203,13 +1227,33 @@ function statRowHtml(statsArr){
 
 function renderStatus(){
   const el = document.getElementById('statusStrip');
-  if(!gameState.started){ el.innerHTML=''; return; }
+  const panel = document.getElementById('badgePanel');
+  if(!gameState.started){ el.innerHTML=''; panel.style.display='none'; return; }
   const badges = gameState.defeatedGymLeaders.length;
   el.innerHTML =
-    '<span class="status-badges">Badges: '+badges+' / '+gymCount()+'</span>' +
+    '<span class="status-badges" data-action="toggleBadgePanel">Badges: '+badges+' / '+gymCount()+'</span>' +
     '<span class="status-turns">Turn '+(gameState.turnCount||0)+'</span>' +
-    (badges ? '<span class="status-gyms">'+gameState.defeatedGymLeaders.join(', ')+'</span>' : '') +
     '<button type="button" class="reset-btn" data-action="resetGame">Reset Game</button>';
+  renderBadgePanel();
+}
+// One box per gym leader, in the same left-to-right order the region's gym
+// leaders are defined in (DATA.gymLeaders' own key order), labeled with that
+// leader's town's 3-letter map-node id -- tinted by the gym's type once
+// beaten, greyed out otherwise.
+function renderBadgePanel(){
+  const panel = document.getElementById('badgePanel');
+  panel.style.display = badgePanelOpen ? '' : 'none';
+  if(!badgePanelOpen) return;
+  const boxes = Object.keys(DATA.gymLeaders).map(name=>{
+    const node = DATA.mapNodes.find(n => n.gymLeader === name);
+    const abbrev = node ? node.id : '???';
+    const info = DATA.gymLeaders[name];
+    const beaten = gameState.defeatedGymLeaders.includes(name);
+    const bg = beaten ? (TYPE_COLOR[(info.type||'').toLowerCase()] || '#888') : '#ccc';
+    const fg = beaten ? '#fff' : '#777';
+    return '<div class="badge-box" style="background:'+bg+'; color:'+fg+';" title="'+name+' -- '+info.town+' ('+info.type+')'+(beaten?' -- beaten':'')+'">'+abbrev+'</div>';
+  }).join('');
+  panel.innerHTML = '<div class="badge-panel-grid">'+boxes+'</div>';
 }
 
 function renderMyPokemonSection(){
@@ -1720,8 +1764,11 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'endTurn') endTurn();
 });
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
-  const btn = e.target.closest('[data-action="resetGame"]');
-  if(btn) resetGame();
+  if(e.target.closest('[data-action="resetGame"]')){ resetGame(); return; }
+  if(e.target.closest('[data-action="toggleBadgePanel"]')){
+    badgePanelOpen = !badgePanelOpen;
+    renderBadgePanel();
+  }
 });
 document.getElementById('mapInfo').addEventListener('click', (e)=>{
   const btn = e.target.closest('[data-action="moveToNode"]');
