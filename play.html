@@ -187,17 +187,6 @@
     cursor:pointer;
   }
   .town-btn.selected{ background: var(--gold); }
-  .plain-select{
-    width:100%;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12.5px;
-    padding: 9px 10px;
-    border: 1.5px solid var(--ink);
-    border-radius: 5px;
-    background: var(--paper);
-    color: var(--ink);
-    cursor:pointer;
-  }
   .mon-detail-card{
     background: var(--paper);
     border: 1.5px solid var(--line);
@@ -299,6 +288,11 @@
     filter: drop-shadow(0 0 5px var(--gold));
   }
   .map-node.can-move{ cursor:pointer; }
+  .map-node.selected .map-node-shape{
+    stroke: var(--ink);
+    stroke-width: 3.5;
+    stroke-dasharray: 2.5,2;
+  }
   .map-node-label{
     font-family:'IBM Plex Mono', monospace;
     font-weight:600;
@@ -323,29 +317,118 @@
     margin-top: 8px;
     min-height: 16px;
   }
-  .map-tooltip{
-    display:none;
-    position: fixed;
-    transform: translate(-50%, -100%);
-    margin-top: -10px;
-    background: var(--ink);
-    color: var(--paper);
-    border-radius: 6px;
-    padding: 8px 11px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    line-height:1.5;
-    max-width: 220px;
-    z-index: 20;
-    pointer-events:none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  .map-info{
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1.5px dashed var(--ink);
+    min-height: 50px;
   }
-  .tooltip-title{
+  .map-info-empty{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--sage);
+    text-align:center;
+  }
+  .map-info-name{
     font-family:'Fraunces', serif;
     font-weight:700;
+    font-size: 18px;
+    margin-bottom:4px;
+  }
+  .map-info-kind{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color: var(--redwood);
+    margin-bottom: 8px;
+  }
+  .map-info-desc{
     font-size: 13px;
-    margin-bottom: 3px;
+    line-height:1.5;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .map-info-evo{
+    font-size: 12.5px;
+    line-height:1.5;
+    color: var(--ink);
+    background: rgba(201, 162, 39, 0.16);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 7px 9px;
+    margin-bottom: 10px;
+  }
+  .map-go-btn{
+    padding: 9px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:600;
+    background: var(--rust);
     color: var(--paper);
+    border:none;
+    border-radius: 4px;
+    cursor:pointer;
+    margin-bottom: 10px;
+  }
+  .map-go-btn:hover{ background:#a9481f; }
+  .map-encounter-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color: var(--redwood);
+    margin-top: 10px;
+    margin-bottom: 7px;
+  }
+  .map-encounter-list{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
+  .map-encounter-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 5px 8px;
+  }
+  .map-encounter-sum{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size: 11px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 3px;
+    width: 18px;
+    height: 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .map-encounter-name{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 13px;
+    flex: 1;
+  }
+  .map-encounter-types{ display:flex; gap:4px; }
+  .section-toggle{
+    display:block;
+    width:100%;
+    text-align:left;
+    background:none;
+    border:none;
+    padding:0;
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 17px;
+    color: var(--ink);
+    cursor:pointer;
   }
 </style>
 </head>
@@ -365,10 +448,14 @@
     </div>
     <div class="map-scroll"><svg id="mapSvg" viewBox="0 0 0 0"></svg></div>
     <div class="map-hint" id="mapHint"></div>
+    <div class="map-info" id="mapInfo"></div>
+  </div>
+  <div class="card" id="myPokemonCard" style="display:none;">
+    <button type="button" class="section-toggle" id="myPokemonToggle"></button>
+    <div id="myPokemonList" style="display:none;"></div>
   </div>
   <div id="app"></div>
 </div>
-<div id="mapTooltip" class="map-tooltip"></div>
 
 <script>
 try {
@@ -670,36 +757,81 @@ function nodeXY(n){
   return { x: (n.col - 0.5) * CELL, y: (n.row - 0.5) * CELL };
 }
 let mapBuilt = false;
-let hoverTimer = null;
-function townInfoLines(node){
-  const parts = [];
-  if(node.gymLeader){
-    const beaten = gameState.defeatedGymLeaders.includes(node.gymLeader);
-    parts.push('Gym Leader: ' + node.gymLeader + (beaten ? ' (beaten)' : ''));
-  }
-  if(node.kind === 'combo'){
-    parts.push('Dungeon: ' + node.dungeonName);
-  }
+let selectedMapNodeId = null;
+function evoItemsLineHtml(node){
   const townId = node.kind === 'combo' ? node.townId : node.id;
   const items = (DATA.evoItems && DATA.evoItems[townId]) || [];
-  if(items.length){
-    parts.push('Evolution item' + (items.length>1?'s':'') + ': ' + items.join(', '));
+  if(!items.length) return '';
+  return '<div class="map-info-evo">Evolution item' + (items.length>1?'s':'') + ' here: <b>' + items.join(', ') + '</b></div>';
+}
+function buildEncounterPreviewHtml(locationId){
+  const loc = DATA.locations.find(l => l.id === locationId);
+  if(!loc) return '';
+  const rows = loc.table.map((species, i)=>{
+    const sum = i + 2;
+    const types = (DATA.types[species] || ['Normal', null]).filter(Boolean);
+    return '<div class="map-encounter-row">' +
+      '<span class="map-encounter-sum">' + sum + '</span>' +
+      '<span class="map-encounter-name">' + species + '</span>' +
+      '<span class="map-encounter-types">' + types.map(t=>typePillHtml(t)).join('') + '</span>' +
+    '</div>';
+  }).join('');
+  return '<div class="map-encounter-title">Encounter table (2d6 sum)</div>' +
+    '<div class="map-encounter-list">' + rows + '</div>';
+}
+// The "Move here" affordance for whichever node is currently selected in the
+// sidebar -- only offered while actively rolling movement, and only for a node
+// this roll can actually reach (never the player's own current tile, per the
+// must-move rule).
+function moveHereHtml(node){
+  if(view !== 'moving' || !movement) return '';
+  if(node.id === gameState.currentNodeId){
+    return '<div class="map-info-desc" style="opacity:0.65;">You are here -- you must move somewhere else this turn.</div>';
   }
-  if(!parts.length) parts.push('Nothing special here.');
-  return parts;
+  const reachable = reachableWithin(gameState.currentNodeId, movement.total);
+  if(!reachable.has(node.id)){
+    return '<div class="map-info-desc" style="opacity:0.65;">Not reachable with this roll.</div>';
+  }
+  const spacesUsed = reachable.get(node.id);
+  const forfeited = movement.total - spacesUsed;
+  return '<button type="button" class="map-go-btn" data-action="moveToNode" data-node="'+node.id+'">Move Here (uses '+spacesUsed+
+    (forfeited ? ', forfeits '+forfeited : '') + ')</button>';
 }
-function showTownTooltip(node, targetEl){
-  const tooltip = document.getElementById('mapTooltip');
-  const rect = targetEl.getBoundingClientRect();
-  tooltip.innerHTML = '<div class="tooltip-title">'+nodeDisplayName(node)+'</div>' +
-    townInfoLines(node).map(p=>'<div>'+p+'</div>').join('');
-  tooltip.style.left = (rect.left + rect.width/2) + 'px';
-  tooltip.style.top = rect.top + 'px';
-  tooltip.style.display = 'block';
-}
-function hideTownTooltip(){
-  clearTimeout(hoverTimer);
-  document.getElementById('mapTooltip').style.display = 'none';
+function renderMapSidebar(){
+  const infoEl = document.getElementById('mapInfo');
+  const n = selectedMapNodeId ? nodesById[selectedMapNodeId] : null;
+  if(!n){ infoEl.innerHTML = '<div class="map-info-empty">Click a node to see what\'s there.</div>'; return; }
+
+  if(n.kind === 'combo'){
+    const beaten = n.gymLeader && gameState.defeatedGymLeaders.includes(n.gymLeader);
+    const gymLine = n.gymLeader ? ('Home of Gym Leader ' + n.gymLeader + (beaten ? ' (already beaten)' : '') + '.') : 'No gym here.';
+    infoEl.innerHTML =
+      '<div class="map-info-name">' + n.townName + ' / ' + n.dungeonName + '</div>' +
+      '<div class="map-info-kind">Town + Dungeon (same spot)</div>' +
+      '<div class="map-info-desc">' + gymLine + ' ' + n.dungeonName + ' sits in the same location.</div>' +
+      evoItemsLineHtml(n) +
+      moveHereHtml(n) +
+      buildEncounterPreviewHtml(n.dungeonLocationId);
+    return;
+  }
+
+  let extra = '';
+  let encounterHtml = '';
+  if(n.kind === 'town'){
+    const beaten = n.gymLeader && gameState.defeatedGymLeaders.includes(n.gymLeader);
+    extra = n.gymLeader ? ('Home of Gym Leader ' + n.gymLeader + (beaten ? ' (already beaten)' : '') + '.') : 'No gym here.';
+  } else {
+    extra = 'Wild encounter location.';
+    encounterHtml = buildEncounterPreviewHtml(n.locationId);
+  }
+
+  infoEl.innerHTML =
+    '<div class="map-info-name">' + nodeDisplayName(n) + '</div>' +
+    '<div class="map-info-kind">' + nodeKindLabel(n) + '</div>' +
+    '<div class="map-info-desc">' + extra + '</div>' +
+    (n.kind === 'town' ? evoItemsLineHtml(n) : '') +
+    moveHereHtml(n) +
+    encounterHtml;
 }
 function buildGameMap(){
   mapBuilt = true;
@@ -749,34 +881,26 @@ function buildGameMap(){
       g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+2.5, 'text-anchor':'middle', 'font-size':fontSize})).textContent = n.id;
     }
 
-    g.addEventListener('click', ()=> handleMapNodeClick(n.id));
-    if(n.kind === 'town' || n.kind === 'combo'){
-      g.addEventListener('mouseenter', ()=>{
-        clearTimeout(hoverTimer);
-        hoverTimer = setTimeout(()=> showTownTooltip(n, g), 2000);
-      });
-      g.addEventListener('mouseleave', hideTownTooltip);
-    }
+    g.addEventListener('click', ()=> selectMapNode(n.id));
     svg.appendChild(g);
   });
 }
-function handleMapNodeClick(nodeId){
-  const hintEl = document.getElementById('mapHint');
-  if(view !== 'moving' || !movement){
-    hintEl.textContent = 'Roll movement first to move around the map.';
-    return;
-  }
+function selectMapNode(nodeId){
+  selectedMapNodeId = nodeId;
+  document.querySelectorAll('.map-node').forEach(el=>el.classList.remove('selected'));
+  const el = document.querySelector('.map-node[data-id="'+nodeId+'"]');
+  if(el) el.classList.add('selected');
+  renderMapSidebar();
+}
+function moveToNode(nodeId){
+  if(view !== 'moving' || !movement) return;
   const reachable = reachableWithin(gameState.currentNodeId, movement.total);
-  if(reachable.has(nodeId)){
-    hintEl.textContent = '';
-    const spacesUsed = reachable.get(nodeId);
-    const forfeited = movement.total - spacesUsed;
-    gameState.currentNodeId = nodeId;
-    saveGameState();
-    resolveLanding(nodeId, forfeited);
-  } else {
-    hintEl.textContent = "Can't move there from here -- pick a glowing tile.";
-  }
+  if(!reachable.has(nodeId)) return;
+  const spacesUsed = reachable.get(nodeId);
+  const forfeited = movement.total - spacesUsed;
+  gameState.currentNodeId = nodeId;
+  saveGameState();
+  resolveLanding(nodeId, forfeited);
 }
 function renderGameMap(){
   const mapCard = document.getElementById('mapCard');
@@ -794,12 +918,13 @@ function renderGameMap(){
       const el = document.querySelector('.map-node[data-id="'+nid+'"]');
       if(el) el.classList.add('can-move');
     });
-    hintEl.textContent = 'Click a glowing tile to move there -- closer tiles forfeit more of the roll.';
+    hintEl.textContent = 'Click any node for details -- glowing tiles can be reached this turn.';
   } else if(view === 'board'){
-    hintEl.textContent = 'Roll movement to see where you can go.';
+    hintEl.textContent = 'Click any node for details. Roll movement to move.';
   } else {
     hintEl.textContent = '';
   }
+  renderMapSidebar();
 }
 
 /* ============ XP & leveling ============ */
@@ -917,6 +1042,7 @@ let encounter = null;     // active battle state
 let pendingMessage = '';  // for the generic message screen
 let pendingEvolveOptions = []; // for the evolve-a-Pokemon-with-a-town-item screen
 let startPick = { starter:null, town:null };
+let myPokemonOpen = false; // collapsed/expanded state of the "My Pokemon" roster section
 
 /* ============ Rendering ============ */
 const STARTERS = ['Sprigatito','Fennekin','Popplio'];
@@ -942,9 +1068,25 @@ function renderStatus(){
     '<button type="button" class="reset-btn" data-action="resetGame">Reset Game</button>';
 }
 
+function renderMyPokemonSection(){
+  const card = document.getElementById('myPokemonCard');
+  if(!gameState.started){ card.style.display = 'none'; return; }
+  card.style.display = '';
+  const mons = loadGamePokemon();
+  document.getElementById('myPokemonToggle').textContent = (myPokemonOpen ? '▼' : '▶') + ' My Pokemon (' + mons.length + ')';
+  const listEl = document.getElementById('myPokemonList');
+  listEl.style.display = myPokemonOpen ? '' : 'none';
+  if(myPokemonOpen){
+    listEl.innerHTML = mons.length
+      ? mons.map(m => monStatCardHtml(m)).join('')
+      : '<div class="empty-note">No Pokemon caught yet.</div>';
+  }
+}
+
 function render(){
   renderStatus();
   renderGameMap();
+  renderMyPokemonSection();
   const app = document.getElementById('app');
   if(view === 'start') app.innerHTML = renderStartScreen();
   else if(view === 'board') app.innerHTML = renderBoardScreen();
@@ -1071,41 +1213,31 @@ function renderRouteRollScreen(){
   '</div>';
 }
 
-// Which My-Pokemon id is currently highlighted in the send-out dropdown (its
-// full stat card is what's shown below the dropdown) -- reset whenever the
-// previously-selected one is no longer a valid choice (lost this encounter,
-// released, etc.) rather than left dangling.
-let pickerSelectedId = null;
+// Shared "one Pokemon, full detail" card -- types, attack type (in parens,
+// matching the Field Guide's own convention), every stat plus the total, and
+// current XP progress. `actionHtml`, if given, is appended inside the card
+// (e.g. a "Send Out" button); omit it for a plain read-only roster view.
+function monStatCardHtml(m, actionHtml){
+  const level = m.ev.reduce((a,b)=>a+b,0);
+  const finalStats = m.base.map((b,i)=>b+m.ev[i]);
+  return '<div class="mon-detail-card">' +
+    '<div class="mon-detail-name">'+m.name+' Lv'+level+'</div>' +
+    typePillHtml(m.t1) + typePillHtml(m.t2) +
+    ' (<span class="type-pill" style="background:var(--rust);">Atk '+m.atk+'</span>)' +
+    statRowHtml(finalStats) +
+    '<div class="stat-row"><span class="stat-chip">XP <b>'+(m.xp||0)+'</b> / '+(level*10)+' to next level</span></div>' +
+    (actionHtml || '') +
+  '</div>';
+}
 
 function ownedMonPickerHtml(excludeIds){
   const mons = loadGamePokemon().filter(m=>!excludeIds.has(m.id));
   if(!mons.length) return '<div class="empty-note">No available Pokemon left to send out.</div>';
-  if(!pickerSelectedId || !mons.some(m=>m.id===pickerSelectedId)){
-    pickerSelectedId = mons[0].id;
-  }
-  const options = mons.map(m=>{
-    const level = m.ev.reduce((a,b)=>a+b,0);
-    const total = statTotal(m.base.map((b,i)=>b+m.ev[i]));
-    const types = [m.t1, m.t2].filter(Boolean).join('/');
-    const label = m.name+' Lv'+level+' -- '+types+' (Atk '+m.atk+') -- Total '+total+' -- XP '+(m.xp||0);
-    return '<option value="'+m.id+'"'+(m.id===pickerSelectedId?' selected':'')+'>'+label+'</option>';
-  }).join('');
-
-  const sel = mons.find(m=>m.id===pickerSelectedId);
-  const finalStats = sel.base.map((b,i)=>b+sel.ev[i]);
-  const level = sel.ev.reduce((a,b)=>a+b,0);
-
-  return '<select class="plain-select" data-change-action="pickerSelect">'+options+'</select>' +
-    '<div class="mon-detail-card">' +
-      '<div class="mon-detail-name">'+sel.name+' Lv'+level+'</div>' +
-      typePillHtml(sel.t1) + typePillHtml(sel.t2) +
-      ' <span class="type-pill" style="background:var(--rust);">Atk '+sel.atk+'</span>' +
-      statRowHtml(finalStats) +
-      '<div class="stat-row"><span class="stat-chip">XP <b>'+(sel.xp||0)+'</b> / '+(level*10)+' to next level</span></div>' +
-    '</div>' +
-    '<div class="choice-grid" style="margin-top:10px;">' +
-      '<button type="button" class="btn btn-primary" data-action="pickPlayerMon" data-id="'+sel.id+'">Send Out '+sel.name+'</button>' +
-    '</div>';
+  return mons.map(m=>
+    monStatCardHtml(m, '<div class="choice-grid" style="margin-top:8px;">' +
+      '<button type="button" class="btn btn-primary" data-action="pickPlayerMon" data-id="'+m.id+'">Send Out '+m.name+'</button>' +
+    '</div>')
+  ).join('');
 }
 
 function opponentDisplayHtml(opp, statusClass){
@@ -1124,7 +1256,7 @@ function renderEncounterScreen(){
   const oppCard =
     '<div class="card-title">'+current.species+' Lv'+current.level+'</div>' +
     typePillHtml(current.types[0]) + typePillHtml(current.types[1]) +
-    ' <span class="type-pill" style="background:var(--rust);">Atk '+current.atk+'</span>' +
+    ' (<span class="type-pill" style="background:var(--rust);">Atk '+current.atk+'</span>)' +
     statRowHtml(current.statsArr);
 
   let actionHtml;
@@ -1280,7 +1412,6 @@ function rollRoute(adjust){
 }
 
 function beginEncounter(type, ctx){
-  pickerSelectedId = null;
   let opponents, extra = {};
   if(type === 'wild'){
     opponents = [rollWildEncounter(ctx.locationId)];
@@ -1430,15 +1561,17 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'chooseDefeat') chooseDefeat();
   else if(action === 'endTurn') endTurn();
 });
-document.getElementById('app').addEventListener('change', (e)=>{
-  const sel = e.target.closest('[data-change-action="pickerSelect"]');
-  if(!sel) return;
-  pickerSelectedId = sel.value;
-  render();
-});
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
   const btn = e.target.closest('[data-action="resetGame"]');
   if(btn) resetGame();
+});
+document.getElementById('mapInfo').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-action="moveToNode"]');
+  if(btn) moveToNode(btn.dataset.node);
+});
+document.getElementById('myPokemonToggle').addEventListener('click', ()=>{
+  myPokemonOpen = !myPokemonOpen;
+  renderMyPokemonSection();
 });
 
 render();
