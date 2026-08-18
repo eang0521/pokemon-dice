@@ -86,6 +86,19 @@
   .header-die:hover{ background: var(--paper-deep); }
   .header-die:active{ transform: translateY(1px); }
   .header-die:focus-visible{ outline: 3px solid var(--gold); outline-offset:2px; }
+  .play-link{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:600;
+    color: var(--paper);
+    background: var(--nogym-green);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 7px 11px;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .play-link:hover{ background:#4a7440; }
   .masthead .brand{
     font-family:'Fraunces', serif;
     font-weight:600;
@@ -1436,6 +1449,7 @@
         <span class="header-die-label">Quick roll</span>
         <div class="die header-die" id="headerDie" role="button" tabindex="0" aria-label="Roll a d6">-</div>
       </div>
+      <a class="play-link" href="play.html">&#9654; Play the Game</a>
     </div>
   </div>
 

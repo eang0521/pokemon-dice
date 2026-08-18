@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calli Adventure -- Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDE6D6;
+    --paper-deep:#E2D9C4;
+    --ink:#1F2E3D;
+    --redwood:#2F4538;
+    --rust:#C4572E;
+    --gold:#D9A441;
+    --sage:#8AA399;
+    --nogym-green:#5B8A4E;
+    --line: rgba(31,46,61,0.16);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(196,87,46,0.07), transparent 40%),
+      radial-gradient(circle at 85% 82%, rgba(47,69,56,0.08), transparent 45%),
+      repeating-linear-gradient(0deg, transparent, transparent 38px, var(--line) 39px),
+      repeating-linear-gradient(90deg, transparent, transparent 38px, var(--line) 39px);
+    color: var(--ink);
+    font-family: 'Work Sans', sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: 24px 14px 80px;
+  }
+  .sheet{ width:100%; max-width: 720px; }
+  .masthead{
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 10px 4px 14px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 16px;
+  }
+  .brand{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 22px;
+    color: var(--redwood);
+  }
+  .nav-link{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:600;
+    color: var(--ink);
+    text-decoration:none;
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 6px 10px;
+    background: var(--paper-deep);
+  }
+  .nav-link:hover{ background: var(--gold); }
+  .status-strip{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .status-badges{
+    background: var(--gold);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 4px 9px;
+    font-weight:600;
+  }
+  .status-gyms{ color: var(--redwood); }
+  .reset-btn{
+    margin-left:auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight:600;
+    color: var(--ink);
+    background: var(--paper-deep);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 5px 9px;
+    cursor:pointer;
+  }
+  .reset-btn:hover{ background:#e8bdb0; }
+  .card{
+    background: var(--paper-deep);
+    border: 1.5px solid var(--ink);
+    border-radius: 8px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .card-title{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 19px;
+    margin: 0 0 4px;
+  }
+  .card-sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--redwood);
+    margin-bottom: 10px;
+  }
+  .card-flavor{ font-size:13px; font-style:italic; color:#3c4f45; margin-bottom:10px; }
+  .btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight:600;
+    padding: 10px 14px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    cursor:pointer;
+  }
+  .btn:hover{ background: var(--gold); }
+  .btn:active{ transform: translateY(1px); }
+  .btn:disabled{ opacity:0.45; cursor:not-allowed; }
+  .btn-primary{ background: var(--gold); }
+  .btn-primary:hover{ background:#c4923a; }
+  .btn-wild{ background: var(--nogym-green); color:var(--paper); }
+  .btn-wild:hover{ background:#4a7440; }
+  .btn-danger{ background: var(--rust); color:var(--paper); }
+  .btn-danger:hover{ background:#a8451f; }
+  .choice-grid{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .type-pill{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight:600;
+    color: var(--paper);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right:4px;
+  }
+  .stat-row{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    margin: 8px 0;
+  }
+  .stat-chip{
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 3px 7px;
+  }
+  .stat-chip b{ color: var(--redwood); }
+  .starter-grid{ display:grid; grid-template-columns: 1fr; gap:10px; }
+  @media (min-width:560px){ .starter-grid{ grid-template-columns: 1fr 1fr 1fr; } }
+  .starter-card{
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    padding: 12px;
+    cursor:pointer;
+    text-align:center;
+  }
+  .starter-card.selected{ border-color: var(--rust); background: #f3d9ce; }
+  .starter-card h3{ font-family:'Fraunces', serif; margin: 6px 0 4px; }
+  .town-grid{ display:flex; flex-wrap:wrap; gap:6px; max-height:220px; overflow-y:auto; margin-top:6px; padding:2px; }
+  .town-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 7px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    background: var(--paper);
+    cursor:pointer;
+  }
+  .town-btn.selected{ background: var(--gold); }
+  .mon-pick-btn{
+    display:block;
+    width:100%;
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    padding: 9px 11px;
+    margin-bottom: 6px;
+    border: 1.5px solid var(--ink);
+    border-radius: 5px;
+    background: var(--paper);
+    cursor:pointer;
+  }
+  .mon-pick-btn:hover{ background: var(--sage); }
+  .opp-team-row{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 12px; }
+  .opp-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    padding: 5px 9px;
+    border-radius: 5px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+  }
+  .opp-chip.current{ background: var(--gold); font-weight:700; }
+  .opp-chip.defeated{ opacity:0.45; text-decoration: line-through; }
+  .log-box{
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    max-height: 220px;
+    overflow-y:auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    margin-top: 10px;
+  }
+  .log-line{ padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .log-line:last-child{ border-bottom:none; }
+  .empty-note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--sage);
+    text-align:center;
+    padding: 12px 0;
+  }
+  .field-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--redwood);
+    display:block;
+    margin: 10px 0 4px;
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="masthead">
+    <span class="brand">Calli Adventure</span>
+    <a class="nav-link" href="index.html">&larr; Field Guide</a>
+  </div>
+  <div class="status-strip" id="statusStrip"></div>
+  <div id="app"></div>
+</div>
+
+<script>
+try {
+
+/* ============ Calli data (duplicated from index.html -- see Dice_Region_Ruleset.md
+   for the tradeoff notes; a future refactor could share this via one external file) ============ */
+const DATA = {"locations": [{"id": "Route 1", "name": "Route 1", "kind": "route", "subtitle": "Redwood Town → Route 2", "flavor": "Old-growth redwood forest, shaded and misty", "table": ["Sentret", "Weedle", "Caterpie", "Paras", "Venonat", "Metapod", "Kakuna", "Furret", "Parasect", "Butterfree", "Beedrill"]}, {"id": "Route 2", "name": "Route 2", "kind": "route", "subtitle": "Route 1 → Tidepool Town", "flavor": "Coastal descent down foggy bluffs", "table": ["Venonat", "Krabby", "Wingull", "Krabby", "Staryu", "Chinchou", "Pelipper", "Kingler", "Venomoth", "Starmie", "Lanturn"]}, {"id": "Route 3", "name": "Route 3", "kind": "route", "subtitle": "Tidepool Town → Vinehaven Town", "flavor": "Coastal hills rolling into vineyard terraces", "table": ["Wingull", "Oddish", "Zigzagoon", "Bellsprout", "Linoone", "Gloom", "Weepinbell", "Pelipper", "Vileplume", "Jumpluff", "Bellossom"]}, {"id": "Route 4", "name": "Route 4", "kind": "route", "subtitle": "Route 3 → Baymist City", "flavor": "Fog thickens as the trail turns toward the bay", "table": ["Meowth", "Rattata", "Pidgey", "Zigzagoon", "Gastly", "Pidgeotto", "Persian", "Linoone", "Raticate", "Haunter", "Pidgeot"]}, {"id": "Route 5", "name": "Route 5", "kind": "route", "subtitle": "Baymist City → Vinehaven Town", "flavor": "Open farmland linking fog line to vineyards", "table": ["Rattata", "Pidgey", "Oddish", "Meowth", "Pikachu", "Drifloon", "Gloom", "Persian", "Raichu", "Drifblim", "Vileplume"]}, {"id": "Route 6", "name": "Route 6", "kind": "route", "subtitle": "Vinehaven Town → Capitol City", "flavor": "Valley floor farmland into the river delta", "table": ["Zigzagoon", "Bidoof", "Psyduck", "Machop", "Magikarp", "Linoone", "Bibarel", "Golduck", "Machoke", "Gyarados", "Machamp"]}, {"id": "Route 7", "name": "Route 7", "kind": "route", "subtitle": "Baymist City → Vista Town", "flavor": "Coastal highway hugging cliffs south of the bay", "table": ["Pidgey", "Spearow", "Doduo", "Swablu", "Pidgeotto", "Fearow", "Dodrio", "Altaria", "Pidgeot", "Skarmory", "Aerodactyl"]}, {"id": "Route 8", "name": "Route 8", "kind": "route", "subtitle": "Vinehaven Town → Route 9", "flavor": "Backcountry vineyard trail climbing toward the coast", "table": ["Zigzagoon", "Hoppip", "Oddish", "Miltank", "Tauros", "Skiploom", "Linoone", "Gloom", "Victreebel", "Vileplume", "Bellossom"]}, {"id": "Route 9", "name": "Route 9", "kind": "route", "subtitle": "Vista Town → Route 10", "flavor": "Windswept cliffside trail turning inland", "table": ["Doduo", "Spearow", "Swablu", "Bagon", "Dodrio", "Fearow", "Altaria", "Shelgon", "Skarmory", "Salamence", "Aerodactyl"]}, {"id": "Route 10", "name": "Route 10", "kind": "route", "subtitle": "Capitol City → Route 14", "flavor": "Foothill trail leaving the capital south", "table": ["Machop", "Bidoof", "Psyduck", "Drilbur", "Onix", "Machoke", "Bibarel", "Golduck", "Excadrill", "Steelix", "Machamp"]}, {"id": "Route 11", "name": "Route 11", "kind": "route", "subtitle": "Capitol City → Alpine Town", "flavor": "Mountain foothills climbing into the Sierra", "table": ["Bidoof", "Machop", "Onix", "Drilbur", "Swinub", "Stantler", "Bibarel", "Machoke", "Steelix", "Piloswine", "Machamp"]}, {"id": "Route 12", "name": "Route 12", "kind": "route", "subtitle": "Alpine Town → Crag Town", "flavor": "High alpine pass into volcanic tablelands", "table": ["Sneasel", "Swinub", "Snorunt", "Teddiursa", "Snover", "Piloswine", "Weavile", "Glalie", "Froslass", "Mamoswine", "Golem"]}, {"id": "Route 13", "name": "Route 13", "kind": "route", "subtitle": "Crag Town → Route 14", "flavor": "Dry tableland trail winding toward the valley", "table": ["Rhyhorn", "Geodude", "Larvitar", "Onix", "Graveler", "Rhydon", "Pupitar", "Steelix", "Golem", "Rhyperior", "Tyranitar"]}, {"id": "Route 14", "name": "Route 14", "kind": "route", "subtitle": "Route 10 → Basin Town", "flavor": "Dusty valley floor, oil derricks on the horizon", "table": ["Diglett", "Growlithe", "Ponyta", "Trapinch", "Skorupi", "Dugtrio", "Arcanine", "Rapidash", "Vibrava", "Drapion", "Flygon"]}, {"id": "Route 15", "name": "Route 15", "kind": "route", "subtitle": "Basin Town → Canyon City", "flavor": "Farmland fading into desert scrub", "table": ["Growlithe", "Diglett", "Zubat", "Ponyta", "Trapinch", "Golbat", "Vibrava", "Houndoom", "Sableye", "Crobat", "Absol"]}, {"id": "Route 16", "name": "Route 16", "kind": "route", "subtitle": "Canyon City → Route 17", "flavor": "Boulder-strewn desert trail", "table": ["Houndour", "Zubat", "Nincada", "Vullaby", "Golbat", "Houndoom", "Ninjask", "Mandibuzz", "Crobat", "Absol", "Sableye"]}, {"id": "Route 17", "name": "Route 17", "kind": "route", "subtitle": "Route 15 → Dunebreak City", "flavor": "Cracked earth leading into extreme desert", "table": ["Sandygast", "Cacnea", "Baltoy", "Scraggy", "Darumaka", "Cacturne", "Palossand", "Claydol", "Scrafty", "Darmanitan", "Salazzle"]}, {"id": "Route 18", "name": "Route 18", "kind": "route", "subtitle": "Dunebreak City → Crag Town", "flavor": "Heat-shimmering desert climbing into rocky tablelands", "table": ["Geodude", "Sandygast", "Rhyhorn", "Baltoy", "Larvitar", "Graveler", "Palossand", "Rhydon", "Claydol", "Tyranitar", "Rhyperior"]}, {"id": "Route 19", "name": "Route 19", "kind": "route", "subtitle": "Basin Town → Mission Town", "flavor": "Farmland giving way to mission orchards", "table": ["Sunkern", "Growlithe", "Igglybuff", "Ponyta", "Litleo", "Clefairy", "Jigglypuff", "Sunflora", "Pyroar", "Clefable", "Wigglytuff"]}, {"id": "Route 20", "name": "Route 20", "kind": "route", "subtitle": "Mission Town → Vista Town", "flavor": "Coastal highway along cliffs and missions", "table": ["Sunkern", "Ralts", "Spearow", "Doduo", "Bagon", "Kirlia", "Sunflora", "Fearow", "Dodrio", "Shelgon", "Gardevoir"]}, {"id": "Route 21", "name": "Route 21", "kind": "route", "subtitle": "Mission Town → Skyline City", "flavor": "Suburban sprawl approaching the city", "table": ["Abra", "Igglybuff", "Ralts", "Drowzee", "Jigglypuff", "Kadabra", "Kirlia", "Wigglytuff", "Alakazam", "Gardevoir", "Gallade"]}, {"id": "Route 22", "name": "Route 22", "kind": "route", "subtitle": "Skyline City → Route 23", "flavor": "Freeway overpasses threading the city's edge", "table": ["Drowzee", "Abra", "Natu", "Riolu", "Elgyem", "Kadabra", "Hypno", "Xatu", "Lucario", "Beheeyem", "Alakazam"]}, {"id": "Route 23", "name": "Route 23", "kind": "route", "subtitle": "Route 22 → Route 19", "flavor": "Backroads looping toward farmland", "table": ["Sunkern", "Abra", "Igglybuff", "Drowzee", "Natu", "Swirlix", "Elgyem", "Jigglypuff", "Xatu", "Slurpuff", "Beheeyem"]}, {"id": "Route 24", "name": "Route 24", "kind": "route", "subtitle": "Skyline City → Shoreline City", "flavor": "Coastal freeway running south to the harbor city", "table": ["Abra", "Horsea", "Wailmer", "Drowzee", "Carvanha", "Frillish", "Seadra", "Wailord", "Sharpedo", "Jellicent", "Kingdra"]}, {"id": "Redwood Grove Depths", "name": "Redwood Grove Depths", "kind": "dungeon", "subtitle": "Route 1", "flavor": "Hollowed sequoia trunks and root-cave tunnels beneath the forest floor", "table": ["Weedle", "Caterpie", "Paras", "Venonat", "Metapod", "Kakuna", "Parasect", "Venomoth", "Butterfree", "Beedrill", "Celebi"]}, {"id": "Tidepool Sea Caves", "name": "Tidepool Sea Caves", "kind": "dungeon", "subtitle": "near Tidepool Town", "flavor": "Coastal caves only accessible at low tide", "table": ["Tentacool", "Shellder", "Staryu", "Chinchou", "Corsola", "Pyukumuku", "Cloyster", "Tentacruel", "Starmie", "Lanturn", "Kingler"]}, {"id": "Cable Car Tunnels", "name": "Cable Car Tunnels", "kind": "dungeon", "subtitle": "Baymist City", "flavor": "Disused transit tunnels beneath the foggy hills", "table": ["Magnemite", "Voltorb", "Gastly", "Litwick", "Haunter", "Electrode", "Magneton", "Lampent", "Gengar", "Magnezone", "Chandelure"]}, {"id": "Wine Cellar Catacombs", "name": "Wine Cellar Catacombs", "kind": "dungeon", "subtitle": "Vinehaven Town", "flavor": "Centuries-old aging cellars with a barrel-stack maze", "table": ["Venonat", "Oddish", "Paras", "Hoppip", "Gloom", "Venomoth", "Parasect", "Skiploom", "Vileplume", "Jumpluff", "Bellossom"]}, {"id": "Delta Hydro Station", "name": "Delta Hydro Station", "kind": "dungeon", "subtitle": "Route 6", "flavor": "Abandoned hydroelectric plant in the river delta", "table": ["Bidoof", "Magnemite", "Chinchou", "Voltorb", "Bibarel", "Magneton", "Lanturn", "Electrode", "Gyarados", "Magnezone", "Thundurus"]}, {"id": "Golden Vein Mine", "name": "Golden Vein Mine", "kind": "dungeon", "subtitle": "Route 11", "flavor": "Gold Rush-era mineshaft with cave-ins and minecarts", "table": ["Drilbur", "Roggenrola", "Onix", "Geodude", "Boldore", "Excadrill", "Steelix", "Graveler", "Gigalith", "Golem", "Landorus"]}, {"id": "Alpine Ice Caverns", "name": "Alpine Ice Caverns", "kind": "dungeon", "subtitle": "Route 12", "flavor": "Glacial ice caves beneath the lake, slippery-floor puzzles", "table": ["Swinub", "Snorunt", "Sneasel", "Spheal", "Delibird", "Piloswine", "Abomasnow", "Froslass", "Ursaring", "Sealeo", "Walrein"]}, {"id": "Bishop's Tablelands Labyrinth", "name": "Bishop's Tablelands Labyrinth", "kind": "dungeon", "subtitle": "Route 18", "flavor": "Pitch-dark volcanic rock maze carved by old lava flows", "table": ["Larvitar", "Geodude", "Rhyhorn", "Onix", "Graveler", "Pupitar", "Rhydon", "Golem", "Tyranitar", "Rhyperior", "Aerodactyl"]}, {"id": "Salt Flat Ruins", "name": "Salt Flat Ruins", "kind": "dungeon", "subtitle": "Route 17", "flavor": "Sun-cracked dried lakebed with half-buried ruins", "table": ["Darumaka", "Baltoy", "Sandygast", "Helioptile", "Salandit", "Claydol", "Darmanitan", "Palossand", "Heliolisk", "Salazzle", "Heatran"]}, {"id": "Sunken Oil Fields", "name": "Sunken Oil Fields", "kind": "dungeon", "subtitle": "near Basin Town", "flavor": "Abandoned oil derricks with toxic-gas tunnel hazards", "table": ["Growlithe", "Trapinch", "Skorupi", "Diglett", "Vibrava", "Arcanine", "Drapion", "Rapidash", "Dugtrio", "Darmanitan", "Flygon"]}, {"id": "Boulder Maze", "name": "Boulder Maze", "kind": "dungeon", "subtitle": "Route 15", "flavor": "Rock-pile maze best explored at night under the stars", "table": ["Houndour", "Nincada", "Vullaby", "Ninjask", "Houndoom", "Shedinja", "Mandibuzz", "Absol", "Sableye", "Crobat", "Jirachi"]}, {"id": "Cliffside Grotto", "name": "Cliffside Grotto", "kind": "dungeon", "subtitle": "Route 20", "flavor": "Sea-cliff caves and waterfalls, part climb, part dive", "table": ["Doduo", "Spearow", "Bagon", "Fearow", "Shelgon", "Dodrio", "Altaria", "Aerodactyl", "Skarmory", "Salamence", "Tornadus"]}, {"id": "Studio Backlot Storm Drains", "name": "Studio Backlot Storm Drains", "kind": "dungeon", "subtitle": "Skyline City", "flavor": "Underground flood-control tunnels beneath old film sets", "table": ["Zubat", "Drowzee", "Bronzor", "Deino", "Hypno", "Golbat", "Zweilous", "Bronzong", "Absol", "Crobat", "Hydreigon"]}, {"id": "Kelp Forest Trench / Victory Road", "name": "Kelp Forest Trench / Victory Road", "kind": "dungeon", "subtitle": "Route 24", "flavor": "Submerged kelp trench surfacing into a rocky coastal ridge — the region's final gauntlet", "table": ["Horsea", "Kangaskhan", "Tentacruel", "Seadra", "Sharpedo", "Jellicent", "Wailord", "Gyarados", "Kingdra", "Tyranitar", "Suicune"]}], "dice": {"Staryu": [2, 3, 3, 4, 3, 5], "Starmie": [3, 4, 5, 6, 5, 7], "Krabby": [2, 6, 5, 1, 1, 3], "Kingler": [3, 7, 7, 3, 3, 4], "Pyukumuku": [3, 3, 7, 2, 7, 0], "Wingull": [2, 2, 2, 3, 2, 5], "Pelipper": [3, 3, 6, 5, 4, 4], "Horsea": [2, 2, 4, 4, 1, 3], "Gastly": [2, 2, 2, 6, 2, 5], "Haunter": [3, 3, 3, 7, 3, 5], "Gengar": [3, 4, 3, 7, 4, 6], "Drifloon": [5, 3, 2, 3, 3, 4], "Drifblim": [9, 5, 3, 5, 3, 5], "Litwick": [3, 2, 3, 4, 3, 1], "Lampent": [3, 2, 3, 5, 3, 3], "Chandelure": [3, 3, 5, 8, 5, 5], "Snorunt": [3, 3, 3, 3, 3, 3], "Froslass": [4, 5, 4, 5, 4, 6], "Frillish": [3, 2, 3, 4, 5, 2], "Drilbur": [3, 5, 2, 2, 3, 4], "Excadrill": [6, 8, 3, 3, 4, 5], "Onix": [2, 3, 9, 2, 3, 4], "Steelix": [4, 5, 11, 3, 4, 2], "Trapinch": [3, 6, 3, 3, 3, 1], "Vibrava": [3, 4, 3, 3, 3, 4], "Flygon": [5, 6, 5, 5, 5, 6], "Rhyhorn": [5, 5, 5, 2, 2, 1], "Rhydon": [6, 7, 7, 3, 3, 2], "Baltoy": [2, 2, 3, 2, 4, 3], "Swinub": [3, 3, 2, 2, 2, 3], "Piloswine": [6, 6, 5, 3, 3, 3], "Mamoswine": [6, 7, 5, 4, 3, 5], "Sneasel": [3, 5, 3, 2, 4, 7], "Weavile": [4, 7, 4, 3, 5, 7], "Delibird": [3, 3, 3, 4, 3, 4], "Spheal": [4, 2, 3, 3, 3, 1], "Walrein": [6, 5, 5, 5, 5, 4], "Snover": [3, 4, 3, 4, 3, 2], "Houndour": [3, 3, 2, 5, 3, 4], "Houndoom": [4, 5, 3, 6, 5, 5], "Absol": [4, 7, 3, 4, 3, 4], "Sableye": [3, 4, 4, 4, 4, 3], "Vullaby": [4, 3, 4, 3, 4, 3], "Mandibuzz": [6, 4, 6, 3, 5, 5], "Cacnea": [3, 5, 2, 5, 2, 2], "Darumaka": [4, 5, 3, 1, 3, 3], "Darmanitan": [6, 8, 3, 2, 3, 5], "Growlithe": [3, 4, 3, 4, 3, 3], "Arcanine": [5, 6, 5, 6, 5, 5], "Ponyta": [3, 5, 3, 4, 4, 5], "Rapidash": [4, 6, 4, 5, 5, 6], "Salandit": [3, 3, 2, 4, 2, 4], "Salazzle": [4, 4, 3, 6, 3, 7], "Litleo": [4, 3, 3, 4, 3, 4], "Clefairy": [4, 3, 3, 3, 4, 2], "Clefable": [5, 4, 4, 5, 5, 3], "Ralts": [2, 1, 1, 3, 2, 2], "Kirlia": [2, 2, 2, 4, 3, 3], "Gardevoir": [4, 4, 4, 7, 7, 5], "Igglybuff": [5, 2, 1, 2, 1, 1], "Jigglypuff": [7, 3, 1, 3, 1, 1], "Wigglytuff": [8, 4, 3, 5, 3, 3], "Swirlix": [4, 3, 4, 3, 3, 3], "Slurpuff": [5, 5, 5, 5, 4, 4], "Sunkern": [2, 2, 2, 2, 2, 2], "Abra": [1, 1, 1, 6, 3, 5], "Kadabra": [2, 2, 2, 7, 4, 6], "Alakazam": [3, 3, 3, 8, 5, 7], "Drowzee": [3, 3, 3, 2, 5, 2], "Hypno": [5, 4, 4, 4, 7, 4], "Natu": [2, 3, 3, 4, 3, 4], "Xatu": [4, 4, 4, 5, 4, 5], "Elgyem": [3, 3, 3, 5, 3, 2], "Beheeyem": [4, 4, 4, 7, 5, 2], "Bronzor": [3, 1, 5, 1, 5, 1], "Abomasnow": [5, 5, 4, 5, 5, 3], "Aerodactyl": [5, 6, 4, 3, 4, 7], "Altaria": [4, 4, 5, 4, 6, 5], "Bagon": [3, 4, 3, 2, 2, 3], "Beedrill": [4, 5, 2, 3, 5, 4], "Bellossom": [4, 5, 5, 5, 6, 3], "Bellsprout": [3, 4, 2, 4, 2, 2], "Bibarel": [5, 5, 3, 3, 3, 4], "Bidoof": [3, 3, 2, 2, 2, 2], "Boldore": [4, 6, 6, 3, 2, 1], "Braixen": [3, 3, 3, 5, 4, 4], "Brionne": [3, 4, 4, 5, 5, 3], "Bronzong": [4, 5, 7, 5, 7, 2], "Butterfree": [3, 3, 3, 5, 5, 4], "Cacturne": [4, 7, 3, 7, 3, 3], "Carvanha": [3, 5, 1, 4, 1, 4], "Caterpie": [3, 2, 2, 1, 1, 3], "Celebi": [6, 6, 6, 6, 6, 6], "Chinchou": [4, 2, 2, 3, 3, 4], "Claydol": [3, 4, 6, 4, 7, 4], "Cloyster": [3, 5, 10, 5, 3, 4], "Corsola": [4, 3, 5, 4, 5, 2], "Crobat": [5, 5, 5, 4, 5, 7], "Deino": [3, 4, 3, 3, 3, 2], "Delphox": [4, 4, 4, 7, 6, 6], "Diglett": [1, 3, 1, 2, 3, 5], "Dodrio": [3, 6, 4, 3, 3, 6], "Doduo": [2, 5, 3, 2, 2, 4], "Drapion": [4, 5, 6, 3, 4, 5], "Dugtrio": [2, 6, 3, 3, 4, 7], "Electrode": [3, 3, 4, 5, 5, 9], "Fearow": [4, 5, 4, 3, 3, 6], "Fennekin": [2, 3, 2, 4, 3, 3], "Floragato": [3, 5, 4, 3, 4, 5], "Furret": [5, 4, 4, 3, 3, 5], "Gallade": [4, 7, 4, 4, 7, 5], "Geodude": [2, 5, 6, 2, 2, 1], "Gigalith": [5, 8, 7, 3, 5, 1], "Glalie": [5, 5, 5, 5, 5, 5], "Gloom": [3, 4, 4, 5, 4, 2], "Golbat": [4, 5, 4, 4, 4, 5], "Golduck": [5, 5, 4, 5, 5, 5], "Golem": [5, 7, 7, 3, 4, 3], "Graveler": [3, 5, 7, 3, 3, 2], "Gyarados": [5, 7, 5, 3, 6, 5], "Heatran": [5, 5, 6, 7, 6, 4], "Heliolisk": [4, 3, 3, 6, 5, 6], "Helioptile": [3, 2, 2, 3, 2, 4], "Hoppip": [2, 2, 2, 2, 3, 3], "Hydreigon": [5, 6, 5, 7, 5, 6], "Jellicent": [6, 3, 4, 5, 6, 3], "Jirachi": [6, 6, 6, 6, 6, 6], "Jumpluff": [4, 3, 4, 3, 5, 6], "Kakuna": [3, 1, 3, 1, 1, 2], "Kangaskhan": [6, 5, 5, 2, 5, 5], "Kingdra": [4, 5, 5, 5, 5, 5], "Landorus": [5, 7, 5, 7, 5, 6], "Lanturn": [7, 3, 3, 4, 4, 4], "Larvitar": [3, 4, 3, 3, 3, 2], "Linoone": [4, 4, 3, 3, 3, 6], "Lucario": [4, 6, 4, 7, 4, 5], "Machamp": [5, 7, 5, 4, 5, 3], "Machoke": [5, 6, 4, 3, 3, 3], "Machop": [4, 5, 3, 2, 2, 2], "Magikarp": [1, 1, 3, 1, 1, 5], "Magnemite": [1, 2, 4, 5, 3, 3], "Magneton": [3, 3, 5, 7, 4, 4], "Magnezone": [4, 4, 7, 7, 5, 3], "Meowscarada": [4, 6, 4, 5, 4, 7], "Meowth": [2, 3, 2, 2, 2, 5], "Metapod": [3, 1, 3, 1, 1, 2], "Miltank": [5, 5, 6, 2, 4, 6], "Nincada": [2, 3, 5, 2, 2, 2], "Ninjask": [3, 5, 3, 3, 3, 9], "Oddish": [3, 3, 3, 4, 4, 2], "Palossand": [5, 4, 6, 6, 4, 2], "Paras": [2, 4, 3, 3, 3, 1], "Parasect": [3, 5, 5, 3, 5, 2], "Persian": [4, 4, 3, 4, 4, 7], "Pidgeot": [5, 5, 4, 4, 4, 6], "Pidgeotto": [4, 3, 3, 3, 3, 4], "Pidgey": [2, 3, 2, 2, 2, 3], "Pikachu": [2, 3, 2, 3, 3, 5], "Popplio": [3, 3, 3, 4, 3, 2], "Primarina": [5, 4, 4, 7, 7, 3], "Psyduck": [3, 3, 3, 4, 3, 3], "Pupitar": [4, 5, 4, 4, 4, 3], "Pyroar": [5, 4, 4, 6, 4, 6], "Raichu": [3, 5, 3, 5, 5, 6], "Raticate": [3, 5, 3, 3, 4, 6], "Rattata": [2, 3, 2, 1, 2, 4], "Rhyperior": [7, 8, 7, 3, 3, 2], "Riolu": [2, 4, 2, 2, 2, 3], "Roggenrola": [3, 4, 5, 1, 1, 1], "Salamence": [5, 8, 5, 6, 5, 6], "Sandygast": [3, 3, 5, 4, 3, 1], "Scrafty": [4, 5, 7, 3, 7, 3], "Scraggy": [3, 4, 4, 2, 4, 3], "Seadra": [3, 4, 5, 5, 3, 5], "Sealeo": [5, 3, 4, 4, 4, 3], "Sentret": [2, 3, 2, 2, 3, 1], "Sharpedo": [4, 7, 2, 5, 2, 5], "Shedinja": [0, 5, 3, 2, 2, 2], "Shelgon": [4, 5, 6, 3, 3, 3], "Shellder": [2, 4, 6, 3, 1, 2], "Skarmory": [4, 5, 8, 2, 4, 4], "Skiploom": [3, 3, 3, 3, 4, 5], "Skorupi": [2, 3, 5, 2, 3, 4], "Spearow": [2, 3, 2, 2, 2, 4], "Sprigatito": [2, 3, 3, 3, 3, 4], "Stantler": [4, 5, 4, 5, 4, 5], "Suicune": [6, 4, 7, 5, 7, 5], "Sunflora": [4, 4, 3, 6, 5, 2], "Swablu": [3, 2, 3, 2, 4, 3], "Tauros": [4, 6, 5, 2, 4, 6], "Teddiursa": [3, 5, 3, 3, 3, 2], "Tentacool": [2, 2, 2, 3, 6, 4], "Tentacruel": [5, 4, 4, 5, 7, 6], "Thundurus": [5, 7, 4, 7, 5, 6], "Tornadus": [5, 7, 4, 7, 5, 6], "Tyranitar": [6, 8, 6, 5, 6, 3], "Ursaring": [5, 7, 4, 4, 4, 3], "Venomoth": [4, 4, 3, 5, 4, 5], "Venonat": [3, 3, 3, 2, 3, 3], "Victreebel": [5, 6, 4, 6, 4, 4], "Vileplume": [4, 5, 5, 6, 5, 3], "Voltorb": [2, 2, 3, 3, 3, 6], "Wailmer": [7, 4, 2, 4, 2, 3], "Wailord": [10, 5, 3, 5, 3, 3], "Weedle": [2, 2, 2, 1, 1, 3], "Weepinbell": [4, 5, 3, 5, 3, 3], "Zigzagoon": [2, 2, 2, 2, 2, 3], "Zubat": [2, 3, 2, 2, 2, 3], "Zweilous": [4, 5, 4, 4, 4, 3]}, "types": {"Sprigatito": ["Grass", null], "Floragato": ["Grass", null], "Meowscarada": ["Grass", "Dark"], "Fennekin": ["Fire", null], "Braixen": ["Fire", null], "Delphox": ["Fire", "Psychic"], "Popplio": ["Water", null], "Brionne": ["Water", null], "Primarina": ["Water", "Fairy"], "Caterpie": ["Bug", null], "Metapod": ["Bug", null], "Butterfree": ["Bug", "Flying"], "Weedle": ["Bug", "Poison"], "Kakuna": ["Bug", "Poison"], "Beedrill": ["Bug", "Poison"], "Bellsprout": ["Grass", "Poison"], "Weepinbell": ["Grass", "Poison"], "Victreebel": ["Grass", "Poison"], "Paras": ["Bug", "Grass"], "Parasect": ["Bug", "Grass"], "Sentret": ["Normal", null], "Furret": ["Normal", null], "Venonat": ["Bug", "Poison"], "Venomoth": ["Bug", "Poison"], "Krabby": ["Water", null], "Kingler": ["Water", null], "Shellder": ["Water", null], "Cloyster": ["Water", "Ice"], "Staryu": ["Water", null], "Starmie": ["Water", "Psychic"], "Wingull": ["Water", "Flying"], "Pelipper": ["Water", "Flying"], "Tentacool": ["Water", "Poison"], "Tentacruel": ["Water", "Poison"], "Chinchou": ["Water", "Electric"], "Lanturn": ["Water", "Electric"], "Corsola": ["Water", "Rock"], "Rattata": ["Normal", null], "Raticate": ["Normal", null], "Pidgey": ["Normal", "Flying"], "Pidgeotto": ["Normal", "Flying"], "Pidgeot": ["Normal", "Flying"], "Meowth": ["Normal", null], "Persian": ["Normal", null], "Gastly": ["Ghost", "Poison"], "Haunter": ["Ghost", "Poison"], "Gengar": ["Ghost", "Poison"], "Drifloon": ["Ghost", "Flying"], "Drifblim": ["Ghost", "Flying"], "Litwick": ["Ghost", "Fire"], "Lampent": ["Ghost", "Fire"], "Chandelure": ["Ghost", "Fire"], "Pikachu": ["Electric", null], "Raichu": ["Electric", null], "Voltorb": ["Electric", null], "Electrode": ["Electric", null], "Magnemite": ["Electric", "Steel"], "Magneton": ["Electric", "Steel"], "Magnezone": ["Electric", "Steel"], "Oddish": ["Grass", "Poison"], "Gloom": ["Grass", "Poison"], "Vileplume": ["Grass", "Poison"], "Bellossom": ["Grass", null], "Hoppip": ["Grass", "Flying"], "Skiploom": ["Grass", "Flying"], "Jumpluff": ["Grass", "Flying"], "Zigzagoon": ["Normal", null], "Linoone": ["Normal", null], "Bidoof": ["Normal", null], "Bibarel": ["Normal", "Water"], "Psyduck": ["Water", null], "Golduck": ["Water", null], "Magikarp": ["Water", null], "Gyarados": ["Water", "Flying"], "Machop": ["Fighting", null], "Machoke": ["Fighting", null], "Machamp": ["Fighting", null], "Onix": ["Rock", "Ground"], "Steelix": ["Steel", "Ground"], "Roggenrola": ["Rock", null], "Boldore": ["Rock", null], "Gigalith": ["Rock", null], "Drilbur": ["Ground", null], "Excadrill": ["Ground", "Steel"], "Swinub": ["Ice", "Ground"], "Piloswine": ["Ice", "Ground"], "Mamoswine": ["Ice", "Ground"], "Snover": ["Grass", "Ice"], "Abomasnow": ["Grass", "Ice"], "Snorunt": ["Ice", null], "Glalie": ["Ice", null], "Froslass": ["Ice", "Ghost"], "Sneasel": ["Dark", "Ice"], "Weavile": ["Dark", "Ice"], "Spheal": ["Ice", "Water"], "Sealeo": ["Ice", "Water"], "Walrein": ["Ice", "Water"], "Teddiursa": ["Normal", null], "Ursaring": ["Normal", null], "Geodude": ["Rock", "Ground"], "Graveler": ["Rock", "Ground"], "Golem": ["Rock", "Ground"], "Rhyhorn": ["Ground", "Rock"], "Rhydon": ["Ground", "Rock"], "Rhyperior": ["Ground", "Rock"], "Larvitar": ["Rock", "Ground"], "Pupitar": ["Rock", "Ground"], "Tyranitar": ["Rock", "Dark"], "Growlithe": ["Fire", null], "Arcanine": ["Fire", null], "Ponyta": ["Fire", null], "Rapidash": ["Fire", null], "Trapinch": ["Ground", null], "Vibrava": ["Ground", "Dragon"], "Flygon": ["Ground", "Dragon"], "Skorupi": ["Poison", "Bug"], "Drapion": ["Poison", "Dark"], "Cacnea": ["Grass", null], "Cacturne": ["Grass", "Dark"], "Sandygast": ["Ghost", "Ground"], "Palossand": ["Ghost", "Ground"], "Baltoy": ["Ground", "Psychic"], "Claydol": ["Ground", "Psychic"], "Darumaka": ["Fire", null], "Darmanitan": ["Fire", null], "Salandit": ["Poison", "Fire"], "Salazzle": ["Poison", "Fire"], "Helioptile": ["Electric", "Normal"], "Heliolisk": ["Electric", "Normal"], "Scraggy": ["Dark", "Fighting"], "Scrafty": ["Dark", "Fighting"], "Zubat": ["Poison", "Flying"], "Golbat": ["Poison", "Flying"], "Crobat": ["Poison", "Flying"], "Sableye": ["Dark", "Ghost"], "Absol": ["Dark", null], "Houndour": ["Dark", "Fire"], "Houndoom": ["Dark", "Fire"], "Nincada": ["Bug", "Ground"], "Ninjask": ["Bug", "Flying"], "Shedinja": ["Bug", "Ghost"], "Vullaby": ["Dark", "Flying"], "Mandibuzz": ["Dark", "Flying"], "Spearow": ["Normal", "Flying"], "Fearow": ["Normal", "Flying"], "Doduo": ["Normal", "Flying"], "Dodrio": ["Normal", "Flying"], "Skarmory": ["Steel", "Flying"], "Aerodactyl": ["Rock", "Flying"], "Swablu": ["Normal", "Flying"], "Altaria": ["Dragon", "Flying"], "Bagon": ["Dragon", null], "Shelgon": ["Dragon", null], "Salamence": ["Dragon", "Flying"], "Igglybuff": ["Normal", "Fairy"], "Jigglypuff": ["Normal", "Fairy"], "Wigglytuff": ["Normal", "Fairy"], "Ralts": ["Psychic", "Fairy"], "Kirlia": ["Psychic", "Fairy"], "Gardevoir": ["Psychic", "Fairy"], "Gallade": ["Psychic", "Fighting"], "Bronzor": ["Steel", "Psychic"], "Bronzong": ["Steel", "Psychic"], "Litleo": ["Fire", "Normal"], "Pyroar": ["Fire", "Normal"], "Sunkern": ["Grass", null], "Sunflora": ["Grass", null], "Abra": ["Psychic", null], "Kadabra": ["Psychic", null], "Alakazam": ["Psychic", null], "Drowzee": ["Psychic", null], "Hypno": ["Psychic", null], "Natu": ["Psychic", "Flying"], "Xatu": ["Psychic", "Flying"], "Riolu": ["Fighting", null], "Lucario": ["Fighting", "Steel"], "Deino": ["Dark", "Dragon"], "Zweilous": ["Dark", "Dragon"], "Hydreigon": ["Dark", "Dragon"], "Horsea": ["Water", null], "Seadra": ["Water", null], "Kingdra": ["Water", "Dragon"], "Wailmer": ["Water", null], "Wailord": ["Water", null], "Carvanha": ["Water", "Dark"], "Sharpedo": ["Water", "Dark"], "Frillish": ["Water", "Ghost"], "Jellicent": ["Water", "Ghost"], "Kangaskhan": ["Normal", null], "Landorus": ["Ground", "Flying"], "Thundurus": ["Electric", "Flying"], "Tornadus": ["Flying", null], "Heatran": ["Fire", "Steel"], "Suicune": ["Water", null], "Celebi": ["Psychic", "Grass"], "Jirachi": ["Steel", "Psychic"], "Miltank": ["Normal", null], "Tauros": ["Normal", null], "Pyukumuku": ["Water", null], "Delibird": ["Ice", "Flying"], "Stantler": ["Normal", null], "Clefairy": ["Fairy", null], "Clefable": ["Fairy", null], "Diglett": ["Ground", null], "Dugtrio": ["Ground", null], "Elgyem": ["Psychic", null], "Beheeyem": ["Psychic", null], "Swirlix": ["Fairy", null], "Slurpuff": ["Fairy", null]}, "predecessor": {"Sprigatito": null, "Floragato": "Sprigatito", "Meowscarada": "Floragato", "Fennekin": null, "Braixen": "Fennekin", "Delphox": "Braixen", "Popplio": null, "Brionne": "Popplio", "Primarina": "Brionne", "Caterpie": null, "Metapod": "Caterpie", "Butterfree": "Metapod", "Weedle": null, "Kakuna": "Weedle", "Beedrill": "Kakuna", "Bellsprout": null, "Weepinbell": "Bellsprout", "Victreebel": "Weepinbell", "Paras": null, "Parasect": "Paras", "Sentret": null, "Furret": "Sentret", "Venonat": null, "Venomoth": "Venonat", "Krabby": null, "Kingler": "Krabby", "Shellder": null, "Cloyster": "Shellder", "Staryu": null, "Starmie": "Staryu", "Wingull": null, "Pelipper": "Wingull", "Tentacool": null, "Tentacruel": "Tentacool", "Chinchou": null, "Lanturn": "Chinchou", "Corsola": null, "Pyukumuku": null, "Rattata": null, "Raticate": "Rattata", "Pidgey": null, "Pidgeotto": "Pidgey", "Pidgeot": "Pidgeotto", "Meowth": null, "Persian": "Meowth", "Gastly": null, "Haunter": "Gastly", "Gengar": "Haunter", "Drifloon": null, "Drifblim": "Drifloon", "Litwick": null, "Lampent": "Litwick", "Chandelure": "Lampent", "Pikachu": null, "Raichu": "Pikachu", "Voltorb": null, "Electrode": "Voltorb", "Magnemite": null, "Magneton": "Magnemite", "Magnezone": "Magneton", "Oddish": null, "Gloom": "Oddish", "Vileplume": "Gloom", "Bellossom": "Gloom", "Hoppip": null, "Skiploom": "Hoppip", "Jumpluff": "Skiploom", "Zigzagoon": null, "Linoone": "Zigzagoon", "Miltank": null, "Tauros": null, "Bidoof": null, "Bibarel": "Bidoof", "Psyduck": null, "Golduck": "Psyduck", "Magikarp": null, "Gyarados": "Magikarp", "Machop": null, "Machoke": "Machop", "Machamp": "Machoke", "Onix": null, "Steelix": "Onix", "Roggenrola": null, "Boldore": "Roggenrola", "Gigalith": "Boldore", "Drilbur": null, "Excadrill": "Drilbur", "Swinub": null, "Piloswine": "Swinub", "Mamoswine": "Piloswine", "Snover": null, "Abomasnow": "Snover", "Snorunt": null, "Glalie": "Snorunt", "Froslass": "Snorunt", "Sneasel": null, "Weavile": "Sneasel", "Spheal": null, "Sealeo": "Spheal", "Walrein": "Sealeo", "Teddiursa": null, "Ursaring": "Teddiursa", "Delibird": null, "Stantler": null, "Geodude": null, "Graveler": "Geodude", "Golem": "Graveler", "Rhyhorn": null, "Rhydon": "Rhyhorn", "Rhyperior": "Rhydon", "Larvitar": null, "Pupitar": "Larvitar", "Tyranitar": "Pupitar", "Growlithe": null, "Arcanine": "Growlithe", "Ponyta": null, "Rapidash": "Ponyta", "Trapinch": null, "Vibrava": "Trapinch", "Flygon": "Vibrava", "Skorupi": null, "Drapion": "Skorupi", "Diglett": null, "Dugtrio": "Diglett", "Cacnea": null, "Cacturne": "Cacnea", "Sandygast": null, "Palossand": "Sandygast", "Baltoy": null, "Claydol": "Baltoy", "Darumaka": null, "Darmanitan": "Darumaka", "Salandit": null, "Salazzle": "Salandit", "Helioptile": null, "Heliolisk": "Helioptile", "Scraggy": null, "Scrafty": "Scraggy", "Zubat": null, "Golbat": "Zubat", "Crobat": "Golbat", "Sableye": null, "Absol": null, "Houndour": null, "Houndoom": "Houndour", "Nincada": null, "Ninjask": "Nincada", "Shedinja": "Nincada", "Vullaby": null, "Mandibuzz": "Vullaby", "Spearow": null, "Fearow": "Spearow", "Doduo": null, "Dodrio": "Doduo", "Skarmory": null, "Aerodactyl": null, "Swablu": null, "Altaria": "Swablu", "Bagon": null, "Shelgon": "Bagon", "Salamence": "Shelgon", "Igglybuff": null, "Jigglypuff": "Igglybuff", "Wigglytuff": "Jigglypuff", "Ralts": null, "Kirlia": "Ralts", "Gardevoir": "Kirlia", "Gallade": "Kirlia", "Bronzor": null, "Bronzong": "Bronzor", "Litleo": null, "Pyroar": "Litleo", "Sunkern": null, "Sunflora": "Sunkern", "Clefairy": null, "Clefable": "Clefairy", "Swirlix": null, "Slurpuff": "Swirlix", "Abra": null, "Kadabra": "Abra", "Alakazam": "Kadabra", "Drowzee": null, "Hypno": "Drowzee", "Natu": null, "Xatu": "Natu", "Riolu": null, "Lucario": "Riolu", "Elgyem": null, "Beheeyem": "Elgyem", "Horsea": null, "Seadra": "Horsea", "Kingdra": "Seadra", "Wailmer": null, "Wailord": "Wailmer", "Carvanha": null, "Sharpedo": "Carvanha", "Frillish": null, "Jellicent": "Frillish", "Kangaskhan": null, "Landorus": null, "Thundurus": null, "Tornadus": null, "Heatran": null, "Suicune": null, "Celebi": null, "Jirachi": null, "Deino": null, "Zweilous": "Deino", "Hydreigon": "Zweilous"}, "minLevel": {"Sprigatito": 1, "Floragato": 5, "Meowscarada": 10, "Fennekin": 1, "Braixen": 5, "Delphox": 10, "Popplio": 1, "Brionne": 5, "Primarina": 9, "Caterpie": 1, "Metapod": 3, "Butterfree": 4, "Weedle": 1, "Kakuna": 3, "Beedrill": 4, "Bellsprout": 1, "Weepinbell": 6, "Victreebel": 6, "Paras": 1, "Parasect": 7, "Sentret": 1, "Furret": 5, "Venonat": 1, "Venomoth": 9, "Krabby": 1, "Kingler": 8, "Shellder": 1, "Cloyster": 1, "Staryu": 1, "Starmie": 1, "Wingull": 1, "Pelipper": 7, "Tentacool": 1, "Tentacruel": 8, "Chinchou": 1, "Lanturn": 8, "Corsola": 1, "Pyukumuku": 1, "Rattata": 1, "Raticate": 6, "Pidgey": 1, "Pidgeotto": 6, "Pidgeot": 10, "Meowth": 1, "Persian": 8, "Gastly": 1, "Haunter": 7, "Gengar": 7, "Drifloon": 1, "Drifblim": 8, "Litwick": 1, "Lampent": 11, "Chandelure": 11, "Pikachu": 1, "Raichu": 1, "Voltorb": 1, "Electrode": 8, "Magnemite": 1, "Magneton": 8, "Magnezone": 8, "Oddish": 1, "Gloom": 6, "Vileplume": 6, "Bellossom": 6, "Hoppip": 1, "Skiploom": 6, "Jumpluff": 8, "Zigzagoon": 1, "Linoone": 6, "Miltank": 1, "Tauros": 1, "Bidoof": 1, "Bibarel": 5, "Psyduck": 1, "Golduck": 9, "Magikarp": 1, "Gyarados": 6, "Machop": 1, "Machoke": 8, "Machamp": 8, "Onix": 1, "Steelix": 1, "Roggenrola": 1, "Boldore": 7, "Gigalith": 7, "Drilbur": 1, "Excadrill": 9, "Swinub": 1, "Piloswine": 9, "Mamoswine": 9, "Snover": 1, "Abomasnow": 10, "Snorunt": 1, "Glalie": 11, "Froslass": 1, "Sneasel": 1, "Weavile": 1, "Spheal": 1, "Sealeo": 9, "Walrein": 11, "Teddiursa": 1, "Ursaring": 8, "Delibird": 1, "Stantler": 1, "Geodude": 1, "Graveler": 7, "Golem": 7, "Rhyhorn": 1, "Rhydon": 11, "Rhyperior": 11, "Larvitar": 1, "Pupitar": 8, "Tyranitar": 13, "Growlithe": 1, "Arcanine": 1, "Ponyta": 1, "Rapidash": 10, "Trapinch": 1, "Vibrava": 9, "Flygon": 11, "Skorupi": 1, "Drapion": 10, "Diglett": 1, "Dugtrio": 8, "Cacnea": 1, "Cacturne": 9, "Sandygast": 1, "Palossand": 11, "Baltoy": 1, "Claydol": 10, "Darumaka": 1, "Darmanitan": 9, "Salandit": 1, "Salazzle": 9, "Helioptile": 1, "Heliolisk": 1, "Scraggy": 1, "Scrafty": 10, "Zubat": 1, "Golbat": 7, "Crobat": 7, "Sableye": 1, "Absol": 1, "Houndour": 1, "Houndoom": 7, "Nincada": 1, "Ninjask": 6, "Shedinja": 6, "Vullaby": 1, "Mandibuzz": 13, "Spearow": 1, "Fearow": 6, "Doduo": 1, "Dodrio": 9, "Skarmory": 1, "Aerodactyl": 1, "Swablu": 1, "Altaria": 9, "Bagon": 1, "Shelgon": 8, "Salamence": 12, "Igglybuff": 1, "Jigglypuff": 1, "Wigglytuff": 1, "Ralts": 1, "Kirlia": 6, "Gardevoir": 8, "Gallade": 6, "Bronzor": 1, "Bronzong": 9, "Litleo": 1, "Pyroar": 9, "Sunkern": 1, "Sunflora": 1, "Clefairy": 1, "Clefable": 1, "Swirlix": 1, "Slurpuff": 1, "Abra": 1, "Kadabra": 5, "Alakazam": 5, "Drowzee": 1, "Hypno": 8, "Natu": 1, "Xatu": 7, "Riolu": 1, "Lucario": 1, "Elgyem": 1, "Beheeyem": 11, "Horsea": 1, "Seadra": 9, "Kingdra": 9, "Wailmer": 1, "Wailord": 10, "Carvanha": 1, "Sharpedo": 8, "Frillish": 1, "Jellicent": 10, "Kangaskhan": 1, "Landorus": 1, "Thundurus": 1, "Tornadus": 1, "Heatran": 1, "Suicune": 1, "Celebi": 1, "Jirachi": 1, "Deino": 1, "Zweilous": 12, "Hydreigon": 15}, "trainerClassBySum": {"7": "Youngster", "6": "Lass", "8": "Camper", "5": "Bug Catcher", "9": "Bird Keeper", "4": "Hiker", "10": "Cyclist", "3": "Backpacker", "11": "Black Belt", "2": "Ranger", "12": "Ace Trainer"}, "trainerTables": {"Youngster": ["Doduo", "Growlithe", "Meowth", "Zigzagoon", "Pidgey", "Rattata", "Sentret", "Bidoof", "Spearow", "Psyduck", "Voltorb"], "Lass": ["Teddiursa", "Wingull", "Swablu", "Sunkern", "Hoppip", "Oddish", "Clefairy", "Igglybuff", "Chinchou", "Swirlix", "Snover"], "Bug Catcher": ["Sandygast", "Skorupi", "Zubat", "Paras", "Weedle", "Caterpie", "Venonat", "Nincada", "Diglett", "Cacnea", "Baltoy"], "Camper": ["Carvanha", "Tentacool", "Spheal", "Swinub", "Bidoof", "Sentret", "Growlithe", "Snorunt", "Krabby", "Wailmer", "Frillish"], "Hiker": ["Baltoy", "Swinub", "Larvitar", "Rhyhorn", "Onix", "Geodude", "Machop", "Roggenrola", "Diglett", "Snorunt", "Sandygast"], "Backpacker": ["Sableye", "Houndour", "Scraggy", "Drifloon", "Doduo", "Zigzagoon", "Natu", "Riolu", "Litwick", "Skorupi", "Absol"], "Bird Keeper": ["Aerodactyl", "Skarmory", "Zubat", "Swablu", "Spearow", "Pidgey", "Doduo", "Wingull", "Vullaby", "Nincada", "Bagon"], "Cyclist": ["Sneasel", "Riolu", "Natu", "Zubat", "Doduo", "Voltorb", "Spearow", "Ponyta", "Diglett", "Nincada", "Growlithe"], "Black Belt": ["Absol", "Houndour", "Scraggy", "Sneasel", "Riolu", "Machop", "Growlithe", "Geodude", "Teddiursa", "Larvitar", "Sableye"], "Ranger": ["Vullaby", "Snover", "Spheal", "Teddiursa", "Bidoof", "Growlithe", "Wingull", "Swablu", "Zigzagoon", "Absol", "Stantler"], "Ace Trainer": ["Larvitar", "Roggenrola", "Litwick", "Magnemite", "Ralts", "Abra", "Gastly", "Horsea", "Trapinch", "Bagon", "Deino"]}, "trainerChain": {"Abra": ["Abra", "Kadabra", "Alakazam"], "Absol": ["Absol"], "Aerodactyl": ["Aerodactyl"], "Bagon": ["Bagon", "Shelgon", "Salamence"], "Baltoy": ["Baltoy", "Claydol"], "Bidoof": ["Bidoof", "Bibarel"], "Cacnea": ["Cacnea", "Cacturne"], "Carvanha": ["Carvanha", "Sharpedo"], "Caterpie": ["Caterpie", "Metapod", "Butterfree"], "Chinchou": ["Chinchou", "Lanturn"], "Clefairy": ["Clefairy", "Clefable"], "Deino": ["Deino", "Zweilous", "Hydreigon"], "Diglett": ["Diglett", "Dugtrio"], "Doduo": ["Doduo", "Dodrio"], "Drifloon": ["Drifloon", "Drifblim"], "Frillish": ["Frillish", "Jellicent"], "Gastly": ["Gastly", "Haunter", "Gengar"], "Geodude": ["Geodude", "Graveler", "Golem"], "Growlithe": ["Growlithe", "Arcanine"], "Hoppip": ["Hoppip", "Skiploom", "Jumpluff"], "Horsea": ["Horsea", "Seadra", "Kingdra"], "Houndour": ["Houndour", "Houndoom"], "Igglybuff": ["Igglybuff", "Jigglypuff", "Wigglytuff"], "Krabby": ["Krabby", "Kingler"], "Larvitar": ["Larvitar", "Pupitar", "Tyranitar"], "Litwick": ["Litwick", "Lampent", "Chandelure"], "Machop": ["Machop", "Machoke", "Machamp"], "Magnemite": ["Magnemite", "Magneton", "Magnezone"], "Meowth": ["Meowth", "Persian"], "Natu": ["Natu", "Xatu"], "Nincada": ["Nincada", ["Ninjask", "Shedinja"]], "Oddish": ["Oddish", "Gloom", ["Vileplume", "Bellossom"]], "Onix": ["Onix", "Steelix"], "Paras": ["Paras", "Parasect"], "Pidgey": ["Pidgey", "Pidgeotto", "Pidgeot"], "Ponyta": ["Ponyta", "Rapidash"], "Psyduck": ["Psyduck", "Golduck"], "Ralts": ["Ralts", "Kirlia", ["Gardevoir", "Gallade"]], "Rattata": ["Rattata", "Raticate"], "Rhyhorn": ["Rhyhorn", "Rhydon", "Rhyperior"], "Riolu": ["Riolu", "Lucario"], "Roggenrola": ["Roggenrola", "Boldore", "Gigalith"], "Sableye": ["Sableye"], "Sandygast": ["Sandygast", "Palossand"], "Scraggy": ["Scraggy", "Scrafty"], "Sentret": ["Sentret", "Furret"], "Skarmory": ["Skarmory"], "Skorupi": ["Skorupi", "Drapion"], "Sneasel": ["Sneasel", "Weavile"], "Snorunt": ["Snorunt", ["Glalie", "Froslass"]], "Snover": ["Snover", "Abomasnow"], "Spearow": ["Spearow", "Fearow"], "Spheal": ["Spheal", "Sealeo", "Walrein"], "Stantler": ["Stantler"], "Sunkern": ["Sunkern", "Sunflora"], "Swablu": ["Swablu", "Altaria"], "Swinub": ["Swinub", "Piloswine", "Mamoswine"], "Swirlix": ["Swirlix", "Slurpuff"], "Teddiursa": ["Teddiursa", "Ursaring"], "Tentacool": ["Tentacool", "Tentacruel"], "Trapinch": ["Trapinch", "Vibrava", "Flygon"], "Venonat": ["Venonat", "Venomoth"], "Voltorb": ["Voltorb", "Electrode"], "Vullaby": ["Vullaby", "Mandibuzz"], "Wailmer": ["Wailmer", "Wailord"], "Weedle": ["Weedle", "Kakuna", "Beedrill"], "Wingull": ["Wingull", "Pelipper"], "Zigzagoon": ["Zigzagoon", "Linoone"], "Zubat": ["Zubat", "Golbat", "Crobat"], "Staryu": ["Staryu", "Starmie"], "Pyukumuku": ["Pyukumuku"], "Drilbur": ["Drilbur", "Excadrill"], "Delibird": ["Delibird"], "Darumaka": ["Darumaka", "Darmanitan"], "Salandit": ["Salandit", "Salazzle"], "Litleo": ["Litleo", "Pyroar"], "Drowzee": ["Drowzee", "Hypno"], "Elgyem": ["Elgyem", "Beheeyem"], "Bronzor": ["Bronzor", "Bronzong"], "Bellsprout": ["Bellsprout", "Weepinbell", "Victreebel"], "Tauros": ["Tauros"], "Magikarp": ["Magikarp", "Gyarados"], "Ralts_M": ["Ralts", "Kirlia", "Gallade"]}, "trainerMinLevel": {"Sprigatito": 1, "Floragato": 5, "Meowscarada": 10, "Fennekin": 1, "Braixen": 5, "Delphox": 10, "Popplio": 1, "Brionne": 5, "Primarina": 9, "Caterpie": 1, "Metapod": 3, "Butterfree": 4, "Weedle": 1, "Kakuna": 3, "Beedrill": 4, "Bellsprout": 1, "Weepinbell": 6, "Victreebel": 9, "Paras": 1, "Parasect": 7, "Sentret": 1, "Furret": 5, "Venonat": 1, "Venomoth": 9, "Krabby": 1, "Kingler": 8, "Shellder": 1, "Cloyster": 7, "Staryu": 1, "Starmie": 7, "Wingull": 1, "Pelipper": 7, "Tentacool": 1, "Tentacruel": 8, "Chinchou": 1, "Lanturn": 8, "Corsola": 1, "Pyukumuku": 1, "Rattata": 1, "Raticate": 6, "Pidgey": 1, "Pidgeotto": 6, "Pidgeot": 10, "Meowth": 1, "Persian": 8, "Gastly": 1, "Haunter": 7, "Gengar": 10, "Drifloon": 1, "Drifblim": 8, "Litwick": 1, "Lampent": 11, "Chandelure": 14, "Pikachu": 1, "Raichu": 7, "Voltorb": 1, "Electrode": 8, "Magnemite": 1, "Magneton": 8, "Magnezone": 11, "Oddish": 1, "Gloom": 6, "Vileplume": 9, "Bellossom": 9, "Hoppip": 1, "Skiploom": 6, "Jumpluff": 8, "Zigzagoon": 1, "Linoone": 6, "Miltank": 1, "Tauros": 1, "Bidoof": 1, "Bibarel": 5, "Psyduck": 1, "Golduck": 9, "Magikarp": 1, "Gyarados": 6, "Machop": 1, "Machoke": 8, "Machamp": 11, "Onix": 1, "Steelix": 7, "Roggenrola": 1, "Boldore": 7, "Gigalith": 10, "Drilbur": 1, "Excadrill": 9, "Swinub": 1, "Piloswine": 9, "Mamoswine": 12, "Snover": 1, "Abomasnow": 10, "Snorunt": 1, "Glalie": 11, "Froslass": 11, "Sneasel": 1, "Weavile": 7, "Spheal": 1, "Sealeo": 9, "Walrein": 11, "Teddiursa": 1, "Ursaring": 8, "Delibird": 1, "Stantler": 1, "Geodude": 1, "Graveler": 7, "Golem": 10, "Rhyhorn": 1, "Rhydon": 11, "Rhyperior": 14, "Larvitar": 1, "Pupitar": 8, "Tyranitar": 13, "Growlithe": 1, "Arcanine": 7, "Ponyta": 1, "Rapidash": 10, "Trapinch": 1, "Vibrava": 9, "Flygon": 11, "Skorupi": 1, "Drapion": 10, "Diglett": 1, "Dugtrio": 8, "Cacnea": 1, "Cacturne": 9, "Sandygast": 1, "Palossand": 11, "Baltoy": 1, "Claydol": 10, "Darumaka": 1, "Darmanitan": 9, "Salandit": 1, "Salazzle": 9, "Helioptile": 1, "Heliolisk": 7, "Scraggy": 1, "Scrafty": 10, "Zubat": 1, "Golbat": 7, "Crobat": 10, "Sableye": 1, "Absol": 1, "Houndour": 1, "Houndoom": 7, "Nincada": 1, "Ninjask": 6, "Shedinja": 6, "Vullaby": 1, "Mandibuzz": 13, "Spearow": 1, "Fearow": 6, "Doduo": 1, "Dodrio": 9, "Skarmory": 1, "Aerodactyl": 1, "Swablu": 1, "Altaria": 9, "Bagon": 1, "Shelgon": 8, "Salamence": 12, "Igglybuff": 1, "Jigglypuff": 7, "Wigglytuff": 10, "Ralts": 1, "Kirlia": 6, "Gardevoir": 8, "Gallade": 8, "Bronzor": 1, "Bronzong": 9, "Litleo": 1, "Pyroar": 9, "Sunkern": 1, "Sunflora": 7, "Clefairy": 1, "Clefable": 7, "Swirlix": 1, "Slurpuff": 7, "Abra": 1, "Kadabra": 5, "Alakazam": 8, "Drowzee": 1, "Hypno": 8, "Natu": 1, "Xatu": 7, "Riolu": 1, "Lucario": 7, "Elgyem": 1, "Beheeyem": 11, "Horsea": 1, "Seadra": 9, "Kingdra": 12, "Wailmer": 1, "Wailord": 10, "Carvanha": 1, "Sharpedo": 8, "Frillish": 1, "Jellicent": 10, "Kangaskhan": 1, "Landorus": 1, "Thundurus": 1, "Tornadus": 1, "Heatran": 1, "Suicune": 1, "Celebi": 1, "Jirachi": 1, "Deino": 1, "Zweilous": 12, "Hydreigon": 15}, "gymLeaders": {"Marina": {"town": "Tidepool Town", "type": "Water", "slots": {"1": "Staryu", "2": "Krabby", "3": "Pyukumuku", "4": "Wingull", "5": "Horsea"}}, "Raven": {"town": "Baymist City", "type": "Ghost", "slots": {"1": "Gastly", "2": "Drifloon", "3": "Litwick", "4": "Snorunt", "5": "Frillish"}}, "Dustin": {"town": "Capitol City", "type": "Ground", "slots": {"1": "Drilbur", "2": "Onix", "3": "Trapinch", "4": "Rhyhorn", "5": "Baltoy"}}, "Crystal": {"town": "Alpine Town", "type": "Ice", "slots": {"1": "Swinub", "2": "Sneasel", "3": "Delibird", "4": "Spheal", "5": "Snover"}}, "Cruz": {"town": "Canyon City", "type": "Dark", "slots": {"1": "Houndour", "2": "Absol", "3": "Sableye", "4": "Vullaby", "5": "Cacnea"}}, "Solana": {"town": "Dunebreak City", "type": "Fire", "slots": {"1": "Darumaka", "2": "Growlithe", "3": "Ponyta", "4": "Salandit", "5": "Litleo"}}, "Grace": {"town": "Mission Town", "type": "Fairy", "slots": {"1": "Clefairy", "2": ["Ralts", "Gardevoir"], "3": "Igglybuff", "4": "Swirlix", "5": "Sunkern"}}, "Luna": {"town": "Skyline City", "type": "Psychic", "slots": {"1": "Abra", "2": "Drowzee", "3": "Natu", "4": "Elgyem", "5": "Bronzor"}}}, "eliteFour": [{"id": "E4_1", "name": "Wren", "type": "Bug", "slots": {"1": "Caterpie", "2": "Venonat", "3": "Paras", "4": "Nincada", "ace": "Weedle"}, "levels": {"1": 11, "2": 12, "3": 12, "4": 13, "ace": 13}}, {"id": "E4_2", "name": "Ivy", "type": "Grass", "slots": {"1": "Hoppip", "2": "Bellsprout", "3": "Cacnea", "4": "Sunkern", "ace": "Oddish"}, "levels": {"1": 12, "2": 12, "3": 13, "4": 13, "ace": 14}}, {"id": "E4_3", "name": "Marcus", "type": "Rock", "slots": {"1": "Geodude", "2": "Roggenrola", "3": "Aerodactyl", "4": "Skarmory", "ace": "Larvitar"}, "levels": {"1": 12, "2": 13, "3": 13, "4": 14, "ace": 14}}, {"id": "E4_4", "name": "Cortez", "type": "Fighting", "slots": {"1": "Riolu", "2": "Ralts_M", "3": "Scraggy", "4": "Skorupi", "ace": "Machop"}, "levels": {"1": 13, "2": 13, "3": 14, "4": 14, "ace": 15}}], "champion": {"id": "CHAMPION", "name": "Sierra", "type": "Mixed", "slots": {"1": "Tauros", "2": "Magnemite", "3": "Wailmer", "4": "Zubat", "5": "Magikarp", "ace": "Bagon"}, "levels": {"1": 13, "2": 13, "3": 14, "4": 14, "5": 15, "ace": 15}}, "mapNodes": [{"id": "ALP", "kind": "town", "row": 1, "col": 5, "name": "Alpine Town", "gymLeader": "Crystal", "locationId": null}, {"id": "AI", "kind": "dungeon", "row": 1, "col": 6, "name": "Alpine Ice Caverns", "locationId": "Alpine Ice Caverns"}, {"id": "12a", "kind": "route", "row": 1, "col": 7, "name": "Route 12", "locationId": "Route 12"}, {"id": "12b", "kind": "route", "row": 1, "col": 8, "name": "Route 12", "locationId": "Route 12"}, {"id": "11b", "kind": "route", "row": 2, "col": 5, "name": "Route 11", "locationId": "Route 11"}, {"id": "CRA", "kind": "town", "row": 2, "col": 8, "name": "Crag Town", "gymLeader": null, "locationId": null}, {"id": "BT", "kind": "dungeon", "row": 2, "col": 9, "name": "Bishop's Tablelands Labyrinth", "locationId": "Bishop's Tablelands Labyrinth"}, {"id": "18", "kind": "route", "row": 2, "col": 10, "name": "Route 18", "locationId": "Route 18"}, {"id": "DUN", "kind": "town", "row": 2, "col": 11, "name": "Dunebreak City", "gymLeader": "Solana", "locationId": null}, {"id": "GV", "kind": "dungeon", "row": 3, "col": 5, "name": "Golden Vein Mine", "locationId": "Golden Vein Mine"}, {"id": "13a", "kind": "route", "row": 3, "col": 8, "name": "Route 13", "locationId": "Route 13"}, {"id": "SF", "kind": "dungeon", "row": 3, "col": 11, "name": "Salt Flat Ruins", "locationId": "Salt Flat Ruins"}, {"id": "16", "kind": "route", "row": 3, "col": 12, "name": "Route 16", "locationId": "Route 16"}, {"id": "CAN", "kind": "town", "row": 3, "col": 13, "name": "Canyon City", "gymLeader": "Cruz", "locationId": null}, {"id": "11a", "kind": "route", "row": 4, "col": 5, "name": "Route 11", "locationId": "Route 11"}, {"id": "13b", "kind": "route", "row": 4, "col": 8, "name": "Route 13", "locationId": "Route 13"}, {"id": "SO", "kind": "dungeon", "row": 4, "col": 10, "name": "Sunken Oil Fields", "locationId": "Sunken Oil Fields"}, {"id": "17", "kind": "route", "row": 4, "col": 11, "name": "Route 17", "locationId": "Route 17"}, {"id": "BM", "kind": "dungeon", "row": 4, "col": 13, "name": "Boulder Maze", "locationId": "Boulder Maze"}, {"id": "CAP", "kind": "town", "row": 5, "col": 5, "name": "Capitol City", "gymLeader": "Dustin", "locationId": null}, {"id": "10a", "kind": "route", "row": 5, "col": 6, "name": "Route 10", "locationId": "Route 10"}, {"id": "10b", "kind": "route", "row": 5, "col": 7, "name": "Route 10", "locationId": "Route 10"}, {"id": "14a", "kind": "route", "row": 5, "col": 8, "name": "Route 14", "locationId": "Route 14"}, {"id": "14b", "kind": "route", "row": 5, "col": 9, "name": "Route 14", "locationId": "Route 14"}, {"id": "BAS", "kind": "town", "row": 5, "col": 10, "name": "Basin Town", "gymLeader": null, "locationId": null}, {"id": "15a", "kind": "route", "row": 5, "col": 11, "name": "Route 15", "locationId": "Route 15"}, {"id": "15b", "kind": "route", "row": 5, "col": 12, "name": "Route 15", "locationId": "Route 15"}, {"id": "15c", "kind": "route", "row": 5, "col": 13, "name": "Route 15", "locationId": "Route 15"}, {"id": "RED", "kind": "town", "row": 6, "col": 1, "name": "Redwood Town", "gymLeader": null, "locationId": null}, {"id": "RG", "kind": "dungeon", "row": 6, "col": 2, "name": "Redwood Grove Depths", "locationId": "Redwood Grove Depths"}, {"id": "1", "kind": "route", "row": 6, "col": 3, "name": "Route 1", "locationId": "Route 1"}, {"id": "DH", "kind": "dungeon", "row": 6, "col": 5, "name": "Delta Hydro Station", "locationId": "Delta Hydro Station"}, {"id": "9d", "kind": "route", "row": 6, "col": 7, "name": "Route 9", "locationId": "Route 9"}, {"id": "19a", "kind": "route", "row": 6, "col": 10, "name": "Route 19", "locationId": "Route 19"}, {"id": "2", "kind": "route", "row": 7, "col": 3, "name": "Route 2", "locationId": "Route 2"}, {"id": "6", "kind": "route", "row": 7, "col": 5, "name": "Route 6", "locationId": "Route 6"}, {"id": "9c", "kind": "route", "row": 7, "col": 7, "name": "Route 9", "locationId": "Route 9"}, {"id": "19b", "kind": "route", "row": 7, "col": 10, "name": "Route 19", "locationId": "Route 19"}, {"id": "TS", "kind": "dungeon", "row": 8, "col": 2, "name": "Tidepool Sea Caves", "locationId": "Tidepool Sea Caves"}, {"id": "TID", "kind": "town", "row": 8, "col": 3, "name": "Tidepool Town", "gymLeader": "Marina", "locationId": null}, {"id": "3", "kind": "route", "row": 8, "col": 4, "name": "Route 3", "locationId": "Route 3"}, {"id": "VIN", "kind": "combo", "row": 8, "col": 5, "townId": "VIN", "townName": "Vinehaven Town", "gymLeader": null, "dungeonId": "WC", "dungeonName": "Wine Cellar Catacombs", "dungeonLocationId": "Wine Cellar Catacombs"}, {"id": "8", "kind": "route", "row": 8, "col": 6, "name": "Route 8", "locationId": "Route 8"}, {"id": "9b", "kind": "route", "row": 8, "col": 7, "name": "Route 9", "locationId": "Route 9"}, {"id": "19c", "kind": "route", "row": 8, "col": 10, "name": "Route 19", "locationId": "Route 19"}, {"id": "23", "kind": "route", "row": 8, "col": 11, "name": "Route 23", "locationId": "Route 23"}, {"id": "22b", "kind": "route", "row": 8, "col": 12, "name": "Route 22", "locationId": "Route 22"}, {"id": "4a", "kind": "route", "row": 9, "col": 4, "name": "Route 4", "locationId": "Route 4"}, {"id": "5", "kind": "route", "row": 9, "col": 5, "name": "Route 5", "locationId": "Route 5"}, {"id": "9a", "kind": "route", "row": 9, "col": 7, "name": "Route 9", "locationId": "Route 9"}, {"id": "19d", "kind": "route", "row": 9, "col": 10, "name": "Route 19", "locationId": "Route 19"}, {"id": "22a", "kind": "route", "row": 9, "col": 12, "name": "Route 22", "locationId": "Route 22"}, {"id": "4b", "kind": "route", "row": 10, "col": 4, "name": "Route 4", "locationId": "Route 4"}, {"id": "BAY", "kind": "combo", "row": 10, "col": 5, "townId": "BAY", "townName": "Baymist City", "gymLeader": "Raven", "dungeonId": "CC", "dungeonName": "Cable Car Tunnels", "dungeonLocationId": "Cable Car Tunnels"}, {"id": "7", "kind": "route", "row": 10, "col": 6, "name": "Route 7", "locationId": "Route 7"}, {"id": "VIS", "kind": "town", "row": 10, "col": 7, "name": "Vista Town", "gymLeader": null, "locationId": null}, {"id": "CG", "kind": "dungeon", "row": 10, "col": 8, "name": "Cliffside Grotto", "locationId": "Cliffside Grotto"}, {"id": "20", "kind": "route", "row": 10, "col": 9, "name": "Route 20", "locationId": "Route 20"}, {"id": "MIS", "kind": "town", "row": 10, "col": 10, "name": "Mission Town", "gymLeader": "Grace", "locationId": null}, {"id": "21", "kind": "route", "row": 10, "col": 11, "name": "Route 21", "locationId": "Route 21"}, {"id": "SKY", "kind": "combo", "row": 10, "col": 12, "townId": "SKY", "townName": "Skyline City", "gymLeader": "Luna", "dungeonId": "SB", "dungeonName": "Studio Backlot Storm Drains", "dungeonLocationId": "Studio Backlot Storm Drains"}, {"id": "24", "kind": "route", "row": 10, "col": 13, "name": "Route 24", "locationId": "Route 24"}, {"id": "KF", "kind": "dungeon", "row": 10, "col": 14, "name": "Kelp Forest Trench / Victory Road", "locationId": "Kelp Forest Trench / Victory Road"}, {"id": "SHO", "kind": "town", "row": 10, "col": 15, "name": "Shoreline City", "gymLeader": null, "locationId": null}], "mapEdges": [["ALP", "AI"], ["ALP", "11b"], ["AI", "12a"], ["12a", "12b"], ["12b", "CRA"], ["11b", "GV"], ["CRA", "BT"], ["CRA", "13a"], ["BT", "18"], ["18", "DUN"], ["DUN", "SF"], ["GV", "11a"], ["13a", "13b"], ["SF", "16"], ["SF", "17"], ["16", "CAN"], ["CAN", "BM"], ["11a", "CAP"], ["13b", "14a"], ["SO", "BAS"], ["17", "15a"], ["BM", "15c"], ["CAP", "10a"], ["CAP", "DH"], ["10a", "10b"], ["10b", "14a"], ["10b", "9d"], ["14a", "14b"], ["14b", "BAS"], ["BAS", "15a"], ["BAS", "19a"], ["15a", "15b"], ["15b", "15c"], ["RED", "RG"], ["RG", "1"], ["1", "2"], ["DH", "6"], ["9d", "9c"], ["19a", "19b"], ["2", "TID"], ["6", "VIN"], ["9c", "9b"], ["19b", "19c"], ["TS", "TID"], ["TID", "3"], ["3", "VIN"], ["3", "4a"], ["VIN", "8"], ["VIN", "5"], ["8", "9b"], ["9b", "9a"], ["19c", "23"], ["19c", "19d"], ["23", "22b"], ["22b", "22a"], ["4a", "4b"], ["5", "BAY"], ["9a", "VIS"], ["19d", "MIS"], ["22a", "SKY"], ["4b", "BAY"], ["BAY", "7"], ["7", "VIS"], ["VIS", "CG"], ["CG", "20"], ["20", "MIS"], ["MIS", "21"], ["21", "SKY"], ["SKY", "24"], ["24", "KF"], ["KF", "SHO"]], "evoInfo": {"Sprigatito": {"evolvesFrom": null, "evolvesInto": [{"species": "Floragato", "method": "Level 5"}]}, "Floragato": {"evolvesFrom": "Sprigatito", "evolvesInto": [{"species": "Meowscarada", "method": "Level 10"}]}, "Meowscarada": {"evolvesFrom": "Floragato", "evolvesInto": []}, "Fennekin": {"evolvesFrom": null, "evolvesInto": [{"species": "Braixen", "method": "Level 5"}]}, "Braixen": {"evolvesFrom": "Fennekin", "evolvesInto": [{"species": "Delphox", "method": "Level 10"}]}, "Delphox": {"evolvesFrom": "Braixen", "evolvesInto": []}, "Popplio": {"evolvesFrom": null, "evolvesInto": [{"species": "Brionne", "method": "Level 5"}]}, "Brionne": {"evolvesFrom": "Popplio", "evolvesInto": [{"species": "Primarina", "method": "Level 9"}]}, "Primarina": {"evolvesFrom": "Brionne", "evolvesInto": []}, "Caterpie": {"evolvesFrom": null, "evolvesInto": [{"species": "Metapod", "method": "Level 3"}]}, "Metapod": {"evolvesFrom": "Caterpie", "evolvesInto": [{"species": "Butterfree", "method": "Level 4"}]}, "Butterfree": {"evolvesFrom": "Metapod", "evolvesInto": []}, "Weedle": {"evolvesFrom": null, "evolvesInto": [{"species": "Kakuna", "method": "Level 3"}]}, "Kakuna": {"evolvesFrom": "Weedle", "evolvesInto": [{"species": "Beedrill", "method": "Level 4"}]}, "Beedrill": {"evolvesFrom": "Kakuna", "evolvesInto": []}, "Bellsprout": {"evolvesFrom": null, "evolvesInto": [{"species": "Weepinbell", "method": "Level 6"}]}, "Weepinbell": {"evolvesFrom": "Bellsprout", "evolvesInto": [{"species": "Victreebel", "method": "Leaf Stone"}]}, "Victreebel": {"evolvesFrom": "Weepinbell", "evolvesInto": []}, "Paras": {"evolvesFrom": null, "evolvesInto": [{"species": "Parasect", "method": "Level 7"}]}, "Parasect": {"evolvesFrom": "Paras", "evolvesInto": []}, "Sentret": {"evolvesFrom": null, "evolvesInto": [{"species": "Furret", "method": "Level 5"}]}, "Furret": {"evolvesFrom": "Sentret", "evolvesInto": []}, "Venonat": {"evolvesFrom": null, "evolvesInto": [{"species": "Venomoth", "method": "Level 9"}]}, "Venomoth": {"evolvesFrom": "Venonat", "evolvesInto": []}, "Krabby": {"evolvesFrom": null, "evolvesInto": [{"species": "Kingler", "method": "Level 8"}]}, "Kingler": {"evolvesFrom": "Krabby", "evolvesInto": []}, "Shellder": {"evolvesFrom": null, "evolvesInto": [{"species": "Cloyster", "method": "Water Stone"}]}, "Cloyster": {"evolvesFrom": "Shellder", "evolvesInto": []}, "Staryu": {"evolvesFrom": null, "evolvesInto": [{"species": "Starmie", "method": "Water Stone"}]}, "Starmie": {"evolvesFrom": "Staryu", "evolvesInto": []}, "Wingull": {"evolvesFrom": null, "evolvesInto": [{"species": "Pelipper", "method": "Level 7"}]}, "Pelipper": {"evolvesFrom": "Wingull", "evolvesInto": []}, "Tentacool": {"evolvesFrom": null, "evolvesInto": [{"species": "Tentacruel", "method": "Level 8"}]}, "Tentacruel": {"evolvesFrom": "Tentacool", "evolvesInto": []}, "Chinchou": {"evolvesFrom": null, "evolvesInto": [{"species": "Lanturn", "method": "Level 8"}]}, "Lanturn": {"evolvesFrom": "Chinchou", "evolvesInto": []}, "Corsola": {"evolvesFrom": null, "evolvesInto": []}, "Pyukumuku": {"evolvesFrom": null, "evolvesInto": []}, "Rattata": {"evolvesFrom": null, "evolvesInto": [{"species": "Raticate", "method": "Level 6"}]}, "Raticate": {"evolvesFrom": "Rattata", "evolvesInto": []}, "Pidgey": {"evolvesFrom": null, "evolvesInto": [{"species": "Pidgeotto", "method": "Level 6"}]}, "Pidgeotto": {"evolvesFrom": "Pidgey", "evolvesInto": [{"species": "Pidgeot", "method": "Level 10"}]}, "Pidgeot": {"evolvesFrom": "Pidgeotto", "evolvesInto": []}, "Meowth": {"evolvesFrom": null, "evolvesInto": [{"species": "Persian", "method": "Level 8"}]}, "Persian": {"evolvesFrom": "Meowth", "evolvesInto": []}, "Gastly": {"evolvesFrom": null, "evolvesInto": [{"species": "Haunter", "method": "Level 7"}]}, "Haunter": {"evolvesFrom": "Gastly", "evolvesInto": [{"species": "Gengar", "method": "Linking Cord"}]}, "Gengar": {"evolvesFrom": "Haunter", "evolvesInto": []}, "Drifloon": {"evolvesFrom": null, "evolvesInto": [{"species": "Drifblim", "method": "Level 8"}]}, "Drifblim": {"evolvesFrom": "Drifloon", "evolvesInto": []}, "Litwick": {"evolvesFrom": null, "evolvesInto": [{"species": "Lampent", "method": "Level 11"}]}, "Lampent": {"evolvesFrom": "Litwick", "evolvesInto": [{"species": "Chandelure", "method": "Dusk Stone"}]}, "Chandelure": {"evolvesFrom": "Lampent", "evolvesInto": []}, "Pikachu": {"evolvesFrom": null, "evolvesInto": [{"species": "Raichu", "method": "Thunder Stone"}]}, "Raichu": {"evolvesFrom": "Pikachu", "evolvesInto": []}, "Voltorb": {"evolvesFrom": null, "evolvesInto": [{"species": "Electrode", "method": "Level 8"}]}, "Electrode": {"evolvesFrom": "Voltorb", "evolvesInto": []}, "Magnemite": {"evolvesFrom": null, "evolvesInto": [{"species": "Magneton", "method": "Level 8"}]}, "Magneton": {"evolvesFrom": "Magnemite", "evolvesInto": [{"species": "Magnezone", "method": "Special location"}]}, "Magnezone": {"evolvesFrom": "Magneton", "evolvesInto": []}, "Oddish": {"evolvesFrom": null, "evolvesInto": [{"species": "Gloom", "method": "Level 6"}]}, "Gloom": {"evolvesFrom": "Oddish", "evolvesInto": [{"species": "Vileplume", "method": "Leaf Stone"}, {"species": "Bellossom", "method": "Sun Stone"}]}, "Vileplume": {"evolvesFrom": "Gloom", "evolvesInto": []}, "Bellossom": {"evolvesFrom": "Gloom", "evolvesInto": []}, "Hoppip": {"evolvesFrom": null, "evolvesInto": [{"species": "Skiploom", "method": "Level 6"}]}, "Skiploom": {"evolvesFrom": "Hoppip", "evolvesInto": [{"species": "Jumpluff", "method": "Level 8"}]}, "Jumpluff": {"evolvesFrom": "Skiploom", "evolvesInto": []}, "Zigzagoon": {"evolvesFrom": null, "evolvesInto": [{"species": "Linoone", "method": "Level 6"}]}, "Linoone": {"evolvesFrom": "Zigzagoon", "evolvesInto": []}, "Miltank": {"evolvesFrom": null, "evolvesInto": []}, "Tauros": {"evolvesFrom": null, "evolvesInto": []}, "Bidoof": {"evolvesFrom": null, "evolvesInto": [{"species": "Bibarel", "method": "Level 5"}]}, "Bibarel": {"evolvesFrom": "Bidoof", "evolvesInto": []}, "Psyduck": {"evolvesFrom": null, "evolvesInto": [{"species": "Golduck", "method": "Level 9"}]}, "Golduck": {"evolvesFrom": "Psyduck", "evolvesInto": []}, "Magikarp": {"evolvesFrom": null, "evolvesInto": [{"species": "Gyarados", "method": "Level 6"}]}, "Gyarados": {"evolvesFrom": "Magikarp", "evolvesInto": []}, "Machop": {"evolvesFrom": null, "evolvesInto": [{"species": "Machoke", "method": "Level 8"}]}, "Machoke": {"evolvesFrom": "Machop", "evolvesInto": [{"species": "Machamp", "method": "Linking Cord"}]}, "Machamp": {"evolvesFrom": "Machoke", "evolvesInto": []}, "Onix": {"evolvesFrom": null, "evolvesInto": [{"species": "Steelix", "method": "Metal Coat"}]}, "Steelix": {"evolvesFrom": "Onix", "evolvesInto": []}, "Roggenrola": {"evolvesFrom": null, "evolvesInto": [{"species": "Boldore", "method": "Level 7"}]}, "Boldore": {"evolvesFrom": "Roggenrola", "evolvesInto": [{"species": "Gigalith", "method": "Linking Cord"}]}, "Gigalith": {"evolvesFrom": "Boldore", "evolvesInto": []}, "Drilbur": {"evolvesFrom": null, "evolvesInto": [{"species": "Excadrill", "method": "Level 9"}]}, "Excadrill": {"evolvesFrom": "Drilbur", "evolvesInto": []}, "Swinub": {"evolvesFrom": null, "evolvesInto": [{"species": "Piloswine", "method": "Level 9"}]}, "Piloswine": {"evolvesFrom": "Swinub", "evolvesInto": [{"species": "Mamoswine", "method": "Knows Ancient Power"}]}, "Mamoswine": {"evolvesFrom": "Piloswine", "evolvesInto": []}, "Snover": {"evolvesFrom": null, "evolvesInto": [{"species": "Abomasnow", "method": "Level 10"}]}, "Abomasnow": {"evolvesFrom": "Snover", "evolvesInto": []}, "Snorunt": {"evolvesFrom": null, "evolvesInto": [{"species": "Glalie", "method": "Level 11"}, {"species": "Froslass", "method": "Dawn Stone"}]}, "Glalie": {"evolvesFrom": "Snorunt", "evolvesInto": []}, "Froslass": {"evolvesFrom": "Snorunt", "evolvesInto": []}, "Sneasel": {"evolvesFrom": null, "evolvesInto": [{"species": "Weavile", "method": "Razor Claw"}]}, "Weavile": {"evolvesFrom": "Sneasel", "evolvesInto": []}, "Spheal": {"evolvesFrom": null, "evolvesInto": [{"species": "Sealeo", "method": "Level 9"}]}, "Sealeo": {"evolvesFrom": "Spheal", "evolvesInto": [{"species": "Walrein", "method": "Level 11"}]}, "Walrein": {"evolvesFrom": "Sealeo", "evolvesInto": []}, "Teddiursa": {"evolvesFrom": null, "evolvesInto": [{"species": "Ursaring", "method": "Level 8"}]}, "Ursaring": {"evolvesFrom": "Teddiursa", "evolvesInto": []}, "Delibird": {"evolvesFrom": null, "evolvesInto": []}, "Stantler": {"evolvesFrom": null, "evolvesInto": []}, "Geodude": {"evolvesFrom": null, "evolvesInto": [{"species": "Graveler", "method": "Level 7"}]}, "Graveler": {"evolvesFrom": "Geodude", "evolvesInto": [{"species": "Golem", "method": "Linking Cord"}]}, "Golem": {"evolvesFrom": "Graveler", "evolvesInto": []}, "Rhyhorn": {"evolvesFrom": null, "evolvesInto": [{"species": "Rhydon", "method": "Level 11"}]}, "Rhydon": {"evolvesFrom": "Rhyhorn", "evolvesInto": [{"species": "Rhyperior", "method": "Protector"}]}, "Rhyperior": {"evolvesFrom": "Rhydon", "evolvesInto": []}, "Larvitar": {"evolvesFrom": null, "evolvesInto": [{"species": "Pupitar", "method": "Level 8"}]}, "Pupitar": {"evolvesFrom": "Larvitar", "evolvesInto": [{"species": "Tyranitar", "method": "Level 13"}]}, "Tyranitar": {"evolvesFrom": "Pupitar", "evolvesInto": []}, "Growlithe": {"evolvesFrom": null, "evolvesInto": [{"species": "Arcanine", "method": "Fire Stone"}]}, "Arcanine": {"evolvesFrom": "Growlithe", "evolvesInto": []}, "Ponyta": {"evolvesFrom": null, "evolvesInto": [{"species": "Rapidash", "method": "Level 10"}]}, "Rapidash": {"evolvesFrom": "Ponyta", "evolvesInto": []}, "Trapinch": {"evolvesFrom": null, "evolvesInto": [{"species": "Vibrava", "method": "Level 9"}]}, "Vibrava": {"evolvesFrom": "Trapinch", "evolvesInto": [{"species": "Flygon", "method": "Level 11"}]}, "Flygon": {"evolvesFrom": "Vibrava", "evolvesInto": []}, "Skorupi": {"evolvesFrom": null, "evolvesInto": [{"species": "Drapion", "method": "Level 10"}]}, "Drapion": {"evolvesFrom": "Skorupi", "evolvesInto": []}, "Diglett": {"evolvesFrom": null, "evolvesInto": [{"species": "Dugtrio", "method": "Level 8"}]}, "Dugtrio": {"evolvesFrom": "Diglett", "evolvesInto": []}, "Cacnea": {"evolvesFrom": null, "evolvesInto": [{"species": "Cacturne", "method": "Level 9"}]}, "Cacturne": {"evolvesFrom": "Cacnea", "evolvesInto": []}, "Sandygast": {"evolvesFrom": null, "evolvesInto": [{"species": "Palossand", "method": "Level 11"}]}, "Palossand": {"evolvesFrom": "Sandygast", "evolvesInto": []}, "Baltoy": {"evolvesFrom": null, "evolvesInto": [{"species": "Claydol", "method": "Level 10"}]}, "Claydol": {"evolvesFrom": "Baltoy", "evolvesInto": []}, "Darumaka": {"evolvesFrom": null, "evolvesInto": [{"species": "Darmanitan", "method": "Level 9"}]}, "Darmanitan": {"evolvesFrom": "Darumaka", "evolvesInto": []}, "Salandit": {"evolvesFrom": null, "evolvesInto": [{"species": "Salazzle", "method": "Level 9"}]}, "Salazzle": {"evolvesFrom": "Salandit", "evolvesInto": []}, "Helioptile": {"evolvesFrom": null, "evolvesInto": [{"species": "Heliolisk", "method": "Sun Stone"}]}, "Heliolisk": {"evolvesFrom": "Helioptile", "evolvesInto": []}, "Scraggy": {"evolvesFrom": null, "evolvesInto": [{"species": "Scrafty", "method": "Level 10"}]}, "Scrafty": {"evolvesFrom": "Scraggy", "evolvesInto": []}, "Zubat": {"evolvesFrom": null, "evolvesInto": [{"species": "Golbat", "method": "Level 7"}]}, "Golbat": {"evolvesFrom": "Zubat", "evolvesInto": [{"species": "Crobat", "method": "Friendship (catch Lv +4)"}]}, "Crobat": {"evolvesFrom": "Golbat", "evolvesInto": []}, "Sableye": {"evolvesFrom": null, "evolvesInto": []}, "Absol": {"evolvesFrom": null, "evolvesInto": []}, "Houndour": {"evolvesFrom": null, "evolvesInto": [{"species": "Houndoom", "method": "Level 7"}]}, "Houndoom": {"evolvesFrom": "Houndour", "evolvesInto": []}, "Nincada": {"evolvesFrom": null, "evolvesInto": [{"species": "Ninjask", "method": "Level 6"}, {"species": "Shedinja", "method": "Level (bonus)"}]}, "Ninjask": {"evolvesFrom": "Nincada", "evolvesInto": []}, "Shedinja": {"evolvesFrom": "Nincada", "evolvesInto": []}, "Vullaby": {"evolvesFrom": null, "evolvesInto": [{"species": "Mandibuzz", "method": "Level 13"}]}, "Mandibuzz": {"evolvesFrom": "Vullaby", "evolvesInto": []}, "Spearow": {"evolvesFrom": null, "evolvesInto": [{"species": "Fearow", "method": "Level 6"}]}, "Fearow": {"evolvesFrom": "Spearow", "evolvesInto": []}, "Doduo": {"evolvesFrom": null, "evolvesInto": [{"species": "Dodrio", "method": "Level 9"}]}, "Dodrio": {"evolvesFrom": "Doduo", "evolvesInto": []}, "Skarmory": {"evolvesFrom": null, "evolvesInto": []}, "Aerodactyl": {"evolvesFrom": null, "evolvesInto": []}, "Swablu": {"evolvesFrom": null, "evolvesInto": [{"species": "Altaria", "method": "Level 9"}]}, "Altaria": {"evolvesFrom": "Swablu", "evolvesInto": []}, "Bagon": {"evolvesFrom": null, "evolvesInto": [{"species": "Shelgon", "method": "Level 8"}]}, "Shelgon": {"evolvesFrom": "Bagon", "evolvesInto": [{"species": "Salamence", "method": "Level 12"}]}, "Salamence": {"evolvesFrom": "Shelgon", "evolvesInto": []}, "Igglybuff": {"evolvesFrom": null, "evolvesInto": [{"species": "Jigglypuff", "method": "Friendship (catch Lv +4)"}]}, "Jigglypuff": {"evolvesFrom": "Igglybuff", "evolvesInto": [{"species": "Wigglytuff", "method": "Moon Stone"}]}, "Wigglytuff": {"evolvesFrom": "Jigglypuff", "evolvesInto": []}, "Ralts": {"evolvesFrom": null, "evolvesInto": [{"species": "Kirlia", "method": "Level 6"}]}, "Kirlia": {"evolvesFrom": "Ralts", "evolvesInto": [{"species": "Gardevoir", "method": "Level 8"}, {"species": "Gallade", "method": "Dawn Stone"}]}, "Gardevoir": {"evolvesFrom": "Kirlia", "evolvesInto": []}, "Gallade": {"evolvesFrom": "Kirlia", "evolvesInto": []}, "Bronzor": {"evolvesFrom": null, "evolvesInto": [{"species": "Bronzong", "method": "Level 9"}]}, "Bronzong": {"evolvesFrom": "Bronzor", "evolvesInto": []}, "Litleo": {"evolvesFrom": null, "evolvesInto": [{"species": "Pyroar", "method": "Level 9"}]}, "Pyroar": {"evolvesFrom": "Litleo", "evolvesInto": []}, "Sunkern": {"evolvesFrom": null, "evolvesInto": [{"species": "Sunflora", "method": "Sun Stone"}]}, "Sunflora": {"evolvesFrom": "Sunkern", "evolvesInto": []}, "Clefairy": {"evolvesFrom": null, "evolvesInto": [{"species": "Clefable", "method": "Moon Stone"}]}, "Clefable": {"evolvesFrom": "Clefairy", "evolvesInto": []}, "Swirlix": {"evolvesFrom": null, "evolvesInto": [{"species": "Slurpuff", "method": "Whipped Dream"}]}, "Slurpuff": {"evolvesFrom": "Swirlix", "evolvesInto": []}, "Abra": {"evolvesFrom": null, "evolvesInto": [{"species": "Kadabra", "method": "Level 5"}]}, "Kadabra": {"evolvesFrom": "Abra", "evolvesInto": [{"species": "Alakazam", "method": "Linking Cord"}]}, "Alakazam": {"evolvesFrom": "Kadabra", "evolvesInto": []}, "Drowzee": {"evolvesFrom": null, "evolvesInto": [{"species": "Hypno", "method": "Level 8"}]}, "Hypno": {"evolvesFrom": "Drowzee", "evolvesInto": []}, "Natu": {"evolvesFrom": null, "evolvesInto": [{"species": "Xatu", "method": "Level 7"}]}, "Xatu": {"evolvesFrom": "Natu", "evolvesInto": []}, "Riolu": {"evolvesFrom": null, "evolvesInto": [{"species": "Lucario", "method": "Friendship (catch Lv +4)"}]}, "Lucario": {"evolvesFrom": "Riolu", "evolvesInto": []}, "Elgyem": {"evolvesFrom": null, "evolvesInto": [{"species": "Beheeyem", "method": "Level 11"}]}, "Beheeyem": {"evolvesFrom": "Elgyem", "evolvesInto": []}, "Horsea": {"evolvesFrom": null, "evolvesInto": [{"species": "Seadra", "method": "Level 9"}]}, "Seadra": {"evolvesFrom": "Horsea", "evolvesInto": [{"species": "Kingdra", "method": "Dragon Scale"}]}, "Kingdra": {"evolvesFrom": "Seadra", "evolvesInto": []}, "Wailmer": {"evolvesFrom": null, "evolvesInto": [{"species": "Wailord", "method": "Level 10"}]}, "Wailord": {"evolvesFrom": "Wailmer", "evolvesInto": []}, "Carvanha": {"evolvesFrom": null, "evolvesInto": [{"species": "Sharpedo", "method": "Level 8"}]}, "Sharpedo": {"evolvesFrom": "Carvanha", "evolvesInto": []}, "Frillish": {"evolvesFrom": null, "evolvesInto": [{"species": "Jellicent", "method": "Level 10"}]}, "Jellicent": {"evolvesFrom": "Frillish", "evolvesInto": []}, "Kangaskhan": {"evolvesFrom": null, "evolvesInto": []}, "Landorus": {"evolvesFrom": null, "evolvesInto": []}, "Thundurus": {"evolvesFrom": null, "evolvesInto": []}, "Tornadus": {"evolvesFrom": null, "evolvesInto": []}, "Heatran": {"evolvesFrom": null, "evolvesInto": []}, "Suicune": {"evolvesFrom": null, "evolvesInto": []}, "Celebi": {"evolvesFrom": null, "evolvesInto": []}, "Jirachi": {"evolvesFrom": null, "evolvesInto": []}, "Deino": {"evolvesFrom": null, "evolvesInto": [{"species": "Zweilous", "method": "Level 12"}]}, "Zweilous": {"evolvesFrom": "Deino", "evolvesInto": [{"species": "Hydreigon", "method": "Level 15"}]}, "Hydreigon": {"evolvesFrom": "Zweilous", "evolvesInto": []}}, "dexSections": {"Starters||Given by the Professor in Redwood Town": ["Sprigatito", "Floragato", "Meowscarada", "Fennekin", "Braixen", "Delphox", "Popplio", "Brionne", "Primarina"], "Redwood Town — Ancient Forest||Route 1–2 · Old-growth canopy, ferns, undergrowth": ["Caterpie", "Metapod", "Butterfree", "Weedle", "Kakuna", "Beedrill", "Bellsprout", "Weepinbell", "Victreebel", "Paras", "Parasect", "Sentret", "Furret", "Venonat", "Venomoth"], "Tidepool Town — Rocky Coast & Tide Pools||Route 2–3 · Mendocino headlands, lighthouse, kelp beds": ["Krabby", "Kingler", "Shellder", "Cloyster", "Staryu", "Starmie", "Wingull", "Pelipper", "Tentacool", "Tentacruel", "Chinchou", "Lanturn", "Corsola", "Pyukumuku"], "Baymist City — Foggy Urban Bay||Route 3 · San Francisco: cable cars, fog, brick alleys": ["Rattata", "Raticate", "Pidgey", "Pidgeotto", "Pidgeot", "Meowth", "Persian", "Gastly", "Haunter", "Gengar", "Drifloon", "Drifblim", "Litwick", "Lampent", "Chandelure", "Pikachu", "Raichu", "Voltorb", "Electrode", "Magnemite", "Magneton", "Magnezone"], "Vinehaven Town — Wine Country||Route 3–4 · Napa terraces, orchards, farmland": ["Oddish", "Gloom", "Vileplume", "Bellossom", "Hoppip", "Skiploom", "Jumpluff", "Zigzagoon", "Linoone", "Miltank", "Tauros"], "Capitol City — River Delta & Gold Country||Route 4–6 · Sacramento: rivers, capitol, old mineshafts": ["Bidoof", "Bibarel", "Psyduck", "Golduck", "Magikarp", "Gyarados", "Machop", "Machoke", "Machamp", "Onix", "Steelix", "Roggenrola", "Boldore", "Gigalith", "Drilbur", "Excadrill"], "Alpine Town — High Sierra Lake||Route 6–7 · Lake Tahoe: snowfields, pine forest, alpine lake": ["Swinub", "Piloswine", "Mamoswine", "Snover", "Abomasnow", "Snorunt", "Glalie", "Froslass", "Sneasel", "Weavile", "Spheal", "Sealeo", "Walrein", "Teddiursa", "Ursaring", "Delibird", "Stantler"], "Crag Town — Volcanic Tablelands||Route 7–8, 10 · Bishop: eastern Sierra, 395 corridor": ["Geodude", "Graveler", "Golem", "Rhyhorn", "Rhydon", "Rhyperior", "Larvitar", "Pupitar", "Tyranitar"], "Basin Town — Farmland & Oil Fields||Route 10–11, 14, 18 · Bakersfield: derricks, dusty flats": ["Growlithe", "Arcanine", "Ponyta", "Rapidash", "Trapinch", "Vibrava", "Flygon", "Skorupi", "Drapion", "Diglett", "Dugtrio"], "Dunebreak City — Extreme Desert||Route 8–9 · Death Valley: salt flats, dunes, brutal heat": ["Cacnea", "Cacturne", "Sandygast", "Palossand", "Baltoy", "Claydol", "Darumaka", "Darmanitan", "Salandit", "Salazzle", "Helioptile", "Heliolisk", "Scraggy", "Scrafty"], "Canyon City — Boulder Desert||Route 9, 11, 16 · Joshua Tree: rock piles, night skies": ["Zubat", "Golbat", "Crobat", "Sableye", "Absol", "Houndour", "Houndoom", "Nincada", "Ninjask", "Shedinja", "Vullaby", "Mandibuzz"], "Vista Town — Coastal Cliffs||Route 12–13 · Big Sur: sea cliffs, wind, fossil bluffs": ["Spearow", "Fearow", "Doduo", "Dodrio", "Skarmory", "Aerodactyl", "Swablu", "Altaria", "Bagon", "Shelgon", "Salamence"], "Mission Town — Historic Mission Grounds||Route 13–15 · San Luis Obispo: adobe missions, gardens": ["Igglybuff", "Jigglypuff", "Wigglytuff", "Ralts", "Kirlia", "Gardevoir", "Gallade", "Bronzor", "Bronzong", "Litleo", "Pyroar", "Sunkern", "Sunflora", "Clefairy", "Clefable", "Swirlix", "Slurpuff"], "Skyline City — Studio Metropolis||Route 15–18 · Los Angeles: backlots, freeways, pier lights": ["Abra", "Kadabra", "Alakazam", "Drowzee", "Hypno", "Natu", "Xatu", "Riolu", "Lucario", "Deino", "Zweilous", "Hydreigon", "Elgyem", "Beheeyem"], "Shoreline City — Naval Harbor & Zoo Coast||Route 17 · San Diego: harbor, kelp forest, zoo imports": ["Horsea", "Seadra", "Kingdra", "Wailmer", "Wailord", "Carvanha", "Sharpedo", "Frillish", "Jellicent", "Kangaskhan"], "Legendary & Mythical Pokémon||Scattered across the region": ["Landorus", "Thundurus", "Tornadus", "Heatran", "Suicune", "Celebi", "Jirachi"]}, "evoItems": {"RED": ["Leaf Stone"], "TID": ["Water Stone"], "BAY": ["Dusk Stone"], "CAP": ["Thunder Stone", "Metal Coat"], "DUN": ["Sun Stone"], "MIS": ["Dawn Stone", "Whipped Dream"], "BAS": ["Fire Stone"], "CAN": ["Moon Stone"], "ALP": ["Razor Claw"], "CRA": ["Protector"], "SHO": ["Dragon Scale"], "SKY": ["Linking Cord"]} };
+
+/* ============ Copied pure helpers (verbatim from index.html) ============ */
+function gymCount(){ return Object.keys(DATA.gymLeaders).length; }
+function buildThresholds(){
+  const max = gymCount();
+  const q1 = Math.round(max/4), q2 = Math.round(max/2), q3 = Math.round(3*max/4);
+  return [
+    {min:0, max:0, T:2},
+    {min:1, max:q1, T:3},
+    {min:q1+1, max:q2, T:4},
+    {min:q2+1, max:q3, T:5},
+    {min:q3+1, max:max, T:6},
+  ];
+}
+const thresholds = buildThresholds();
+function thresholdFor(badges){
+  for(const t of thresholds){ if(badges>=t.min && badges<=t.max) return t.T; }
+  return 6;
+}
+const levelMap = {1:1, 2:2, 3:2, 4:3, 5:3, 6:4};
+const WHEEL = ['dragon','flying','normal','fighting','dark','fire','ghost','psychic','fairy',
+               'grass','poison','bug','electric','steel','rock','ground','ice','water'];
+const TYPE_COLOR = {
+  dragon:'#7B4FE0', flying:'#8FA8DE', normal:'#B0A890', fighting:'#C1443C', dark:'#4A4038',
+  fire:'#E0713C', ghost:'#6E5A9E', psychic:'#E0637F', fairy:'#E8A0C4', grass:'#6C9A4B',
+  poison:'#9B59B6', bug:'#9AAE3A', electric:'#D9A441', steel:'#8C97A3', rock:'#B7A05A',
+  ground:'#C9A66B', ice:'#6FB8C2', water:'#4E86C6'
+};
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+function rand(n){ return 1 + Math.floor(Math.random()*n); }
+function wheelShift(sum){
+  if(sum===2) return -2;
+  if(sum===3||sum===4) return -1;
+  if(sum>=5 && sum<=9) return 0;
+  if(sum===10||sum===11) return 1;
+  if(sum===12) return 2;
+  return 0;
+}
+function randomAttackType(t1, t2){
+  const types = [t1, t2].filter(Boolean).map(t=>t.toLowerCase());
+  const baseType = types[Math.floor(Math.random()*types.length)];
+  const shift = wheelShift(rand(6) + rand(6));
+  const baseIdx = WHEEL.indexOf(baseType);
+  const finalIdx = ((baseIdx + shift) % WHEEL.length + WHEEL.length) % WHEEL.length;
+  return cap(WHEEL[finalIdx]);
+}
+function pickHighestIndex(stats){
+  const max = Math.max(...stats);
+  const candidates = [];
+  stats.forEach((v,i)=>{ if(v===max) candidates.push(i); });
+  return candidates[Math.floor(Math.random()*candidates.length)];
+}
+function distributeLevelBonus(stats, level){
+  const idx = [0,1,2,3,4,5];
+  for(let i=idx.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [idx[i],idx[j]] = [idx[j],idx[i]];
+  }
+  idx.sort((a,b) => stats[b]-stats[a]);
+  const bonus = [0,0,0,0,0,0];
+  const fullCycles = Math.floor(level/6);
+  const remainder = level%6;
+  for(let k=0;k<6;k++){ bonus[idx[k]] = fullCycles; }
+  for(let k=0;k<remainder;k++){ bonus[idx[k]] += 1; }
+  return bonus;
+}
+function trainerTeamSize(badges){
+  if(badges===0) return 1;
+  if(badges<=2) return 2;
+  if(badges<=4) return 3;
+  if(badges<=6) return 4;
+  return 5;
+}
+function pickStageForLevel(rootEntry, level){
+  const root = Array.isArray(rootEntry) ? rootEntry[0] : rootEntry;
+  const forcedBranch = Array.isArray(rootEntry) ? rootEntry[1] : null;
+  const chain = DATA.trainerChain[root] || [root];
+  let chosen = chain[0];
+  for(const stage of chain){
+    if(Array.isArray(stage)){
+      const eligible = stage.filter(sp => {
+        const lvl = DATA.trainerMinLevel[sp];
+        return lvl !== undefined && lvl <= level;
+      });
+      if(eligible.length){
+        chosen = (forcedBranch && eligible.includes(forcedBranch))
+          ? forcedBranch
+          : eligible[Math.floor(Math.random() * eligible.length)];
+      }
+      continue;
+    }
+    const lvl = DATA.trainerMinLevel[stage];
+    if(lvl !== undefined && lvl <= level){
+      chosen = stage;
+    }
+  }
+  return chosen;
+}
+function fixedAttackType(finalSpecies, slotKey){
+  const types = DATA.types[finalSpecies] || ['Normal', null];
+  const primary = (types[0] || 'normal').toLowerCase();
+  const secondary = types[1] ? types[1].toLowerCase() : null;
+  const baseType = (slotKey === '2') ? (secondary || primary) : primary;
+  const idx = WHEEL.indexOf(baseType);
+  let shift = 0;
+  if(slotKey === '3') shift = 1;
+  if(slotKey === '4') shift = -1;
+  const finalIdx = ((idx + shift) % WHEEL.length + WHEEL.length) % WHEEL.length;
+  return WHEEL[finalIdx];
+}
+const TYPE_CHART = {
+  Normal:   { Rock:0.5, Ghost:0, Steel:0.5 },
+  Fire:     { Fire:0.5, Water:0.5, Grass:2, Ice:2, Bug:2, Rock:0.5, Dragon:0.5, Steel:2 },
+  Water:    { Fire:2, Water:0.5, Grass:0.5, Ground:2, Rock:2, Dragon:0.5 },
+  Electric: { Water:2, Electric:0.5, Grass:0.5, Ground:0, Flying:2, Dragon:0.5 },
+  Grass:    { Fire:0.5, Water:2, Grass:0.5, Poison:0.5, Ground:2, Flying:0.5, Bug:0.5, Rock:2, Dragon:0.5, Steel:0.5 },
+  Ice:      { Fire:0.5, Water:0.5, Grass:2, Ice:0.5, Ground:2, Flying:2, Dragon:2, Steel:0.5 },
+  Fighting: { Normal:2, Ice:2, Poison:0.5, Flying:0.5, Psychic:0.5, Bug:0.5, Rock:2, Ghost:0, Dark:2, Steel:2, Fairy:0.5 },
+  Poison:   { Grass:2, Poison:0.5, Ground:0.5, Rock:0.5, Ghost:0.5, Steel:0, Fairy:2 },
+  Ground:   { Fire:2, Electric:2, Grass:0.5, Poison:2, Flying:0, Bug:0.5, Rock:2, Steel:2 },
+  Flying:   { Electric:0.5, Grass:2, Fighting:2, Bug:2, Rock:0.5, Steel:0.5 },
+  Psychic:  { Fighting:2, Poison:2, Psychic:0.5, Dark:0, Steel:0.5 },
+  Bug:      { Fire:0.5, Grass:2, Fighting:0.5, Poison:0.5, Flying:0.5, Psychic:2, Ghost:0.5, Dark:2, Steel:0.5, Fairy:0.5 },
+  Rock:     { Fire:2, Ice:2, Fighting:0.5, Ground:0.5, Flying:2, Bug:2, Steel:0.5 },
+  Ghost:    { Normal:0, Psychic:2, Ghost:2, Dark:0.5 },
+  Dragon:   { Dragon:2, Steel:0.5, Fairy:0 },
+  Dark:     { Fighting:0.5, Psychic:2, Ghost:2, Dark:0.5, Fairy:0.5 },
+  Steel:    { Fire:0.5, Water:0.5, Electric:0.5, Ice:2, Rock:2, Steel:0.5, Fairy:2 },
+  Fairy:    { Fire:0.5, Fighting:2, Poison:0.5, Dragon:2, Dark:2, Steel:0.5 },
+};
+const STAT_NAMES = ['HP','Atk','Def','SpA','SpD','Spe'];
+function effectiveness(atkType, defType1, defType2){
+  const row = TYPE_CHART[atkType] || {};
+  let m = (row[defType1] ?? 1);
+  if(defType2) m *= (row[defType2] ?? 1);
+  return m;
+}
+function diceConfig(mult){
+  if(mult >= 4) return {n:3, mode:'best'};
+  if(mult === 2) return {n:2, mode:'best'};
+  if(mult === 1) return {n:1, mode:'single'};
+  if(mult === 0.5) return {n:2, mode:'worst'};
+  if(mult === 0.25) return {n:3, mode:'worst'};
+  return {n:3, mode:'worst'};
+}
+function rollSide(finalStats, cfg, stabBonus){
+  let kept = null;
+  for(let i=0;i<cfg.n;i++){
+    const idx = Math.floor(Math.random()*6);
+    const val = finalStats[idx];
+    kept = (kept===null) ? val : (cfg.mode==='worst' ? Math.min(kept,val) : Math.max(kept,val));
+  }
+  return { kept, final: kept + stabBonus };
+}
+function resolveBattle(statsA, typesA, atkA, statsB, typesB, atkB){
+  const cfgA = diceConfig(effectiveness(atkA, typesA[0], typesA[1]));
+  const cfgB = diceConfig(effectiveness(atkB, typesB[0], typesB[1]));
+  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? 1 : 0;
+  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? 1 : 0;
+  let rounds = 0;
+  while(rounds++ < 300){
+    const rA = rollSide(statsA, cfgA, stabA);
+    const rB = rollSide(statsB, cfgB, stabB);
+    if(rA.final !== rB.final){
+      return { winner: rA.final>rB.final ? 'A' : 'B', finalA: rA.final, finalB: rB.final };
+    }
+  }
+  return { winner: 'tie', finalA:null, finalB:null };
+}
+
+/* ============ My Pokemon collection (shared localStorage key with index.html) ============ */
+const MY_POKEMON_KEY = 'pokemonDiceMyPokemonV1';
+function loadMyPokemon(){
+  try {
+    const list = JSON.parse(localStorage.getItem(MY_POKEMON_KEY) || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch(e){ return []; }
+}
+function saveMyPokemonList(list){
+  try { localStorage.setItem(MY_POKEMON_KEY, JSON.stringify(list)); }
+  catch(e){ console.error('Could not save My Pokemon', e); }
+}
+function addMyPokemon(entry){
+  const list = loadMyPokemon();
+  const full = Object.assign({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+    caughtAt: new Date().toISOString(),
+    xp: 0,
+  }, entry);
+  list.push(full);
+  saveMyPokemonList(list);
+  return full;
+}
+
+/* ============ Persistent game state ============ */
+const GAME_KEY = 'pokemonDiceGameStateV1';
+function loadGameState(){
+  try {
+    const s = JSON.parse(localStorage.getItem(GAME_KEY) || 'null');
+    if(s && typeof s === 'object') return s;
+  } catch(e){}
+  return { started:false, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[] };
+}
+function saveGameState(){
+  try { localStorage.setItem(GAME_KEY, JSON.stringify(gameState)); }
+  catch(e){ console.error('Could not save game state', e); }
+}
+let gameState = loadGameState();
+
+/* ============ Map helpers ============ */
+const nodesById = {};
+DATA.mapNodes.forEach(n=>{ nodesById[n.id] = n; });
+function neighborsOf(nodeId){
+  const out = [];
+  DATA.mapEdges.forEach(([a,b])=>{
+    if(a===nodeId) out.push(b);
+    else if(b===nodeId) out.push(a);
+  });
+  return out;
+}
+function nodeDisplayName(node){
+  return node.kind === 'combo' ? (node.townName + ' / ' + node.dungeonName) : node.name;
+}
+function nodeKindLabel(node){
+  if(node.kind === 'combo') return 'Town + Dungeon';
+  if(node.kind === 'town') return 'Town / City';
+  if(node.kind === 'dungeon') return 'Dungeon';
+  return 'Route';
+}
+function locationIdFor(node){
+  if(node.kind === 'route' || node.kind === 'dungeon') return node.locationId;
+  if(node.kind === 'combo') return node.dungeonLocationId;
+  return null;
+}
+function locationFlavor(node){
+  const locId = locationIdFor(node);
+  if(!locId) return null;
+  return DATA.locations.find(l=>l.id===locId) || null;
+}
+
+/* ============ XP & leveling ============ */
+function splitXP(total, participantIds){
+  const n = participantIds.length;
+  if(n===0) return [];
+  const base = Math.floor(total/n);
+  const remainder = total - base*n;
+  return participantIds.map((id,i)=>({ id, xp: base + (i >= n-remainder ? 1 : 0) }));
+}
+function grantXP(entry, xpGain, highIdx){
+  entry.xp = (entry.xp || 0) + xpGain;
+  let level = entry.ev.reduce((a,b)=>a+b,0);
+  while(entry.xp >= level*10 && level>0){
+    entry.xp -= level*10;
+    entry.ev[highIdx] = (entry.ev[highIdx]||0) + 1;
+    level += 1;
+  }
+}
+function statTotal(statsArr){ return statsArr.reduce((a,b)=>a+b,0); }
+
+/* ============ Rolling opponents ============ */
+function rollOneDieWithThreshold(T){
+  let v = rand(6);
+  while(v>T){ v = rand(6); }
+  return v;
+}
+function rollTrueTypeAttack(types){
+  const typesLower = types.filter(Boolean).map(t=>t.toLowerCase());
+  const baseType = typesLower[Math.floor(Math.random()*typesLower.length)];
+  const shift = wheelShift(rand(6)+rand(6));
+  const baseIdx = WHEEL.indexOf(baseType);
+  const finalIdx = ((baseIdx+shift)%WHEEL.length+WHEEL.length)%WHEEL.length;
+  return cap(WHEEL[finalIdx]);
+}
+function buildOpponent(species, level){
+  const stats = DATA.dice[species] || [0,0,0,0,0,0];
+  const levelBonus = distributeLevelBonus(stats, level);
+  const statsArr = stats.map((n,i)=>n+levelBonus[i]);
+  const highIdx = pickHighestIndex(statsArr);
+  const types = DATA.types[species] || ['Normal', null];
+  return { species, level, statsArr, levelBonus, base:stats, types, highIdx };
+}
+function rollWildEncounter(locationId){
+  const loc = DATA.locations.find(l=>l.id===locationId);
+  const badges = gameState.defeatedGymLeaders.length;
+  const T = thresholdFor(badges);
+  const sum = rollOneDieWithThreshold(T) + rollOneDieWithThreshold(T);
+  const rolledSpecies = loc.table[sum-2];
+
+  const rawLevel = rand(6);
+  const finalLevel = levelMap[rawLevel] + badges;
+
+  let species = rolledSpecies;
+  let downgraded = false;
+  while(DATA.predecessor[species] && (DATA.minLevel[species]||1) > finalLevel){
+    species = DATA.predecessor[species];
+    downgraded = true;
+  }
+
+  const opp = buildOpponent(species, finalLevel);
+  opp.atk = rollTrueTypeAttack(opp.types);
+  opp.downgraded = downgraded;
+  opp.rolledSpecies = rolledSpecies;
+  opp.locationName = loc.name;
+  return opp;
+}
+function rollTrainerTeam(){
+  const badges = gameState.defeatedGymLeaders.length;
+  const classSum = rand(6)+rand(6);
+  const className = DATA.trainerClassBySum[String(classSum)];
+  const teamSize = trainerTeamSize(badges);
+  const trainerLevel = 3 + badges;
+  const table = DATA.trainerTables[className];
+  const team = [];
+  for(let i=0;i<teamSize;i++){
+    const msum = rand(6)+rand(6);
+    const root = table[msum-2];
+    const finalSpecies = pickStageForLevel(root, trainerLevel);
+    const opp = buildOpponent(finalSpecies, trainerLevel);
+    opp.atk = rollTrueTypeAttack(opp.types);
+    team.push(opp);
+  }
+  return { className, team };
+}
+function rollGymTeam(leaderName){
+  const badges = gameState.defeatedGymLeaders.length;
+  const info = DATA.gymLeaders[leaderName];
+  const slotDefs = [
+    {slot:1, minBadges:0, level: badges+5},
+    {slot:2, minBadges:0, level: badges+4},
+    {slot:3, minBadges:2, level: badges+4},
+    {slot:4, minBadges:4, level: badges+5},
+    {slot:5, minBadges:6, level: badges+3},
+  ];
+  const sendOrder = [5,2,3,4,1];
+  const team = [];
+  sendOrder.forEach(slotNum=>{
+    const def = slotDefs.find(d=>d.slot===slotNum);
+    if(badges < def.minBadges) return;
+    const root = info.slots[String(slotNum)] || info.slots[slotNum];
+    const finalSpecies = pickStageForLevel(root, def.level);
+    const opp = buildOpponent(finalSpecies, def.level);
+    opp.atk = cap(fixedAttackType(finalSpecies, String(slotNum)));
+    team.push(opp);
+  });
+  return { info, team };
+}
+
+/* ============ Transient (non-persisted) UI/turn state ============ */
+let view = gameState.started ? 'board' : 'start';
+let movement = null;      // { total, remaining }
+let encounter = null;     // active battle state
+let pendingMessage = '';  // for the generic message screen
+let startPick = { starter:null, town:null };
+
+/* ============ Rendering ============ */
+const STARTERS = ['Sprigatito','Fennekin','Popplio'];
+
+function typePillHtml(type){
+  if(!type) return '';
+  const c = TYPE_COLOR[type.toLowerCase()] || '#888';
+  return '<span class="type-pill" style="background:'+c+';">'+type+'</span>';
+}
+function statRowHtml(statsArr){
+  return '<div class="stat-row">' + STAT_NAMES.map((label,i)=>
+    '<span class="stat-chip">'+label+' <b>'+statsArr[i]+'</b></span>'
+  ).join('') + '<span class="stat-chip">Total <b>'+statTotal(statsArr)+'</b></span></div>';
+}
+
+function renderStatus(){
+  const el = document.getElementById('statusStrip');
+  if(!gameState.started){ el.innerHTML=''; return; }
+  const badges = gameState.defeatedGymLeaders.length;
+  el.innerHTML =
+    '<span class="status-badges">Badges: '+badges+' / '+gymCount()+'</span>' +
+    (badges ? '<span class="status-gyms">'+gameState.defeatedGymLeaders.join(', ')+'</span>' : '') +
+    '<button type="button" class="reset-btn" data-action="resetGame">Reset Game</button>';
+}
+
+function render(){
+  renderStatus();
+  const app = document.getElementById('app');
+  if(view === 'start') app.innerHTML = renderStartScreen();
+  else if(view === 'board') app.innerHTML = renderBoardScreen();
+  else if(view === 'moving') app.innerHTML = renderMovingScreen();
+  else if(view === 'townMenu') app.innerHTML = renderTownMenuScreen();
+  else if(view === 'routeRoll') app.innerHTML = renderRouteRollScreen();
+  else if(view === 'encounter') app.innerHTML = renderEncounterScreen();
+  else if(view === 'catchOrDefeat') app.innerHTML = renderCatchOrDefeatScreen();
+  else if(view === 'message') app.innerHTML = renderMessageScreen();
+}
+
+function renderStartScreen(){
+  const starterCards = STARTERS.map(sp=>{
+    const types = DATA.types[sp] || ['Normal', null];
+    const stats = DATA.dice[sp] || [0,0,0,0,0,0];
+    const selected = startPick.starter === sp;
+    return '<div class="starter-card'+(selected?' selected':'')+'" data-action="pickStarter" data-species="'+sp+'">' +
+      '<h3>'+sp+'</h3>' +
+      typePillHtml(types[0]) + typePillHtml(types[1]) +
+      statRowHtml(stats) +
+      '</div>';
+  }).join('');
+
+  const townNodes = DATA.mapNodes.filter(n=>n.kind==='town' || n.kind==='combo');
+  const townButtons = townNodes.map(n=>{
+    const selected = startPick.town === n.id;
+    return '<button type="button" class="town-btn'+(selected?' selected':'')+'" data-action="pickTown" data-node="'+n.id+'">'+nodeDisplayName(n)+'</button>';
+  }).join('');
+
+  const canBegin = startPick.starter && startPick.town;
+
+  return '<div class="card">' +
+    '<div class="card-title">Begin Your Adventure</div>' +
+    '<div class="card-sub">Choose a starter</div>' +
+    '<div class="starter-grid">'+starterCards+'</div>' +
+    '<div class="field-label">Choose a starting town</div>' +
+    '<div class="town-grid">'+townButtons+'</div>' +
+    '<div class="choice-grid" style="margin-top:16px;">' +
+      '<button type="button" class="btn btn-primary" data-action="beginAdventure" '+(canBegin?'':'disabled')+'>Begin Adventure</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderBoardScreen(){
+  const node = nodesById[gameState.currentNodeId];
+  const loc = locationFlavor(node);
+  return '<div class="card">' +
+    '<div class="card-title">'+nodeDisplayName(node)+'</div>' +
+    '<div class="card-sub">'+nodeKindLabel(node)+'</div>' +
+    (loc && loc.flavor ? '<div class="card-flavor">'+loc.flavor+'</div>' : '') +
+    '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="rollMovement">Roll Movement</button></div>' +
+  '</div>';
+}
+
+function renderMovingScreen(){
+  const node = nodesById[gameState.currentNodeId];
+  const neighbors = neighborsOf(gameState.currentNodeId).map(id=>nodesById[id]);
+  const neighborBtns = neighbors.map(n=>
+    '<button type="button" class="btn" data-action="stepTo" data-node="'+n.id+'">'+nodeDisplayName(n)+' <span style="opacity:0.6;">('+nodeKindLabel(n)+')</span></button>'
+  ).join('');
+  return '<div class="card">' +
+    '<div class="card-title">Rolled a '+movement.total+'</div>' +
+    '<div class="card-sub">'+movement.remaining+' space'+(movement.remaining===1?'':'s')+' left -- currently at '+nodeDisplayName(node)+'</div>' +
+    '<div class="field-label">Move to</div>' +
+    '<div class="choice-grid">'+neighborBtns+'</div>' +
+    '<div class="choice-grid" style="margin-top:14px;">' +
+      '<button type="button" class="btn btn-danger" data-action="stopMoving">Stop Here (forfeit '+movement.remaining+')</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderTownMenuScreen(){
+  const node = nodesById[gameState.currentNodeId];
+  const options = [];
+  if(node.kind === 'combo'){
+    options.push('<button type="button" class="btn btn-wild" data-action="townAction" data-choice="dungeon">Dungeon Wild Encounter -- '+node.dungeonName+'</button>');
+  }
+  const items = (DATA.evoItems && DATA.evoItems[node.kind==='combo' ? node.townId : node.id]) || [];
+  if(items.length){
+    options.push('<button type="button" class="btn" data-action="townAction" data-choice="item">Get Evolution Item</button>');
+  }
+  if(node.gymLeader){
+    options.push('<button type="button" class="btn btn-primary" data-action="townAction" data-choice="gym">Gym Battle -- '+node.gymLeader+'</button>');
+  }
+  return '<div class="card">' +
+    '<div class="card-title">'+nodeDisplayName(node)+'</div>' +
+    '<div class="card-sub">'+nodeKindLabel(node)+'</div>' +
+    (options.length
+      ? '<div class="field-label">What would you like to do?</div><div class="choice-grid">'+options.join('')+'</div>'
+      : '<div class="empty-note">Nothing to do here right now.</div><div class="choice-grid"><button type="button" class="btn" data-action="endTurn">Continue</button></div>') +
+  '</div>';
+}
+
+function renderRouteRollScreen(){
+  const node = nodesById[gameState.currentNodeId];
+  const forfeited = movement ? movement.forfeited || 0 : 0;
+  let adjustHtml = '';
+  if(forfeited > 0){
+    adjustHtml =
+      '<div class="field-label">You forfeited '+forfeited+' space'+(forfeited===1?'':'s')+' -- adjust the roll?</div>' +
+      '<div class="choice-grid">' +
+        '<button type="button" class="btn btn-wild" data-action="rollRoute" data-adjust="-'+forfeited+'">&minus;'+forfeited+' (favor Wild)</button>' +
+        '<button type="button" class="btn" data-action="rollRoute" data-adjust="0">No adjustment</button>' +
+        '<button type="button" class="btn btn-primary" data-action="rollRoute" data-adjust="'+forfeited+'">+'+forfeited+' (favor Trainer)</button>' +
+      '</div>';
+  } else {
+    adjustHtml = '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="rollRoute" data-adjust="0">Roll</button></div>';
+  }
+  return '<div class="card">' +
+    '<div class="card-title">'+nodeDisplayName(node)+'</div>' +
+    '<div class="card-sub">Route -- roll to see what you find (3 or lower: wild, 4 or higher: trainer)</div>' +
+    adjustHtml +
+  '</div>';
+}
+
+function ownedMonPickerHtml(excludeIds){
+  const mons = loadMyPokemon().filter(m=>!excludeIds.has(m.id));
+  if(!mons.length) return '<div class="empty-note">No available Pokemon left to send out.</div>';
+  return mons.map(m=>{
+    const level = m.ev.reduce((a,b)=>a+b,0);
+    return '<button type="button" class="mon-pick-btn" data-action="pickPlayerMon" data-id="'+m.id+'">' +
+      '<b>'+m.name+'</b> Lv '+level+' -- '+typePillHtml(m.t1)+typePillHtml(m.t2)+' (Atk '+m.atk+')' +
+      '</button>';
+  }).join('');
+}
+
+function opponentDisplayHtml(opp, statusClass){
+  return '<span class="opp-chip'+(statusClass?(' '+statusClass):'')+'">'+opp.species+' Lv'+opp.level+'</span>';
+}
+
+function renderEncounterScreen(){
+  const e = encounter;
+  const isWild = e.type === 'wild';
+  const teamRow = isWild ? '' :
+    '<div class="opp-team-row">' + e.opponents.map((o,i)=>
+      opponentDisplayHtml(o, i<e.oppIdx ? 'defeated' : (i===e.oppIdx ? 'current' : ''))
+    ).join('') + '</div>';
+
+  const current = e.opponents[e.oppIdx];
+  const oppCard =
+    '<div class="card-title">'+current.species+' Lv'+current.level+'</div>' +
+    typePillHtml(current.types[0]) + typePillHtml(current.types[1]) +
+    ' <span class="type-pill" style="background:var(--rust);">Atk '+current.atk+'</span>' +
+    statRowHtml(current.statsArr);
+
+  let actionHtml;
+  if(e.currentPlayerId){
+    const m = loadMyPokemon().find(x=>x.id===e.currentPlayerId);
+    actionHtml = '<div class="field-label">Currently battling: '+(m?m.name:'?')+'</div>' +
+      '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="fight">Fight!</button></div>';
+  } else {
+    actionHtml = '<div class="field-label">Choose a Pokemon to send out</div>' + ownedMonPickerHtml(e.lostIds);
+  }
+
+  const logHtml = e.log.length
+    ? '<div class="log-box">' + e.log.slice().reverse().map(l=>'<div class="log-line">'+l+'</div>').join('') + '</div>'
+    : '';
+
+  return '<div class="card">' +
+    '<div class="card-sub">'+(isWild ? 'Wild Encounter' : (e.type==='gym' ? 'Gym Battle -- '+e.gymLeaderName : 'Trainer Battle -- '+e.className))+'</div>' +
+    teamRow +
+    oppCard +
+    '<hr style="border:none;border-top:1px dashed var(--line);margin:12px 0;">' +
+    actionHtml +
+    logHtml +
+  '</div>';
+}
+
+function renderCatchOrDefeatScreen(){
+  const opp = encounter.opponents[0];
+  return '<div class="card">' +
+    '<div class="card-title">You defeated the wild '+opp.species+'!</div>' +
+    '<div class="card-sub">Catch it, or let your Pokemon gain experience from defeating it?</div>' +
+    '<div class="choice-grid">' +
+      '<button type="button" class="btn btn-wild" data-action="chooseCatch">Catch</button>' +
+      '<button type="button" class="btn btn-primary" data-action="chooseDefeat">Defeat (gain XP)</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderMessageScreen(){
+  return '<div class="card">' +
+    '<div class="card-title">'+pendingMessage+'</div>' +
+    '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="endTurn">Continue</button></div>' +
+  '</div>';
+}
+
+/* ============ Actions ============ */
+function pickStarter(species){ startPick.starter = species; render(); }
+function pickTown(nodeId){ startPick.town = nodeId; render(); }
+
+function beginAdventure(){
+  if(!startPick.starter || !startPick.town) return;
+  const sp = startPick.starter;
+  const types = DATA.types[sp] || ['Normal', null];
+  const base = DATA.dice[sp] || [0,0,0,0,0,0];
+  const ev = [0,0,0,0,0,0];
+  for(let i=0;i<2;i++){ ev[rand(6)-1] += 1; }
+  addMyPokemon({
+    name: sp,
+    t1: types[0] || null,
+    t2: types[1] || null,
+    atk: randomAttackType(types[0], types[1]),
+    base: base,
+    ev: ev,
+    note: 'Starter',
+  });
+  gameState = { started:true, starterSpecies: sp, currentNodeId: startPick.town, defeatedGymLeaders: [] };
+  saveGameState();
+  view = 'board';
+  render();
+}
+
+function resetGame(){
+  if(!confirm('Reset your adventure? Your caught Pokemon collection is not affected.')) return;
+  localStorage.removeItem(GAME_KEY);
+  gameState = loadGameState();
+  startPick = { starter:null, town:null };
+  view = 'start';
+  movement = null;
+  encounter = null;
+  render();
+}
+
+function rollMovement(){
+  const n = rand(6);
+  movement = { total:n, remaining:n, forfeited:0 };
+  view = 'moving';
+  render();
+}
+function stepTo(nodeId){
+  movement.remaining -= 1;
+  gameState.currentNodeId = nodeId;
+  saveGameState();
+  if(movement.remaining <= 0){
+    resolveLanding(nodeId, 0);
+  } else {
+    render();
+  }
+}
+function stopMoving(){
+  const forfeited = movement.remaining;
+  movement.remaining = 0;
+  resolveLanding(gameState.currentNodeId, forfeited);
+}
+function resolveLanding(nodeId, forfeited){
+  const node = nodesById[nodeId];
+  if(movement) movement.forfeited = forfeited;
+  if(node.kind === 'dungeon'){
+    beginEncounter('wild', { locationId: node.locationId });
+  } else if(node.kind === 'route'){
+    view = 'routeRoll';
+    render();
+  } else {
+    view = 'townMenu';
+    render();
+  }
+}
+
+function townAction(choice){
+  const node = nodesById[gameState.currentNodeId];
+  if(choice === 'dungeon'){
+    beginEncounter('wild', { locationId: node.dungeonLocationId });
+  } else if(choice === 'item'){
+    const items = DATA.evoItems[node.kind==='combo' ? node.townId : node.id] || [];
+    pendingMessage = 'You found ' + (items.length>1 ? 'some items' : 'an item') + ': ' + items.join(', ') + '!';
+    view = 'message';
+    render();
+  } else if(choice === 'gym'){
+    beginEncounter('gym', { leaderName: node.gymLeader });
+  }
+}
+
+function rollRoute(adjust){
+  const node = nodesById[gameState.currentNodeId];
+  const raw = rand(6);
+  const result = raw + adjust;
+  if(result <= 3){
+    beginEncounter('wild', { locationId: node.locationId });
+  } else {
+    beginEncounter('trainer', {});
+  }
+}
+
+function beginEncounter(type, ctx){
+  let opponents, extra = {};
+  if(type === 'wild'){
+    opponents = [rollWildEncounter(ctx.locationId)];
+  } else if(type === 'trainer'){
+    const r = rollTrainerTeam();
+    opponents = r.team;
+    extra.className = r.className;
+  } else {
+    const r = rollGymTeam(ctx.leaderName);
+    opponents = r.team;
+    extra.gymLeaderName = ctx.leaderName;
+  }
+  encounter = Object.assign({
+    type, opponents, oppIdx:0,
+    currentPlayerId: null,
+    lostIds: new Set(),
+    sentOutIds: [],
+    currentOpponentParticipants: [],
+    log: [],
+  }, extra);
+  view = 'encounter';
+  render();
+}
+
+function pickPlayerMon(id){
+  encounter.currentPlayerId = id;
+  if(!encounter.sentOutIds.includes(id)) encounter.sentOutIds.push(id);
+  render();
+}
+
+function fight(){
+  const e = encounter;
+  const entry = loadMyPokemon().find(x=>x.id===e.currentPlayerId);
+  const opp = e.opponents[e.oppIdx];
+  e.currentOpponentParticipants.push(e.currentPlayerId);
+
+  const statsA = entry.base.map((b,i)=>b+entry.ev[i]);
+  const result = resolveBattle(statsA, [entry.t1, entry.t2], entry.atk, opp.statsArr, opp.types, opp.atk);
+
+  if(result.winner === 'A'){
+    e.log.push(entry.name+' ('+result.finalA+') defeated '+opp.species+' ('+result.finalB+')!');
+    const isLastOpponent = (e.oppIdx === e.opponents.length - 1);
+    if(e.type === 'wild'){
+      e.pendingXP = { total: statTotal(opp.statsArr), participants: e.currentOpponentParticipants.slice(), highIdx: opp.highIdx };
+      view = 'catchOrDefeat';
+      render();
+      return;
+    }
+    const xpTotal = Math.floor(statTotal(opp.statsArr) * 1.5);
+    const splits = splitXP(xpTotal, e.currentOpponentParticipants);
+    const list = loadMyPokemon();
+    splits.forEach(({id, xp})=>{
+      const mon = list.find(x=>x.id===id);
+      if(mon) grantXP(mon, xp, opp.highIdx);
+    });
+    saveMyPokemonList(list);
+    splits.forEach(s=>{ const m=list.find(x=>x.id===s.id); if(m) e.log.push(m.name+' gained '+s.xp+' XP.'); });
+
+    e.oppIdx += 1;
+    e.currentOpponentParticipants = [];
+    if(isLastOpponent){
+      if(e.type === 'gym'){
+        if(!gameState.defeatedGymLeaders.includes(e.gymLeaderName)){
+          gameState.defeatedGymLeaders.push(e.gymLeaderName);
+          saveGameState();
+        }
+        pendingMessage = 'You defeated '+e.gymLeaderName+' and earned a badge!';
+      } else {
+        pendingMessage = 'You defeated the trainer\'s whole team!';
+      }
+      view = 'message';
+      encounter = null;
+    }
+    render();
+    return;
+  }
+
+  // Loss
+  e.log.push(entry.name+' ('+result.finalA+') lost to '+opp.species+' ('+result.finalB+').');
+  e.lostIds.add(e.currentPlayerId);
+  e.currentPlayerId = null;
+
+  const remainingOwned = loadMyPokemon().filter(m=>!e.lostIds.has(m.id));
+  if(e.sentOutIds.length >= 6 || remainingOwned.length === 0){
+    pendingMessage = (e.type==='wild') ? 'The wild '+opp.species+' got away.' : 'You had no Pokemon left and had to withdraw.';
+    view = 'message';
+    encounter = null;
+  }
+  render();
+}
+
+function chooseCatch(){
+  const opp = encounter.opponents[0];
+  addMyPokemon({
+    name: opp.species,
+    t1: opp.types[0] || null,
+    t2: opp.types[1] || null,
+    atk: opp.atk,
+    base: opp.base,
+    ev: opp.levelBonus.slice(),
+    note: 'Caught in the wild',
+  });
+  pendingMessage = 'Caught '+opp.species+'!';
+  view = 'message';
+  encounter = null;
+  render();
+}
+function chooseDefeat(){
+  const e = encounter;
+  const opp = e.opponents[0];
+  const splits = splitXP(e.pendingXP.total, e.pendingXP.participants);
+  const list = loadMyPokemon();
+  splits.forEach(({id, xp})=>{
+    const mon = list.find(x=>x.id===id);
+    if(mon) grantXP(mon, xp, e.pendingXP.highIdx);
+  });
+  saveMyPokemonList(list);
+  pendingMessage = 'Defeated the wild '+opp.species+'. ' +
+    splits.map(s=>{ const m=list.find(x=>x.id===s.id); return m ? (m.name+' +'+s.xp+' XP') : ''; }).join(', ');
+  view = 'message';
+  encounter = null;
+  render();
+}
+
+function endTurn(){
+  view = 'board';
+  movement = null;
+  render();
+}
+
+/* ============ Event delegation ============ */
+document.getElementById('app').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-action]');
+  if(!btn) return;
+  const action = btn.dataset.action;
+  if(action === 'pickStarter') pickStarter(btn.dataset.species);
+  else if(action === 'pickTown') pickTown(btn.dataset.node);
+  else if(action === 'beginAdventure') beginAdventure();
+  else if(action === 'rollMovement') rollMovement();
+  else if(action === 'stepTo') stepTo(btn.dataset.node);
+  else if(action === 'stopMoving') stopMoving();
+  else if(action === 'townAction') townAction(btn.dataset.choice);
+  else if(action === 'rollRoute') rollRoute(parseInt(btn.dataset.adjust, 10));
+  else if(action === 'pickPlayerMon') pickPlayerMon(btn.dataset.id);
+  else if(action === 'fight') fight();
+  else if(action === 'chooseCatch') chooseCatch();
+  else if(action === 'chooseDefeat') chooseDefeat();
+  else if(action === 'endTurn') endTurn();
+});
+document.getElementById('statusStrip').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-action="resetGame"]');
+  if(btn) resetGame();
+});
+
+render();
+
+} catch (err) {
+  document.body.innerHTML =
+    '<div style="max-width:600px;margin:60px auto;padding:24px;' +
+    'font-family:monospace;background:#fff3f0;border:2px solid #C4572E;' +
+    'border-radius:6px;color:#1F2E3D;line-height:1.6;">' +
+    '<b style="color:#C4572E;">The game failed to load.</b><br><br>' +
+    'Error: ' + err.message + '<br><br>' +
+    '<span style="font-size:13px;">Check the browser console for details.</span></div>';
+  console.error(err);
+}
+</script>
+</body>
+</html>
