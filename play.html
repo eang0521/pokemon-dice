@@ -241,6 +241,78 @@
     display:block;
     margin: 10px 0 4px;
   }
+  .map-legend{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .map-legend span{ display:flex; align-items:center; gap:5px; }
+  .legend-swatch{ display:inline-block; width:11px; height:11px; }
+  .legend-town{ background: var(--gold); border: 1.5px solid var(--ink); }
+  .legend-town-nogym{ background: var(--nogym-green); border: 1.5px solid var(--ink); }
+  .legend-dungeon{
+    width:0; height:0;
+    background: transparent;
+    border-left: 5.5px solid transparent;
+    border-right: 5.5px solid transparent;
+    border-bottom: 10px solid var(--rust);
+  }
+  .legend-route{ background: var(--sage); border: 1.5px solid var(--ink); border-radius:50%; }
+  .map-scroll{
+    overflow-x:auto;
+    overflow-y:hidden;
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    background: var(--paper);
+    -webkit-overflow-scrolling: touch;
+  }
+  #mapSvg{ display:block; }
+  .map-node{ cursor:pointer; }
+  .map-node-shape{
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    transition: stroke-width .12s ease, filter .12s ease;
+  }
+  .map-node:hover .map-node-shape{ stroke-width: 2.5; }
+  .map-node.player-here .map-node-shape{
+    stroke: var(--rust);
+    stroke-width: 3.5;
+    filter: drop-shadow(0 0 4px var(--rust));
+  }
+  .map-node.can-move .map-node-shape{
+    stroke: var(--gold);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 5px var(--gold));
+  }
+  .map-node.can-move{ cursor:pointer; }
+  .map-node-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    pointer-events:none;
+    fill: var(--ink);
+  }
+  .map-node-label-light{ fill: var(--paper); }
+  .map-node-divider{
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    pointer-events:none;
+  }
+  .map-edge{
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    opacity: 0.35;
+  }
+  .map-hint{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--redwood);
+    margin-top: 8px;
+    min-height: 16px;
+  }
 </style>
 </head>
 <body>
@@ -250,6 +322,16 @@
     <a class="nav-link" href="index.html">&larr; Field Guide</a>
   </div>
   <div class="status-strip" id="statusStrip"></div>
+  <div class="card" id="mapCard" style="display:none;">
+    <div class="map-legend">
+      <span><span class="legend-swatch legend-town"></span>Gym town</span>
+      <span><span class="legend-swatch legend-town-nogym"></span>Town, no gym</span>
+      <span><span class="legend-swatch legend-dungeon"></span>Dungeon</span>
+      <span><span class="legend-swatch legend-route"></span>Route</span>
+    </div>
+    <div class="map-scroll"><svg id="mapSvg" viewBox="0 0 0 0"></svg></div>
+    <div class="map-hint" id="mapHint"></div>
+  </div>
   <div id="app"></div>
 </div>
 
@@ -499,6 +581,107 @@ function locationFlavor(node){
   return DATA.locations.find(l=>l.id===locId) || null;
 }
 
+/* ============ Visual map (adapted from index.html's Region Map tab) ============ */
+const CELL = 42;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs){
+  const el = document.createElementNS(SVG_NS, tag);
+  for(const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function nodeXY(n){
+  return { x: (n.col - 0.5) * CELL, y: (n.row - 0.5) * CELL };
+}
+let mapBuilt = false;
+function buildGameMap(){
+  mapBuilt = true;
+  const maxRow = Math.max(...DATA.mapNodes.map(n=>n.row));
+  const maxCol = Math.max(...DATA.mapNodes.map(n=>n.col));
+  const svg = document.getElementById('mapSvg');
+  svg.innerHTML = '';
+  svg.setAttribute('viewBox', '0 0 ' + (maxCol*CELL) + ' ' + (maxRow*CELL));
+  svg.setAttribute('width', (maxCol*CELL));
+  svg.setAttribute('height', (maxRow*CELL));
+
+  DATA.mapEdges.forEach(([a,b])=>{
+    const na = nodesById[a], nb = nodesById[b];
+    if(!na || !nb) return;
+    const pa = nodeXY(na), pb = nodeXY(nb);
+    svg.appendChild(svgEl('line', { class:'map-edge', x1:pa.x, y1:pa.y, x2:pb.x, y2:pb.y }));
+  });
+
+  DATA.mapNodes.forEach(n=>{
+    const p = nodeXY(n);
+    const g = svgEl('g', {class:'map-node', 'data-id': n.id});
+
+    if(n.kind === 'town'){
+      const s = 11;
+      const townFill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
+      g.appendChild(svgEl('rect', { class:'map-node-shape', x:p.x-s, y:p.y-s, width:s*2, height:s*2, fill:townFill }));
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+3, 'text-anchor':'middle', 'font-size':8})).textContent = n.id;
+    } else if(n.kind === 'dungeon'){
+      const s = 11;
+      const points = [ [p.x, p.y-s], [p.x-s, p.y+s*0.8], [p.x+s, p.y+s*0.8] ].map(pt=>pt.join(',')).join(' ');
+      g.appendChild(svgEl('polygon', { class:'map-node-shape', points, fill:'var(--rust)' }));
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+21, 'text-anchor':'middle', 'font-size':6.5})).textContent = n.id;
+    } else if(n.kind === 'combo'){
+      const w = 12, hTop = 10, hBottom = 12;
+      const topFill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
+      const topPts = [ [p.x-w,p.y-hTop], [p.x+w,p.y-hTop], [p.x+w,p.y], [p.x-w,p.y] ].map(pt=>pt.join(',')).join(' ');
+      const bottomPts = [ [p.x-w,p.y], [p.x+w,p.y], [p.x,p.y+hBottom] ].map(pt=>pt.join(',')).join(' ');
+      g.appendChild(svgEl('polygon', {class:'map-node-shape', points: topPts, fill:topFill}));
+      g.appendChild(svgEl('polygon', {class:'map-node-shape', points: bottomPts, fill:'var(--rust)'}));
+      g.appendChild(svgEl('line', {class:'map-node-divider', x1:p.x-w, y1:p.y, x2:p.x+w, y2:p.y}));
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y-3, 'text-anchor':'middle', 'font-size':7})).textContent = n.townId;
+      g.appendChild(svgEl('text', {class:'map-node-label map-node-label-light', x:p.x, y:p.y+9, 'text-anchor':'middle', 'font-size':6})).textContent = n.dungeonId;
+    } else {
+      const r = 11;
+      g.appendChild(svgEl('circle', {class:'map-node-shape', cx:p.x, cy:p.y, r, fill:'var(--sage)'}));
+      const fontSize = n.id.length >= 3 ? 6.5 : 7.5;
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+2.5, 'text-anchor':'middle', 'font-size':fontSize})).textContent = n.id;
+    }
+
+    g.addEventListener('click', ()=> handleMapNodeClick(n.id));
+    svg.appendChild(g);
+  });
+}
+function handleMapNodeClick(nodeId){
+  const hintEl = document.getElementById('mapHint');
+  if(view !== 'moving' || !movement){
+    hintEl.textContent = 'Roll movement first to move around the map.';
+    return;
+  }
+  if(neighborsOf(gameState.currentNodeId).includes(nodeId)){
+    hintEl.textContent = '';
+    stepTo(nodeId);
+  } else {
+    hintEl.textContent = "Can't move there from here -- pick a glowing tile.";
+  }
+}
+function renderGameMap(){
+  const mapCard = document.getElementById('mapCard');
+  if(!gameState.started){ mapCard.style.display = 'none'; return; }
+  mapCard.style.display = '';
+  if(!mapBuilt) buildGameMap();
+
+  document.querySelectorAll('.map-node').forEach(el=>{ el.classList.remove('player-here','can-move'); });
+  const hereEl = document.querySelector('.map-node[data-id="'+gameState.currentNodeId+'"]');
+  if(hereEl) hereEl.classList.add('player-here');
+
+  const hintEl = document.getElementById('mapHint');
+  if(view === 'moving' && movement){
+    neighborsOf(gameState.currentNodeId).forEach(nid=>{
+      const el = document.querySelector('.map-node[data-id="'+nid+'"]');
+      if(el) el.classList.add('can-move');
+    });
+    hintEl.textContent = 'Click a glowing tile to move there.';
+  } else if(view === 'board'){
+    hintEl.textContent = 'Roll movement to see where you can go.';
+  } else {
+    hintEl.textContent = '';
+  }
+}
+
 /* ============ XP & leveling ============ */
 function splitXP(total, participantIds){
   const n = participantIds.length;
@@ -639,6 +822,7 @@ function renderStatus(){
 
 function render(){
   renderStatus();
+  renderGameMap();
   const app = document.getElementById('app');
   if(view === 'start') app.innerHTML = renderStartScreen();
   else if(view === 'board') app.innerHTML = renderBoardScreen();
@@ -695,16 +879,11 @@ function renderBoardScreen(){
 
 function renderMovingScreen(){
   const node = nodesById[gameState.currentNodeId];
-  const neighbors = neighborsOf(gameState.currentNodeId).map(id=>nodesById[id]);
-  const neighborBtns = neighbors.map(n=>
-    '<button type="button" class="btn" data-action="stepTo" data-node="'+n.id+'">'+nodeDisplayName(n)+' <span style="opacity:0.6;">('+nodeKindLabel(n)+')</span></button>'
-  ).join('');
   return '<div class="card">' +
     '<div class="card-title">Rolled a '+movement.total+'</div>' +
     '<div class="card-sub">'+movement.remaining+' space'+(movement.remaining===1?'':'s')+' left -- currently at '+nodeDisplayName(node)+'</div>' +
-    '<div class="field-label">Move to</div>' +
-    '<div class="choice-grid">'+neighborBtns+'</div>' +
-    '<div class="choice-grid" style="margin-top:14px;">' +
+    '<div class="empty-note">Click a glowing tile on the map above to move there.</div>' +
+    '<div class="choice-grid">' +
       '<button type="button" class="btn btn-danger" data-action="stopMoving">Stop Here (forfeit '+movement.remaining+')</button>' +
     '</div>' +
   '</div>';
