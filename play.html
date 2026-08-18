@@ -1457,8 +1457,7 @@ function renderStatus(){
     '<span class="status-badges" data-action="toggleBadgePanel">Badges: '+badges+' / '+gymCount()+'</span>' +
     '<span class="status-turns">Turn '+(gameState.turnCount||0)+'</span>' +
     '<span class="status-slot">Slot '+currentSlot+'</span>' +
-    '<button type="button" class="reset-btn" data-action="goHome">Home</button>' +
-    '<button type="button" class="reset-btn" data-action="resetGame">Reset Game</button>';
+    '<button type="button" class="reset-btn" data-action="goHome">Home</button>';
   renderBadgePanel();
 }
 // One box per gym leader, in the same left-to-right order the region's gym
@@ -1953,13 +1952,6 @@ function beginAdventure(){
   render();
 }
 
-function resetGame(){
-  if(!confirm('Reset your adventure? This clears your map progress, badges, and in-game Pokemon team. Your Field Guide My Pokemon collection is a separate list and is not affected.')) return;
-  localStorage.removeItem(gameKey());
-  saveGamePokemonList([]);
-  goHome(); // back to the slot picker -- this slot now shows as empty, ready for a fresh start
-}
-
 function rollMovement(){
   const n = rand(6);
   movement = { total:n };
@@ -2378,7 +2370,6 @@ document.getElementById('app').addEventListener('click', (e)=>{
 });
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
   if(e.target.closest('[data-action="goHome"]')){ goHome(); return; }
-  if(e.target.closest('[data-action="resetGame"]')){ resetGame(); return; }
   if(e.target.closest('[data-action="toggleBadgePanel"]')){
     badgePanelOpen = !badgePanelOpen;
     renderBadgePanel();
