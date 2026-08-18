@@ -779,10 +779,12 @@ function loadGameState(){
     const s = JSON.parse(localStorage.getItem(GAME_KEY) || 'null');
     if(s && typeof s === 'object'){
       if(typeof s.turnCount !== 'number') s.turnCount = 0; // older saves predate the turn counter
+      if(s.eliteFourProgress === undefined) s.eliteFourProgress = null; // older saves predate the Elite Four
+      if(!Array.isArray(s.eliteFourTeamIds)) s.eliteFourTeamIds = [];
       return s;
     }
   } catch(e){}
-  return { started:false, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0 };
+  return { started:false, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0, eliteFourProgress:null, eliteFourTeamIds:[] };
 }
 function saveGameState(){
   try { localStorage.setItem(GAME_KEY, JSON.stringify(gameState)); }
@@ -1237,6 +1239,25 @@ function rollGymTeam(leaderName){
   });
   return { info, team };
 }
+function eliteFourMembers(){ return DATA.eliteFour.concat([DATA.champion]); }
+function eliteFourMemberLabelForIndex(idx){
+  const members = eliteFourMembers();
+  const m = members[idx];
+  return (idx === members.length-1) ? ('Champion '+m.name) : m.name;
+}
+function rollEliteFourMemberTeam(member){
+  const order = Object.prototype.hasOwnProperty.call(member.slots, '5') ? ['1','2','3','4','5','ace'] : ['1','2','3','4','ace'];
+  const team = [];
+  order.forEach(slotKey=>{
+    const root = member.slots[slotKey];
+    const level = member.levels[slotKey];
+    const finalSpecies = pickStageForLevel(root, level);
+    const opp = buildOpponent(finalSpecies, level);
+    opp.atk = cap(fixedAttackType(finalSpecies, slotKey));
+    team.push(opp);
+  });
+  return team;
+}
 
 /* ============ Transient (non-persisted) UI/turn state ============ */
 let view = gameState.started ? 'board' : 'start';
@@ -1374,6 +1395,18 @@ function renderStartScreen(){
 
 function renderBoardScreen(){
   const node = nodesById[gameState.currentNodeId];
+  if(gameState.eliteFourProgress != null){
+    const label = eliteFourMemberLabelForIndex(gameState.eliteFourProgress);
+    return '<div class="card">' +
+      '<div class="card-title">Shoreline City</div>' +
+      '<div class="card-sub">Elite Four challenge in progress</div>' +
+      '<div class="card-flavor">You fell to '+label+'. Continue your run from here, or roll to move on and forfeit your progress.</div>' +
+      '<div class="choice-grid">' +
+        '<button type="button" class="btn btn-primary" data-action="resumeEliteFour">Continue vs. '+label+'</button>' +
+        '<button type="button" class="btn" data-action="leaveShoreline">Roll Movement (resets Elite Four progress)</button>' +
+      '</div>' +
+    '</div>';
+  }
   const loc = locationFlavor(node);
   return '<div class="card">' +
     '<div class="card-title">'+nodeDisplayName(node)+'</div>' +
@@ -1410,10 +1443,19 @@ function renderTownMenuScreen(){
       options.push('<button type="button" class="btn btn-primary" data-action="townAction" data-choice="gym">Gym Battle -- '+node.gymLeader+'</button>');
     }
   }
+  let shoNote = '';
+  if(node.id === 'SHO'){
+    if(gameState.defeatedGymLeaders.length >= gymCount()){
+      options.push('<button type="button" class="btn btn-primary" data-action="townAction" data-choice="eliteFour">Challenge the Elite Four</button>');
+    } else {
+      shoNote = '<div class="empty-note">You need all '+gymCount()+' badges before you can challenge the Elite Four.</div>';
+    }
+  }
   return '<div class="card">' +
     '<div class="card-title">'+nodeDisplayName(node)+'</div>' +
     '<div class="card-sub">'+nodeKindLabel(node)+'</div>' +
     beatenGymNote +
+    shoNote +
     (options.length
       ? '<div class="field-label">What would you like to do?</div><div class="choice-grid">'+options.join('')+'</div>'
       : '<div class="empty-note">Nothing to do here right now.</div><div class="choice-grid"><button type="button" class="btn" data-action="endTurn">Continue</button></div>') +
@@ -1497,10 +1539,20 @@ function opponentDisplayHtml(opp, statusClass){
 function renderEncounterScreen(){
   const e = encounter;
   const isWild = e.type === 'wild';
-  const teamRow = isWild ? '' :
-    '<div class="opp-team-row">' + e.opponents.map((o,i)=>
+  let teamRow;
+  if(isWild){
+    teamRow = '';
+  } else if(e.type === 'elite4'){
+    const range = currentEliteFourMemberRange(e);
+    teamRow = '<div class="opp-team-row">' + e.opponents.slice(range.start, range.end).map((o,i)=>{
+      const idx = range.start + i;
+      return opponentDisplayHtml(o, idx<e.oppIdx ? 'defeated' : (idx===e.oppIdx ? 'current' : ''));
+    }).join('') + '</div>';
+  } else {
+    teamRow = '<div class="opp-team-row">' + e.opponents.map((o,i)=>
       opponentDisplayHtml(o, i<e.oppIdx ? 'defeated' : (i===e.oppIdx ? 'current' : ''))
     ).join('') + '</div>';
+  }
 
   const current = e.opponents[e.oppIdx];
   const oppCard =
@@ -1514,15 +1566,21 @@ function renderEncounterScreen(){
     actionHtml = '<div class="field-label">Currently battling: '+(m?m.name:'?')+'</div>' +
       '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="fight">Fight!</button></div>';
   } else {
-    actionHtml = '<div class="field-label">Choose a Pokemon to send out (best odds first)</div>' + ownedMonPickerHtml(e.lostIds, current);
+    const excludeIds = e.type === 'elite4' ? eliteFourExcludeIds(e) : e.lostIds;
+    actionHtml = '<div class="field-label">Choose a Pokemon to send out (best odds first)</div>' + ownedMonPickerHtml(excludeIds, current);
   }
 
   const logHtml = e.log.length
     ? '<div class="log-box">' + e.log.slice().reverse().map(l=>'<div class="log-line">'+l+'</div>').join('') + '</div>'
     : '';
 
+  const cardSub = isWild ? 'Wild Encounter'
+    : e.type === 'gym' ? 'Gym Battle -- '+e.gymLeaderName
+    : e.type === 'elite4' ? 'Elite Four -- '+currentEliteFourMemberLabel(e)
+    : 'Trainer Battle -- '+e.className;
+
   return '<div class="card">' +
-    '<div class="card-sub">'+(isWild ? 'Wild Encounter' : (e.type==='gym' ? 'Gym Battle -- '+e.gymLeaderName : 'Trainer Battle -- '+e.className))+'</div>' +
+    '<div class="card-sub">'+cardSub+'</div>' +
     teamRow +
     oppCard +
     '<hr style="border:none;border-top:1px dashed var(--line);margin:12px 0;">' +
@@ -1572,7 +1630,7 @@ function beginAdventure(){
     catchLevel: ev.reduce((a,b)=>a+b,0),
     note: 'Starter',
   });
-  gameState = { started:true, starterSpecies: sp, currentNodeId: startPick.town, defeatedGymLeaders: [], turnCount: 0 };
+  gameState = { started:true, starterSpecies: sp, currentNodeId: startPick.town, defeatedGymLeaders: [], turnCount: 0, eliteFourProgress: null, eliteFourTeamIds: [] };
   saveGameState();
   view = 'board';
   render();
@@ -1625,6 +1683,11 @@ function townAction(choice){
   } else if(choice === 'gym'){
     if(gameState.defeatedGymLeaders.includes(node.gymLeader)) return; // already beaten -- shouldn't be reachable via the UI, but don't allow it even so
     beginEncounter('gym', { leaderName: node.gymLeader });
+  } else if(choice === 'eliteFour'){
+    if(gameState.defeatedGymLeaders.length < gymCount()) return; // shouldn't be reachable via the UI, but don't allow it even so
+    gameState.eliteFourTeamIds = []; // a fresh run always starts with a fresh choice of 6
+    saveGameState();
+    beginEliteFourChallenge(0);
   }
 }
 
@@ -1689,9 +1752,78 @@ function beginEncounter(type, ctx){
   render();
 }
 
+function beginEliteFourChallenge(startIndex){
+  const members = eliteFourMembers();
+  const opponents = [];
+  const memberBoundaries = [];
+  for(let mi=startIndex; mi<members.length; mi++){
+    memberBoundaries.push({ memberIndex: mi, startAt: opponents.length, name: members[mi].name, isChampion: mi === members.length-1 });
+    rollEliteFourMemberTeam(members[mi]).forEach(o=>opponents.push(o));
+  }
+  encounter = {
+    type: 'elite4',
+    opponents, oppIdx: 0,
+    currentPlayerId: null,
+    lostIds: new Set(), // unused for elite4 -- per-opponent "revival" tracking lives in currentOppLostIds instead
+    sentOutIds: (gameState.eliteFourTeamIds || []).slice(),
+    currentOppLostIds: new Set(), // reset each time oppIdx advances -- who has already lost to the CURRENT opponent
+    currentOpponentParticipants: [],
+    xpRecipientIds: new Set(), // no XP or evolution in the Elite Four
+    memberBoundaries,
+    log: [],
+  };
+  gameState.eliteFourProgress = startIndex;
+  saveGameState();
+  view = 'encounter';
+  render();
+}
+
+function currentEliteFourMemberLabel(e){
+  let b = e.memberBoundaries[0];
+  e.memberBoundaries.forEach(x=>{ if(e.oppIdx >= x.startAt) b = x; });
+  return b.isChampion ? ('Champion '+b.name) : b.name;
+}
+function currentEliteFourMemberRange(e){
+  let idx = 0;
+  e.memberBoundaries.forEach((x,i)=>{ if(e.oppIdx >= x.startAt) idx = i; });
+  const start = e.memberBoundaries[idx].startAt;
+  const end = (idx+1 < e.memberBoundaries.length) ? e.memberBoundaries[idx+1].startAt : e.opponents.length;
+  return { start, end };
+}
+// Up to 6 distinct Pokemon total for the whole Elite Four + Champion run (locked once 6 have
+// been used); within that pool, a Pokemon that lost to the CURRENT opponent is unavailable
+// against it but is revived again for the next opponent.
+function eliteFourExcludeIds(e){
+  const pool = gameState.eliteFourTeamIds || [];
+  const excl = new Set(e.currentOppLostIds);
+  if(pool.length >= 6){
+    loadGamePokemon().forEach(m=>{ if(!pool.includes(m.id)) excl.add(m.id); });
+  }
+  return excl;
+}
+
+function resumeEliteFour(){
+  if(gameState.eliteFourProgress == null) return;
+  beginEliteFourChallenge(gameState.eliteFourProgress);
+}
+function leaveShoreline(){
+  if(!confirm('Leave Shoreline City? This resets your Elite Four progress and your locked-in team of 6.')) return;
+  gameState.eliteFourProgress = null;
+  gameState.eliteFourTeamIds = [];
+  saveGameState();
+  rollMovement();
+}
+
 function pickPlayerMon(id){
   encounter.currentPlayerId = id;
   if(!encounter.sentOutIds.includes(id)) encounter.sentOutIds.push(id);
+  if(encounter.type === 'elite4'){
+    if(!gameState.eliteFourTeamIds) gameState.eliteFourTeamIds = [];
+    if(!gameState.eliteFourTeamIds.includes(id) && gameState.eliteFourTeamIds.length < 6){
+      gameState.eliteFourTeamIds.push(id);
+      saveGameState();
+    }
+  }
   render();
 }
 
@@ -1707,6 +1839,29 @@ function fight(){
   if(result.winner === 'A'){
     e.log.push(entry.name+' ('+result.finalA+') defeated '+opp.species+' ('+result.finalB+')!');
     const isLastOpponent = (e.oppIdx === e.opponents.length - 1);
+
+    if(e.type === 'elite4'){
+      if(isLastOpponent){
+        const team = (gameState.eliteFourTeamIds || [])
+          .map(id => loadGamePokemon().find(m=>m.id===id))
+          .filter(Boolean);
+        pendingMessage = 'You have become the Calli champion! Congratulations!' +
+          '<div class="field-label" style="margin-top:14px;">Your Championship Team</div>' +
+          team.map(m=>monStatCardHtml(m)).join('');
+        gameState.eliteFourProgress = null;
+        gameState.eliteFourTeamIds = [];
+        saveGameState();
+        view = 'message';
+        encounter = null;
+      } else {
+        e.oppIdx += 1;
+        e.currentOpponentParticipants = [];
+        e.currentOppLostIds = new Set(); // revived between every battle
+      }
+      render();
+      return;
+    }
+
     if(e.type === 'wild'){
       e.pendingXP = { total: statTotal(opp.statsArr), participants: e.currentOpponentParticipants.slice(), highIdx: opp.highIdx };
       view = 'catchOrDefeat';
@@ -1750,6 +1905,25 @@ function fight(){
 
   // Loss
   e.log.push(entry.name+' ('+result.finalA+') lost to '+opp.species+' ('+result.finalB+').');
+
+  if(e.type === 'elite4'){
+    e.currentOppLostIds.add(e.currentPlayerId);
+    e.currentPlayerId = null;
+    const stillAvailable = loadGamePokemon().filter(m=>!eliteFourExcludeIds(e).has(m.id));
+    if(stillAvailable.length === 0){
+      const label = currentEliteFourMemberLabel(e);
+      let memberIdx = 0;
+      e.memberBoundaries.forEach(b=>{ if(e.oppIdx >= b.startAt) memberIdx = b.memberIndex; });
+      gameState.eliteFourProgress = memberIdx;
+      saveGameState();
+      pendingMessage = 'Your Elite Four challenge ends against '+label+'. Return to Shoreline City to continue, or leave to reset your run.';
+      view = 'message';
+      encounter = null;
+    }
+    render();
+    return;
+  }
+
   e.lostIds.add(e.currentPlayerId);
   e.currentPlayerId = null;
 
@@ -1825,6 +1999,8 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'chooseCatch') chooseCatch();
   else if(action === 'chooseDefeat') chooseDefeat();
   else if(action === 'endTurn') endTurn();
+  else if(action === 'resumeEliteFour') resumeEliteFour();
+  else if(action === 'leaveShoreline') leaveShoreline();
 });
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
   if(e.target.closest('[data-action="resetGame"]')){ resetGame(); return; }
