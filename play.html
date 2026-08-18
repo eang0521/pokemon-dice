@@ -1072,7 +1072,7 @@ function checkAndApplyLevelEvolution(entry){
     messages.push(oldName + ' evolved into ' + target + '!');
 
     const rolledAtk = randomAttackType(entry.t1, entry.t2);
-    if(rolledAtk !== entry.atk && confirm('Change attack type from '+entry.atk+' to '+rolledAtk+'?')){
+    if(rolledAtk !== entry.atk && confirm('Change '+entry.name+'\'s attack type from '+entry.atk+' to '+rolledAtk+'?')){
       entry.atk = rolledAtk;
     }
   }
@@ -1576,7 +1576,7 @@ function chooseEvolveOption(monId, targetSpecies){
   entry.t2 = types[1] || null;
   entry.base = (DATA.dice[targetSpecies] || [0,0,0,0,0,0]).slice();
   const rolledAtk = randomAttackType(entry.t1, entry.t2);
-  if(rolledAtk !== entry.atk && confirm('Change attack type from '+entry.atk+' to '+rolledAtk+'?')){
+  if(rolledAtk !== entry.atk && confirm('Change '+entry.name+'\'s attack type from '+entry.atk+' to '+rolledAtk+'?')){
     entry.atk = rolledAtk;
   }
   saveGamePokemonList(list);
