@@ -125,6 +125,33 @@
     padding: 5px 9px;
     cursor:pointer;
   }
+  .status-slot{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--sage);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .save-slot-card{
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-top: 10px;
+  }
+  .save-slot-card.save-slot-empty{ border-style:dashed; opacity:0.75; }
+  .save-slot-title{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .save-slot-meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--sage);
+    margin-bottom: 8px;
+  }
   .reset-btn:hover{ background:#e8bdb0; }
   .card{
     background: var(--paper-deep);
@@ -851,15 +878,22 @@ function winOdds(statsA, typesA, atkA, statsB, typesB, atkB){
 /* ============ In-game Pokemon collection -- its own key, separate from the Field
    Guide's "My Pokemon" (pokemonDiceMyPokemonV1). Catching/leveling a Pokemon in
    the game does not touch the Field Guide's collection, and vice versa. ============ */
-const GAME_POKEMON_KEY = 'pokemonDiceGamePokemonV1';
+/* ============ Save slots ============ */
+// Up to SAVE_SLOT_COUNT independent adventures, each with its own game state and
+// Pokemon collection, keyed off `currentSlot` -- null while on the home screen.
+const SAVE_SLOT_COUNT = 5;
+let currentSlot = null;
+function gameKey(slot){ return 'pokemonDiceGameStateV1_slot' + (slot || currentSlot); }
+function gamePokemonKey(slot){ return 'pokemonDiceGamePokemonV1_slot' + (slot || currentSlot); }
+
 function loadGamePokemon(){
   try {
-    const list = JSON.parse(localStorage.getItem(GAME_POKEMON_KEY) || '[]');
+    const list = JSON.parse(localStorage.getItem(gamePokemonKey()) || '[]');
     return Array.isArray(list) ? list : [];
   } catch(e){ return []; }
 }
 function saveGamePokemonList(list){
-  try { localStorage.setItem(GAME_POKEMON_KEY, JSON.stringify(list)); }
+  try { localStorage.setItem(gamePokemonKey(), JSON.stringify(list)); }
   catch(e){ console.error('Could not save game Pokemon', e); }
 }
 function addGamePokemon(entry){
@@ -875,10 +909,11 @@ function addGamePokemon(entry){
 }
 
 /* ============ Persistent game state ============ */
-const GAME_KEY = 'pokemonDiceGameStateV1';
-function loadGameState(){
+// Returns null (not a default object) for a slot with nothing saved -- the home
+// screen needs to tell "empty slot" apart from "a real, started adventure."
+function loadGameStateFromSlot(slot){
   try {
-    const s = JSON.parse(localStorage.getItem(GAME_KEY) || 'null');
+    const s = JSON.parse(localStorage.getItem(gameKey(slot)) || 'null');
     if(s && typeof s === 'object'){
       if(typeof s.turnCount !== 'number') s.turnCount = 0; // older saves predate the turn counter
       if(s.eliteFourProgress === undefined) s.eliteFourProgress = null; // older saves predate the Elite Four
@@ -886,13 +921,17 @@ function loadGameState(){
       return s;
     }
   } catch(e){}
-  return { started:false, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0, eliteFourProgress:null, eliteFourTeamIds:[] };
+  return null;
+}
+function loadGameState(){
+  return loadGameStateFromSlot(currentSlot) ||
+    { started:false, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0, eliteFourProgress:null, eliteFourTeamIds:[] };
 }
 function saveGameState(){
-  try { localStorage.setItem(GAME_KEY, JSON.stringify(gameState)); }
+  try { localStorage.setItem(gameKey(), JSON.stringify(gameState)); }
   catch(e){ console.error('Could not save game state', e); }
 }
-let gameState = loadGameState();
+let gameState = null; // no active slot until the player picks one on the home screen
 
 /* ============ Map helpers ============ */
 const nodesById = {};
@@ -1143,6 +1182,7 @@ function moveToNode(nodeId){
 }
 function renderGameMap(){
   const mapCard = document.getElementById('mapCard');
+  if(!gameState){ mapCard.style.display = 'none'; return; } // home screen -- no slot active
   mapCard.style.display = '';
   if(!mapBuilt) buildGameMap();
 
@@ -1367,7 +1407,7 @@ function rollEliteFourMemberTeam(member){
 }
 
 /* ============ Transient (non-persisted) UI/turn state ============ */
-let view = gameState.started ? 'board' : 'start';
+let view = 'home';
 let movement = null;      // { total } -- while the player is choosing a tile to move to
 let pendingForfeit = 0;   // spaces forfeited by the movement that just resolved (route roll adjust)
 let encounter = null;     // active battle state
@@ -1411,11 +1451,13 @@ function statRowHtml(statsArr){
 function renderStatus(){
   const el = document.getElementById('statusStrip');
   const panel = document.getElementById('badgePanel');
-  if(!gameState.started){ el.innerHTML=''; panel.style.display='none'; return; }
+  if(!gameState || !gameState.started){ el.innerHTML=''; panel.style.display='none'; return; }
   const badges = gameState.defeatedGymLeaders.length;
   el.innerHTML =
     '<span class="status-badges" data-action="toggleBadgePanel">Badges: '+badges+' / '+gymCount()+'</span>' +
     '<span class="status-turns">Turn '+(gameState.turnCount||0)+'</span>' +
+    '<span class="status-slot">Slot '+currentSlot+'</span>' +
+    '<button type="button" class="reset-btn" data-action="goHome">Home</button>' +
     '<button type="button" class="reset-btn" data-action="resetGame">Reset Game</button>';
   renderBadgePanel();
 }
@@ -1468,7 +1510,7 @@ function myPokemonSortControlsHtml(){
 
 function renderMyPokemonSection(){
   const card = document.getElementById('myPokemonCard');
-  if(!gameState.started){ card.style.display = 'none'; return; }
+  if(!gameState || !gameState.started){ card.style.display = 'none'; return; }
   card.style.display = '';
   const mons = loadGamePokemon();
   document.getElementById('myPokemonToggle').textContent = (myPokemonOpen ? '▼' : '▶') + ' My Pokemon (' + mons.length + ')';
@@ -1487,7 +1529,8 @@ function render(){
   renderGameMap();
   renderMyPokemonSection();
   const app = document.getElementById('app');
-  if(view === 'start') app.innerHTML = renderStartScreen();
+  if(view === 'home') app.innerHTML = renderHomeScreen();
+  else if(view === 'start') app.innerHTML = renderStartScreen();
   else if(view === 'board') app.innerHTML = renderBoardScreen();
   else if(view === 'moving') app.innerHTML = renderMovingScreen();
   else if(view === 'townMenu') app.innerHTML = renderTownMenuScreen();
@@ -1497,6 +1540,72 @@ function render(){
   else if(view === 'catchOrDefeat') app.innerHTML = renderCatchOrDefeatScreen();
   else if(view === 'message') app.innerHTML = renderMessageScreen();
   else if(view === 'elite4Ack') app.innerHTML = renderElite4AckScreen();
+}
+
+function renderHomeScreen(){
+  let cards = '';
+  for(let slot=1; slot<=SAVE_SLOT_COUNT; slot++){
+    const gs = loadGameStateFromSlot(slot);
+    if(gs && gs.started){
+      const node = nodesById[gs.currentNodeId];
+      const locName = node ? nodeDisplayName(node) : 'Unknown';
+      const badges = (gs.defeatedGymLeaders||[]).length;
+      cards +=
+        '<div class="save-slot-card">' +
+          '<div class="save-slot-title">Slot '+slot+' -- '+gs.starterSpecies+'</div>' +
+          '<div class="save-slot-meta">At '+locName+' &middot; '+badges+' badge'+(badges===1?'':'s')+' &middot; Turn '+(gs.turnCount||0)+'</div>' +
+          '<div class="choice-grid">' +
+            '<button type="button" class="btn btn-primary" data-action="continueSlot" data-slot="'+slot+'">Continue</button>' +
+            '<button type="button" class="btn btn-wild" data-action="newAdventureSlot" data-slot="'+slot+'">New Adventure (Overwrites)</button>' +
+          '</div>' +
+        '</div>';
+    } else {
+      cards +=
+        '<div class="save-slot-card save-slot-empty">' +
+          '<div class="save-slot-title">Slot '+slot+' -- Empty</div>' +
+          '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="newAdventureSlot" data-slot="'+slot+'">Start New Adventure</button></div>' +
+        '</div>';
+    }
+  }
+  return '<div class="card">' +
+    '<div class="card-title">Calli Adventure</div>' +
+    '<div class="card-sub">Choose a save slot ('+SAVE_SLOT_COUNT+' max -- start a new adventure in an occupied slot to overwrite it)</div>' +
+    cards +
+  '</div>';
+}
+
+function goHome(){
+  currentSlot = null;
+  gameState = null;
+  startPick = { starter:null, town:null };
+  view = 'home';
+  encounter = null;
+  movement = null;
+  render();
+}
+function continueSlot(slot){
+  currentSlot = slot;
+  gameState = loadGameState();
+  startPick = { starter:null, town:null };
+  view = gameState.started ? 'board' : 'start';
+  encounter = null;
+  movement = null;
+  render();
+}
+function newAdventureSlot(slot){
+  const existing = loadGameStateFromSlot(slot);
+  if(existing && existing.started){
+    if(!confirm('Slot '+slot+' already has a saved adventure (starter: '+existing.starterSpecies+', '+(existing.defeatedGymLeaders||[]).length+' badges). Starting a new adventure here will permanently overwrite it. Continue?')) return;
+  }
+  currentSlot = slot;
+  localStorage.removeItem(gameKey());
+  saveGamePokemonList([]);
+  gameState = loadGameState();
+  startPick = { starter:null, town:null };
+  view = 'start';
+  encounter = null;
+  movement = null;
+  render();
 }
 
 function renderStartScreen(){
@@ -1846,14 +1955,9 @@ function beginAdventure(){
 
 function resetGame(){
   if(!confirm('Reset your adventure? This clears your map progress, badges, and in-game Pokemon team. Your Field Guide My Pokemon collection is a separate list and is not affected.')) return;
-  localStorage.removeItem(GAME_KEY);
+  localStorage.removeItem(gameKey());
   saveGamePokemonList([]);
-  gameState = loadGameState();
-  startPick = { starter:null, town:null };
-  view = 'start';
-  movement = null;
-  encounter = null;
-  render();
+  goHome(); // back to the slot picker -- this slot now shows as empty, ready for a fresh start
 }
 
 function rollMovement(){
@@ -2269,8 +2373,11 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'resumeEliteFour') resumeEliteFour();
   else if(action === 'leaveShoreline') leaveShoreline();
   else if(action === 'continueEliteFour') continueEliteFour();
+  else if(action === 'continueSlot') continueSlot(parseInt(btn.dataset.slot, 10));
+  else if(action === 'newAdventureSlot') newAdventureSlot(parseInt(btn.dataset.slot, 10));
 });
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
+  if(e.target.closest('[data-action="goHome"]')){ goHome(); return; }
   if(e.target.closest('[data-action="resetGame"]')){ resetGame(); return; }
   if(e.target.closest('[data-action="toggleBadgePanel"]')){
     badgePanelOpen = !badgePanelOpen;
