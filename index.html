@@ -682,7 +682,7 @@
     display:flex;
     gap:4px;
   }
-  .sprite-sm{ width:24px; height:24px; object-fit:contain; image-rendering:pixelated; flex-shrink:0; }
+  .sprite-sm{ width:36px; height:36px; object-fit:contain; image-rendering:pixelated; flex-shrink:0; transform: translateY(-20%); }
 
   .dex-search{
     width:100%;
@@ -1014,10 +1014,11 @@
   }
   .sprite-battle{
     display:block;
-    width:72px; height:72px;
+    width:108px; height:108px;
     object-fit:contain;
     image-rendering:pixelated;
     margin: 0 auto 10px;
+    transform: translateY(-20%); /* pokemondb icons sit low in their own box -- nudge up */
   }
   .vs-badge{
     flex:0 0 auto;
@@ -1341,11 +1342,11 @@
     background: var(--paper-deep);
     border: 1px solid var(--line);
     border-radius: 4px;
-    padding: 10px 84px 12px 14px;
+    padding: 10px 120px 12px 14px;
     position:relative;
   }
   .mon-card.editing{
-    padding: 14px 84px 16px 16px;
+    padding: 14px 120px 16px 16px;
   }
   .mon-card::before{
     content:"";
@@ -1357,9 +1358,10 @@
   .sprite-lg{
     position:absolute;
     top:10px; right:12px;
-    width:64px; height:64px;
+    width:96px; height:96px;
     object-fit:contain;
     image-rendering:pixelated;
+    transform: translateY(-20%); /* pokemondb icons sit low in their own box -- nudge up */
   }
   .mon-card-top{
     display:flex;

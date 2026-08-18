@@ -147,6 +147,7 @@
     color: var(--redwood);
     margin-bottom: 10px;
   }
+  .opp-card-wrap{ position:relative; padding-right:120px; }
   .card-flavor{ font-size:13px; font-style:italic; color:#3c4f45; margin-bottom:10px; }
   .btn{
     font-family:'IBM Plex Mono', monospace;
@@ -221,7 +222,7 @@
     background: var(--paper);
     border: 1.5px solid var(--line);
     border-radius: 6px;
-    padding: 10px 84px 10px 12px;
+    padding: 10px 120px 10px 12px;
     margin-top: 10px;
     position: relative;
   }
@@ -234,9 +235,10 @@
   .sprite-lg{
     position:absolute;
     top:10px; right:12px;
-    width:64px; height:64px;
+    width:96px; height:96px;
     object-fit:contain;
     image-rendering:pixelated;
+    transform: translateY(-20%); /* pokemondb icons sit low in their own box -- nudge up */
   }
   .trainer-type-block{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
   .trainer-type-label{
@@ -272,7 +274,7 @@
     gap:16px;
     margin: 4px 0 10px;
   }
-  .sprite-battle{ width:72px; height:72px; object-fit:contain; image-rendering:pixelated; }
+  .sprite-battle{ width:108px; height:108px; object-fit:contain; image-rendering:pixelated; transform: translateY(-20%); }
   .opp-team-row{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 12px; }
   .opp-chip{
     font-family:'IBM Plex Mono', monospace;
@@ -540,7 +542,7 @@
     flex: 1;
   }
   .map-encounter-types{ display:flex; gap:4px; }
-  .sprite-sm{ width:24px; height:24px; object-fit:contain; image-rendering:pixelated; flex-shrink:0; }
+  .sprite-sm{ width:36px; height:36px; object-fit:contain; image-rendering:pixelated; flex-shrink:0; transform: translateY(-20%); }
   .section-toggle{
     display:block;
     width:100%;
@@ -1667,15 +1669,24 @@ function opponentDisplayHtml(opp, statusClass){
   return '<span class="opp-chip'+(statusClass?(' '+statusClass):'')+'">'+opp.species+' Lv'+opp.level+'</span>';
 }
 
-function diceStageHtml(rb, nameA, nameB){
+// Sprite directly above each side's name -- sits right above the dice stage (or the
+// Fight button, when not yet rolling), so it's always the header of "who's fighting."
+function battleHeaderHtml(nameA, nameB){
+  return '<div class="dice-stage">' +
+    '<div class="dice-side">' + spriteImgHtml(nameA, 'sprite-battle') + '<div class="dice-group-label">'+nameA+'</div></div>' +
+    '<span class="vs-label">vs</span>' +
+    '<div class="dice-side">' + spriteImgHtml(nameB, 'sprite-battle') + '<div class="dice-group-label">'+nameB+'</div></div>' +
+  '</div>';
+}
+function diceStageHtml(rb){
   const pick = (arr)=>arr[Math.floor(Math.random()*arr.length)];
   const diceA = Array.from({length: rb.nA}, (_,i)=>'<div class="die" id="battleDieA'+i+'">'+pick(rb.statsA)+'</div>').join('');
   const diceB = Array.from({length: rb.nB}, (_,i)=>'<div class="die" id="battleDieB'+i+'">'+pick(rb.statsB)+'</div>').join('');
   return '<div class="field-label" style="text-align:center;">Rolling...</div>' +
     '<div class="dice-stage">' +
-      '<div class="dice-side"><div class="dice-group-label">'+nameA+'</div><div class="dice-group">'+diceA+'</div></div>' +
+      '<div class="dice-group">'+diceA+'</div>' +
       '<span class="vs-label">vs</span>' +
-      '<div class="dice-side"><div class="dice-group-label">'+nameB+'</div><div class="dice-group">'+diceB+'</div></div>' +
+      '<div class="dice-group">'+diceB+'</div>' +
     '</div>';
 }
 
@@ -1698,19 +1709,25 @@ function renderEncounterScreen(){
   }
 
   const current = e.opponents[e.oppIdx];
+  // The opponent's own sprite sits in the same top-right spot as a My Pokemon card's,
+  // right beside its types/stats -- a persistent ID for whichever Pokemon it's fighting.
   const oppCard =
-    '<div class="card-title">'+current.species+' Lv '+current.level+'</div>' +
-    trainerTypeBlockHtml(current.types[0], current.types[1], current.atk) +
-    statRowHtml(current.statsArr);
+    '<div class="opp-card-wrap">' +
+      spriteImgHtml(current.species, 'sprite-lg') +
+      '<div class="card-title">'+current.species+' Lv '+current.level+'</div>' +
+      trainerTypeBlockHtml(current.types[0], current.types[1], current.atk) +
+      statRowHtml(current.statsArr) +
+    '</div>';
 
   let actionHtml;
-  if(rollingBattle){
+  if(e.currentPlayerId){
     const m = loadGamePokemon().find(x=>x.id===e.currentPlayerId);
-    actionHtml = diceStageHtml(rollingBattle, m?m.name:'?', current.species);
-  } else if(e.currentPlayerId){
-    const m = loadGamePokemon().find(x=>x.id===e.currentPlayerId);
-    actionHtml = '<div class="field-label">Currently battling: '+(m?m.name:'?')+'</div>' +
-      '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="fight">Fight!</button></div>';
+    // The player's and opponent's sprites sit directly above their names, right above
+    // wherever the dice are about to roll (or the Fight button, before rolling starts).
+    const header = battleHeaderHtml(m?m.name:'?', current.species);
+    actionHtml = rollingBattle
+      ? header + diceStageHtml(rollingBattle)
+      : header + '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="fight">Fight!</button></div>';
   } else {
     const excludeIds = e.type === 'elite4' ? eliteFourExcludeIds(e) : e.lostIds;
     actionHtml = '<div class="field-label">Choose a Pokemon to send out (best odds first)</div>' + ownedMonPickerHtml(excludeIds, current);
@@ -1725,21 +1742,8 @@ function renderEncounterScreen(){
     : e.type === 'elite4' ? 'Elite Four -- '+currentEliteFourMemberLabel(e)
     : 'Trainer Battle -- '+e.className;
 
-  // Only shown once a specific Pokemon is actively engaged (mid-fight or rolling) --
-  // the send-out picker's own cards already carry each candidate's sprite.
-  let battleSpriteHtml = '';
-  if(e.currentPlayerId){
-    const m = loadGamePokemon().find(x=>x.id===e.currentPlayerId);
-    battleSpriteHtml = '<div class="battle-sprite-row">' +
-      spriteImgHtml(m?m.name:null, 'sprite-battle') +
-      '<span class="vs-label">vs</span>' +
-      spriteImgHtml(current.species, 'sprite-battle') +
-    '</div>';
-  }
-
   return '<div class="card">' +
     '<div class="card-sub">'+cardSub+'</div>' +
-    battleSpriteHtml +
     teamRow +
     oppCard +
     '<hr style="border:none;border-top:1px dashed var(--line);margin:12px 0;">' +
