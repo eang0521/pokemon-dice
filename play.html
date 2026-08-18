@@ -200,6 +200,33 @@
     font-size: 16px;
     margin-bottom: 4px;
   }
+  .trainer-type-block{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+  .trainer-type-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--sage);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .trainer-mon-types{ display:flex; gap:5px; }
+  .trainer-atk-paren{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--ink);
+  }
+  .trainer-type-pill{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight:600;
+    color:#fff;
+    padding: 3px 9px;
+    border-radius: 12px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+  }
+  .trainer-atk-pill{ box-shadow: 0 0 0 2px var(--gold); }
   .opp-team-row{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 12px; }
   .opp-chip{
     font-family:'IBM Plex Mono', monospace;
@@ -797,6 +824,23 @@ function moveHereHtml(node){
   return '<button type="button" class="map-go-btn" data-action="moveToNode" data-node="'+node.id+'">Move Here (uses '+spacesUsed+
     (forfeited ? ', forfeits '+forfeited : '') + ')</button>';
 }
+// The gym leader's current roster at the player's present badge count -- same
+// slot-unlock/level logic actually used to fight them (rollGymTeam), shown as
+// a preview so the player can see what they'd be facing before committing.
+function gymTeamPreviewHtml(leaderName){
+  if(!leaderName || !DATA.gymLeaders[leaderName]) return '';
+  const { team } = rollGymTeam(leaderName);
+  if(!team.length) return '';
+  const badges = gameState.defeatedGymLeaders.length;
+  const rows = team.map(o=>
+    '<div class="map-encounter-row">' +
+      '<span class="map-encounter-name">' + o.species + ' Lv ' + o.level + '</span>' +
+      '<span class="map-encounter-types">' + o.types.filter(Boolean).map(t=>typePillHtml(t)).join('') + '</span>' +
+    '</div>'
+  ).join('');
+  return '<div class="map-encounter-title">Current team (' + badges + ' badge' + (badges===1?'':'s') + ')</div>' +
+    '<div class="map-encounter-list">' + rows + '</div>';
+}
 function renderMapSidebar(){
   const infoEl = document.getElementById('mapInfo');
   const n = selectedMapNodeId ? nodesById[selectedMapNodeId] : null;
@@ -811,6 +855,7 @@ function renderMapSidebar(){
       '<div class="map-info-desc">' + gymLine + ' ' + n.dungeonName + ' sits in the same location.</div>' +
       evoItemsLineHtml(n) +
       moveHereHtml(n) +
+      gymTeamPreviewHtml(n.gymLeader) +
       buildEncounterPreviewHtml(n.dungeonLocationId);
     return;
   }
@@ -831,6 +876,7 @@ function renderMapSidebar(){
     '<div class="map-info-desc">' + extra + '</div>' +
     (n.kind === 'town' ? evoItemsLineHtml(n) : '') +
     moveHereHtml(n) +
+    (n.kind === 'town' ? gymTeamPreviewHtml(n.gymLeader) : '') +
     encounterHtml;
 }
 function buildGameMap(){
@@ -904,25 +950,29 @@ function moveToNode(nodeId){
 }
 function renderGameMap(){
   const mapCard = document.getElementById('mapCard');
-  if(!gameState.started){ mapCard.style.display = 'none'; return; }
   mapCard.style.display = '';
   if(!mapBuilt) buildGameMap();
 
   document.querySelectorAll('.map-node').forEach(el=>{ el.classList.remove('player-here','can-move'); });
-  const hereEl = document.querySelector('.map-node[data-id="'+gameState.currentNodeId+'"]');
-  if(hereEl) hereEl.classList.add('player-here');
-
   const hintEl = document.getElementById('mapHint');
-  if(view === 'moving' && movement){
-    reachableWithin(gameState.currentNodeId, movement.total).forEach((dist, nid)=>{
-      const el = document.querySelector('.map-node[data-id="'+nid+'"]');
-      if(el) el.classList.add('can-move');
-    });
-    hintEl.textContent = 'Click any node for details -- glowing tiles can be reached this turn.';
-  } else if(view === 'board'){
-    hintEl.textContent = 'Click any node for details. Roll movement to move.';
+
+  if(!gameState.started){
+    hintEl.textContent = 'Click any node for details -- pick a starting town above.';
   } else {
-    hintEl.textContent = '';
+    const hereEl = document.querySelector('.map-node[data-id="'+gameState.currentNodeId+'"]');
+    if(hereEl) hereEl.classList.add('player-here');
+
+    if(view === 'moving' && movement){
+      reachableWithin(gameState.currentNodeId, movement.total).forEach((dist, nid)=>{
+        const el = document.querySelector('.map-node[data-id="'+nid+'"]');
+        if(el) el.classList.add('can-move');
+      });
+      hintEl.textContent = 'Click any node for details -- glowing tiles can be reached this turn.';
+    } else if(view === 'board'){
+      hintEl.textContent = 'Click any node for details. Roll movement to move.';
+    } else {
+      hintEl.textContent = '';
+    }
   }
   renderMapSidebar();
 }
@@ -1051,6 +1101,21 @@ function typePillHtml(type){
   if(!type) return '';
   const c = TYPE_COLOR[type.toLowerCase()] || '#888';
   return '<span class="type-pill" style="background:'+c+';">'+type+'</span>';
+}
+// Same visual language as the Field Guide's trainer/gym rows and My Pokemon
+// cards -- a "TYPE" label, colored pills, and a parenthesized "(Atk X)" with
+// a gold ring on that pill to set it apart from the true-type ones.
+function trainerStylePill(type, extraClass){
+  if(!type) return '';
+  const c = TYPE_COLOR[type.toLowerCase()] || '#888';
+  return '<span class="trainer-type-pill'+(extraClass?' '+extraClass:'')+'" style="background:'+c+';">'+type+'</span>';
+}
+function trainerTypeBlockHtml(t1, t2, atk){
+  return '<div class="trainer-type-block">' +
+    '<span class="trainer-type-label">Type</span>' +
+    '<span class="trainer-mon-types">'+trainerStylePill(t1)+trainerStylePill(t2)+'</span>' +
+    '<span class="trainer-atk-paren">(<span class="trainer-type-label">Atk</span> '+trainerStylePill(atk, 'trainer-atk-pill')+')</span>' +
+  '</div>';
 }
 function statRowHtml(statsArr){
   return '<div class="stat-row">' + STAT_NAMES.map((label,i)=>
@@ -1221,9 +1286,8 @@ function monStatCardHtml(m, actionHtml){
   const level = m.ev.reduce((a,b)=>a+b,0);
   const finalStats = m.base.map((b,i)=>b+m.ev[i]);
   return '<div class="mon-detail-card">' +
-    '<div class="mon-detail-name">'+m.name+' Lv'+level+'</div>' +
-    typePillHtml(m.t1) + typePillHtml(m.t2) +
-    ' (Atk ' + typePillHtml(m.atk) + ')' +
+    '<div class="mon-detail-name">'+m.name+' Lv '+level+'</div>' +
+    trainerTypeBlockHtml(m.t1, m.t2, m.atk) +
     statRowHtml(finalStats) +
     '<div class="stat-row"><span class="stat-chip">XP <b>'+(m.xp||0)+'</b> / '+(level*10)+' to next level</span></div>' +
     (actionHtml || '') +
@@ -1254,9 +1318,8 @@ function renderEncounterScreen(){
 
   const current = e.opponents[e.oppIdx];
   const oppCard =
-    '<div class="card-title">'+current.species+' Lv'+current.level+'</div>' +
-    typePillHtml(current.types[0]) + typePillHtml(current.types[1]) +
-    ' (Atk ' + typePillHtml(current.atk) + ')' +
+    '<div class="card-title">'+current.species+' Lv '+current.level+'</div>' +
+    trainerTypeBlockHtml(current.types[0], current.types[1], current.atk) +
     statRowHtml(current.statsArr);
 
   let actionHtml;
