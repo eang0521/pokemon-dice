@@ -1180,17 +1180,16 @@ function splitXP(total, participantIds){
 }
 const MAX_LEVEL = 20;
 function isMaxLevel(entry){ return entry.ev.reduce((a,b)=>a+b,0) >= MAX_LEVEL; }
-// Returns false (no-op) once capped, so callers can tell whether XP was actually granted.
+// XP always keeps accumulating (even past the cap -- it's just no longer "toward"
+// anything); the level-up loop itself stops once level 20 is reached.
 function grantXP(entry, xpGain, highIdx){
   let level = entry.ev.reduce((a,b)=>a+b,0);
-  if(level >= MAX_LEVEL) return false;
   entry.xp = (entry.xp || 0) + xpGain;
   while(level < MAX_LEVEL && entry.xp >= level*10 && level>0){
     entry.xp -= level*10;
     entry.ev[highIdx] = (entry.ev[highIdx]||0) + 1;
     level += 1;
   }
-  return true;
 }
 function statTotal(statsArr){ return statsArr.reduce((a,b)=>a+b,0); }
 
@@ -1648,7 +1647,7 @@ function monStatCardHtml(m, actionHtml){
     trainerTypeBlockHtml(m.t1, m.t2, m.atk) +
     statRowHtml(finalStats) +
     '<div class="stat-row"><span class="stat-chip">' + (level >= MAX_LEVEL
-      ? 'XP <b>20</b> / ∞'
+      ? 'XP <b>'+(m.xp||0)+'</b> / ∞'
       : 'XP <b>'+(m.xp||0)+'</b> / '+(level*10)+' to next level') + '</span></div>' +
     (actionHtml || '') +
   '</div>';
@@ -2142,9 +2141,8 @@ async function fight(){
     splits.forEach(({id, xp})=>{
       const mon = list.find(x=>x.id===id);
       if(!mon) return;
-      const capped = isMaxLevel(mon);
       grantXP(mon, xp, opp.highIdx);
-      e.log.push(capped ? mon.name+' is already at the level cap.' : mon.name+' gained '+xp+' XP.');
+      e.log.push(mon.name+' gained '+xp+' XP.');
       e.xpRecipientIds.add(id); // evolution check deferred until the whole encounter ends, not mid-battle
     });
     saveGamePokemonList(list);
@@ -2231,9 +2229,8 @@ function chooseDefeat(){
   splits.forEach(({id, xp})=>{
     const mon = list.find(x=>x.id===id);
     if(!mon) return;
-    const capped = isMaxLevel(mon);
     grantXP(mon, xp, e.pendingXP.highIdx);
-    xpMessages.push(capped ? mon.name+' is already at the level cap.' : mon.name+' +'+xp+' XP');
+    xpMessages.push(mon.name+' +'+xp+' XP');
     checkAndApplyLevelEvolution(mon).forEach(msg => evoMessages.push(msg));
   });
   saveGamePokemonList(list);
