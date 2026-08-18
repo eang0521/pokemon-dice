@@ -832,14 +832,15 @@ function gymTeamPreviewHtml(leaderName){
   const { team } = rollGymTeam(leaderName);
   if(!team.length) return '';
   const badges = gameState.defeatedGymLeaders.length;
-  const rows = team.map(o=>
-    '<div class="map-encounter-row">' +
-      '<span class="map-encounter-name">' + o.species + ' Lv ' + o.level + '</span>' +
-      '<span class="map-encounter-types">' + o.types.filter(Boolean).map(t=>typePillHtml(t)).join('') + '</span>' +
+  const cards = team.map(o=>
+    '<div class="mon-detail-card">' +
+      '<div class="mon-detail-name">' + o.species + ' Lv ' + o.level + '</div>' +
+      trainerTypeBlockHtml(o.types[0], o.types[1], o.atk) +
+      statRowHtml(o.statsArr) +
     '</div>'
   ).join('');
   return '<div class="map-encounter-title">Current team (' + badges + ' badge' + (badges===1?'':'s') + ')</div>' +
-    '<div class="map-encounter-list">' + rows + '</div>';
+    cards;
 }
 function renderMapSidebar(){
   const infoEl = document.getElementById('mapInfo');
