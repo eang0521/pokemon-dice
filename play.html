@@ -1359,6 +1359,7 @@ function render(){
   else if(view === 'encounter') app.innerHTML = renderEncounterScreen();
   else if(view === 'catchOrDefeat') app.innerHTML = renderCatchOrDefeatScreen();
   else if(view === 'message') app.innerHTML = renderMessageScreen();
+  else if(view === 'elite4Ack') app.innerHTML = renderElite4AckScreen();
 }
 
 function renderStartScreen(){
@@ -1608,6 +1609,17 @@ function renderMessageScreen(){
   '</div>';
 }
 
+// Shown between Elite Four members after sweeping one's whole team -- unlike
+// renderMessageScreen's "Continue" (which always ends the turn via endTurn),
+// this resumes the SAME encounter against the next member without costing a turn.
+function renderElite4AckScreen(){
+  return '<div class="card">' +
+    '<div class="card-sub">Elite Four</div>' +
+    '<div class="card-title">'+pendingMessage+'</div>' +
+    '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="continueEliteFour">Continue to '+currentEliteFourMemberLabel(encounter)+'</button></div>' +
+  '</div>';
+}
+
 /* ============ Actions ============ */
 function pickStarter(species){ startPick.starter = species; render(); }
 function pickTown(nodeId){ startPick.town = nodeId; render(); }
@@ -1802,6 +1814,11 @@ function eliteFourExcludeIds(e){
   return excl;
 }
 
+function continueEliteFour(){
+  if(!encounter) return;
+  view = 'encounter';
+  render();
+}
 function resumeEliteFour(){
   if(gameState.eliteFourProgress == null) return;
   beginEliteFourChallenge(gameState.eliteFourProgress);
@@ -1841,6 +1858,9 @@ function fight(){
     const isLastOpponent = (e.oppIdx === e.opponents.length - 1);
 
     if(e.type === 'elite4'){
+      const memberRange = currentEliteFourMemberRange(e); // still the range of the member just being fought
+      const isLastOfMember = (e.oppIdx === memberRange.end - 1);
+      const beatenLabel = currentEliteFourMemberLabel(e);
       if(isLastOpponent){
         const team = (gameState.eliteFourTeamIds || [])
           .map(id => loadGamePokemon().find(m=>m.id===id))
@@ -1857,6 +1877,12 @@ function fight(){
         e.oppIdx += 1;
         e.currentOpponentParticipants = [];
         e.currentOppLostIds = new Set(); // revived between every battle
+        if(isLastOfMember){
+          // Sweeping a member's whole team is its own separate battle -- acknowledge it,
+          // but chaining into the next member (while still winning) costs no extra turn.
+          pendingMessage = 'You defeated '+beatenLabel+'\'s whole team!';
+          view = 'elite4Ack';
+        }
       }
       render();
       return;
@@ -2001,6 +2027,7 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'endTurn') endTurn();
   else if(action === 'resumeEliteFour') resumeEliteFour();
   else if(action === 'leaveShoreline') leaveShoreline();
+  else if(action === 'continueEliteFour') continueEliteFour();
 });
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
   if(e.target.closest('[data-action="resetGame"]')){ resetGame(); return; }
