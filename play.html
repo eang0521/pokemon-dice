@@ -2061,6 +2061,7 @@ async function fight(){
       let memberIdx = 0;
       e.memberBoundaries.forEach(b=>{ if(e.oppIdx >= b.startAt) memberIdx = b.memberIndex; });
       gameState.eliteFourProgress = memberIdx;
+      gameState.turnCount = (gameState.turnCount || 0) + 1; // resuming at the member they lost to counts as a new turn
       saveGameState();
       pendingMessage = 'Your Elite Four challenge ends against '+label+'. Return to Shoreline City to continue, or leave to reset your run.';
       view = 'message';
