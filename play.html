@@ -1879,7 +1879,9 @@ function fight(){
         e.currentOppLostIds = new Set(); // revived between every battle
         if(isLastOfMember){
           // Sweeping a member's whole team is its own separate battle -- acknowledge it,
-          // but chaining into the next member (while still winning) costs no extra turn.
+          // let the player pick a fresh lead for the next member instead of auto-continuing
+          // with whoever happened to land the last hit, and cost no extra turn doing so.
+          e.currentPlayerId = null;
           pendingMessage = 'You defeated '+beatenLabel+'\'s whole team!';
           view = 'elite4Ack';
         }
