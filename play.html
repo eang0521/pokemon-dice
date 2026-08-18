@@ -297,6 +297,54 @@
     display:block;
     margin: 10px 0 4px;
   }
+  .dice-stage{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 18px;
+    margin: 14px 0 4px;
+  }
+  .dice-group{ display:flex; gap:8px; }
+  .dice-group-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--sage);
+    text-align:center;
+    margin-bottom:6px;
+  }
+  .dice-side{ display:flex; flex-direction:column; align-items:center; }
+  .die{
+    width:44px; height:44px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 7px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight:600;
+  }
+  .die.rolling{ animation: dieTumble .09s linear infinite; }
+  .die.die-kept{
+    border-color: var(--gold);
+    background: var(--gold);
+    box-shadow: 0 0 0 2px var(--gold);
+  }
+  @keyframes dieTumble{
+    0%{ transform: rotate(0deg) scale(1); }
+    50%{ transform: rotate(8deg) scale(1.05); }
+    100%{ transform: rotate(-6deg) scale(1); }
+  }
+  .vs-label{
+    font-family:'Fraunces', serif;
+    font-size:18px;
+    color: var(--redwood);
+    align-self:center;
+    margin-top: 18px;
+  }
   .map-legend{
     display:flex;
     gap:14px;
@@ -551,6 +599,21 @@ const TYPE_COLOR = {
 };
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 function rand(n){ return 1 + Math.floor(Math.random()*n); }
+function sleep(ms){ return new Promise(res=>setTimeout(res, ms)); }
+// Cycles a die square through random 1-6 values, then settles on finalFace -- the
+// actual rolled result, not a cosmetic one.
+async function tumble(el, durationMs, finalFace){
+  if(!el) return;
+  el.classList.add('rolling');
+  const steps = Math.max(1, Math.round(durationMs/85));
+  for(let i=0;i<steps-1;i++){
+    el.textContent = rand(6);
+    await sleep(85);
+  }
+  el.textContent = finalFace;
+  el.classList.remove('rolling');
+  await sleep(85);
+}
 function wheelShift(sum){
   if(sum===2) return -2;
   if(sum===3||sum===4) return -1;
@@ -666,31 +729,21 @@ function diceConfig(mult){
   if(mult === 0.25) return {n:3, mode:'worst'};
   return {n:3, mode:'worst'};
 }
+// One die per cfg.n: its face (1-6) is which of the 6 stats got picked, and the
+// kept die (best-or-worst per cfg.mode) is flagged by index so the UI can highlight it.
 function rollSide(finalStats, cfg, stabBonus){
-  let kept = null;
+  const picks = [];
+  let kept = null, keptIdx = 0;
   for(let i=0;i<cfg.n;i++){
     const idx = Math.floor(Math.random()*6);
+    picks.push(idx+1);
     const val = finalStats[idx];
-    kept = (kept===null) ? val : (cfg.mode==='worst' ? Math.min(kept,val) : Math.max(kept,val));
-  }
-  return { kept, final: kept + stabBonus };
-}
-function resolveBattle(statsA, typesA, atkA, statsB, typesB, atkB){
-  // Dice count/keep-best-or-worst depends on how effective each side's OWN attack
-  // type is against the OTHER side's defending types -- not against its own.
-  const cfgA = diceConfig(effectiveness(atkA, typesB[0], typesB[1]));
-  const cfgB = diceConfig(effectiveness(atkB, typesA[0], typesA[1]));
-  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? 1 : 0;
-  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? 1 : 0;
-  let rounds = 0;
-  while(rounds++ < 300){
-    const rA = rollSide(statsA, cfgA, stabA);
-    const rB = rollSide(statsB, cfgB, stabB);
-    if(rA.final !== rB.final){
-      return { winner: rA.final>rB.final ? 'A' : 'B', finalA: rA.final, finalB: rB.final };
+    if(kept===null || (cfg.mode==='worst' ? val<kept : val>kept)){
+      kept = val;
+      keptIdx = i;
     }
   }
-  return { winner: 'tie', finalA:null, finalB:null };
+  return { picks, keptIdx, kept, final: kept + stabBonus };
 }
 
 // Exact result distribution for one side: Map<finalValue, probability> --
@@ -1269,6 +1322,7 @@ let pendingEvolveOptions = []; // for the evolve-a-Pokemon-with-a-town-item scre
 let startPick = { starter:null, town:null };
 let myPokemonOpen = false; // collapsed/expanded state of the "My Pokemon" roster section
 let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
+let rollingBattle = null; // { nA, nB } dice counts while the "Fight!" roll animation is playing
 
 /* ============ Rendering ============ */
 const STARTERS = ['Sprigatito','Fennekin','Popplio'];
@@ -1537,6 +1591,17 @@ function opponentDisplayHtml(opp, statusClass){
   return '<span class="opp-chip'+(statusClass?(' '+statusClass):'')+'">'+opp.species+' Lv'+opp.level+'</span>';
 }
 
+function diceStageHtml(rb, nameA, nameB){
+  const diceA = Array.from({length: rb.nA}, (_,i)=>'<div class="die" id="battleDieA'+i+'">'+rand(6)+'</div>').join('');
+  const diceB = Array.from({length: rb.nB}, (_,i)=>'<div class="die" id="battleDieB'+i+'">'+rand(6)+'</div>').join('');
+  return '<div class="field-label" style="text-align:center;">Rolling...</div>' +
+    '<div class="dice-stage">' +
+      '<div class="dice-side"><div class="dice-group-label">'+nameA+'</div><div class="dice-group">'+diceA+'</div></div>' +
+      '<span class="vs-label">vs</span>' +
+      '<div class="dice-side"><div class="dice-group-label">'+nameB+'</div><div class="dice-group">'+diceB+'</div></div>' +
+    '</div>';
+}
+
 function renderEncounterScreen(){
   const e = encounter;
   const isWild = e.type === 'wild';
@@ -1562,7 +1627,10 @@ function renderEncounterScreen(){
     statRowHtml(current.statsArr);
 
   let actionHtml;
-  if(e.currentPlayerId){
+  if(rollingBattle){
+    const m = loadGamePokemon().find(x=>x.id===e.currentPlayerId);
+    actionHtml = diceStageHtml(rollingBattle, m?m.name:'?', current.species);
+  } else if(e.currentPlayerId){
     const m = loadGamePokemon().find(x=>x.id===e.currentPlayerId);
     actionHtml = '<div class="field-label">Currently battling: '+(m?m.name:'?')+'</div>' +
       '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="fight">Fight!</button></div>';
@@ -1776,9 +1844,9 @@ function beginEliteFourChallenge(startIndex){
     type: 'elite4',
     opponents, oppIdx: 0,
     currentPlayerId: null,
-    lostIds: new Set(), // unused for elite4 -- per-opponent "revival" tracking lives in currentOppLostIds instead
+    lostIds: new Set(), // unused for elite4 -- per-member "revival" tracking lives in currentMemberLostIds instead
     sentOutIds: (gameState.eliteFourTeamIds || []).slice(),
-    currentOppLostIds: new Set(), // reset each time oppIdx advances -- who has already lost to the CURRENT opponent
+    currentMemberLostIds: new Set(), // reset only when moving to a NEW member -- who has already lost within this member's battle
     currentOpponentParticipants: [],
     xpRecipientIds: new Set(), // no XP or evolution in the Elite Four
     memberBoundaries,
@@ -1803,11 +1871,11 @@ function currentEliteFourMemberRange(e){
   return { start, end };
 }
 // Up to 6 distinct Pokemon total for the whole Elite Four + Champion run (locked once 6 have
-// been used); within that pool, a Pokemon that lost to the CURRENT opponent is unavailable
-// against it but is revived again for the next opponent.
+// been used); within that pool, a Pokemon that has already lost within the CURRENT member's
+// battle is unavailable for the rest of that battle, but is revived again for the next member.
 function eliteFourExcludeIds(e){
   const pool = gameState.eliteFourTeamIds || [];
-  const excl = new Set(e.currentOppLostIds);
+  const excl = new Set(e.currentMemberLostIds);
   if(pool.length >= 6){
     loadGamePokemon().forEach(m=>{ if(!pool.includes(m.id)) excl.add(m.id); });
   }
@@ -1844,14 +1912,51 @@ function pickPlayerMon(id){
   render();
 }
 
-function fight(){
+async function fight(){
+  if(rollingBattle) return; // guard against double-clicks mid-animation
   const e = encounter;
   const entry = loadGamePokemon().find(x=>x.id===e.currentPlayerId);
   const opp = e.opponents[e.oppIdx];
   e.currentOpponentParticipants.push(e.currentPlayerId);
 
   const statsA = entry.base.map((b,i)=>b+entry.ev[i]);
-  const result = resolveBattle(statsA, [entry.t1, entry.t2], entry.atk, opp.statsArr, opp.types, opp.atk);
+  const statsB = opp.statsArr;
+  const typesA = [entry.t1, entry.t2], typesB = opp.types;
+  const atkA = entry.atk, atkB = opp.atk;
+  // Dice count/keep-best-or-worst depends on how effective each side's OWN attack
+  // type is against the OTHER side's defending types -- not against its own.
+  const cfgA = diceConfig(effectiveness(atkA, typesB[0], typesB[1]));
+  const cfgB = diceConfig(effectiveness(atkB, typesA[0], typesA[1]));
+  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? 1 : 0;
+  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? 1 : 0;
+
+  // The dice you see ARE the actual roll -- animate real rounds (including real ties,
+  // paused on-screen so the player can see what happened) rather than faking a replay.
+  let rA, rB, roundNum = 0, animate = true;
+  do {
+    roundNum++;
+    rA = rollSide(statsA, cfgA, stabA);
+    rB = rollSide(statsB, cfgB, stabB);
+    if(animate){
+      rollingBattle = { nA: cfgA.n, nB: cfgB.n };
+      render();
+      await Promise.all([
+        ...rA.picks.map((face,i)=>tumble(document.getElementById('battleDieA'+i), 900, face)),
+        ...rB.picks.map((face,i)=>tumble(document.getElementById('battleDieB'+i), 900, face)),
+      ]);
+      const dieA = document.getElementById('battleDieA'+rA.keptIdx);
+      const dieB = document.getElementById('battleDieB'+rB.keptIdx);
+      if(dieA) dieA.classList.add('die-kept');
+      if(dieB) dieB.classList.add('die-kept');
+      await sleep(rA.final === rB.final ? 900 : 500);
+      if(roundNum >= 8) animate = false; // an extreme tie streak stops animating and fast-forwards
+    }
+  } while(rA.final === rB.final && roundNum < 300);
+  rollingBattle = null;
+
+  const result = (rA.final === rB.final)
+    ? { winner: 'tie', finalA: null, finalB: null }
+    : { winner: rA.final > rB.final ? 'A' : 'B', finalA: rA.final, finalB: rB.final };
 
   if(result.winner === 'A'){
     e.log.push(entry.name+' ('+result.finalA+') defeated '+opp.species+' ('+result.finalB+')!');
@@ -1876,11 +1981,12 @@ function fight(){
       } else {
         e.oppIdx += 1;
         e.currentOpponentParticipants = [];
-        e.currentOppLostIds = new Set(); // revived between every battle
         if(isLastOfMember){
-          // Sweeping a member's whole team is its own separate battle -- acknowledge it,
-          // let the player pick a fresh lead for the next member instead of auto-continuing
-          // with whoever happened to land the last hit, and cost no extra turn doing so.
+          // Sweeping a member's whole team is its own separate battle -- Pokemon are only
+          // revived here, at the member boundary, never mid-battle against the same member.
+          e.currentMemberLostIds = new Set();
+          // Acknowledge it, let the player pick a fresh lead for the next member instead of
+          // auto-continuing with whoever happened to land the last hit, at no extra turn cost.
           e.currentPlayerId = null;
           pendingMessage = 'You defeated '+beatenLabel+'\'s whole team!';
           view = 'elite4Ack';
@@ -1935,7 +2041,7 @@ function fight(){
   e.log.push(entry.name+' ('+result.finalA+') lost to '+opp.species+' ('+result.finalB+').');
 
   if(e.type === 'elite4'){
-    e.currentOppLostIds.add(e.currentPlayerId);
+    e.currentMemberLostIds.add(e.currentPlayerId);
     e.currentPlayerId = null;
     const stillAvailable = loadGamePokemon().filter(m=>!eliteFourExcludeIds(e).has(m.id));
     if(stillAvailable.length === 0){
