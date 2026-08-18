@@ -1327,6 +1327,7 @@ let pendingMessage = '';  // for the generic message screen
 let pendingEvolveOptions = []; // for the evolve-a-Pokemon-with-a-town-item screen
 let startPick = { starter:null, town:null };
 let myPokemonOpen = false; // collapsed/expanded state of the "My Pokemon" roster section
+let myPokemonSort = 'obtained'; // 'obtained' | 'stat' | 'level' -- sort order of the roster list
 let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
 let rollingBattle = null; // { nA, nB } dice counts while the "Fight!" roll animation is playing
 
@@ -1390,6 +1391,33 @@ function renderBadgePanel(){
   panel.innerHTML = '<div class="badge-panel-grid">'+boxes+'</div>';
 }
 
+function gameMonLevel(m){ return m.ev.reduce((a,b)=>a+b,0); }
+function gameMonStatTotal(m){ return statTotal(m.base.map((b,i)=>b+m.ev[i])); }
+
+const MY_POKEMON_SORTS = [
+  { mode:'obtained', label:'Order Obtained' },
+  { mode:'stat', label:'Stat Total' },
+  { mode:'level', label:'Level' },
+];
+// 'obtained' leaves the natural (insertion) order alone; the other two are always
+// highest-first, each tiebroken by the other measure.
+function sortedGamePokemon(mons, mode){
+  const arr = mons.slice();
+  if(mode === 'stat'){
+    arr.sort((a,b) => (gameMonStatTotal(b)-gameMonStatTotal(a)) || (gameMonLevel(b)-gameMonLevel(a)));
+  } else if(mode === 'level'){
+    arr.sort((a,b) => (gameMonLevel(b)-gameMonLevel(a)) || (gameMonStatTotal(b)-gameMonStatTotal(a)));
+  }
+  return arr;
+}
+function myPokemonSortControlsHtml(){
+  return '<div class="choice-grid" style="margin-bottom:10px;">' +
+    MY_POKEMON_SORTS.map(s =>
+      '<button type="button" class="btn'+(myPokemonSort===s.mode?' btn-primary':'')+'" data-action="setMyPokemonSort" data-sort="'+s.mode+'">'+s.label+'</button>'
+    ).join('') +
+  '</div>';
+}
+
 function renderMyPokemonSection(){
   const card = document.getElementById('myPokemonCard');
   if(!gameState.started){ card.style.display = 'none'; return; }
@@ -1399,9 +1427,10 @@ function renderMyPokemonSection(){
   const listEl = document.getElementById('myPokemonList');
   listEl.style.display = myPokemonOpen ? '' : 'none';
   if(myPokemonOpen){
-    listEl.innerHTML = mons.length
-      ? mons.map(m => monStatCardHtml(m)).join('')
-      : '<div class="empty-note">No Pokemon caught yet.</div>';
+    const sorted = sortedGamePokemon(mons, myPokemonSort);
+    listEl.innerHTML = myPokemonSortControlsHtml() + (sorted.length
+      ? sorted.map(m => monStatCardHtml(m)).join('')
+      : '<div class="empty-note">No Pokemon caught yet.</div>');
   }
 }
 
@@ -2163,6 +2192,12 @@ document.getElementById('mapInfo').addEventListener('click', (e)=>{
 });
 document.getElementById('myPokemonToggle').addEventListener('click', ()=>{
   myPokemonOpen = !myPokemonOpen;
+  renderMyPokemonSection();
+});
+document.getElementById('myPokemonList').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-action="setMyPokemonSort"]');
+  if(!btn) return;
+  myPokemonSort = btn.dataset.sort;
   renderMyPokemonSection();
 });
 
