@@ -1178,14 +1178,19 @@ function splitXP(total, participantIds){
   const remainder = total - base*n;
   return participantIds.map((id,i)=>({ id, xp: base + (i >= n-remainder ? 1 : 0) }));
 }
+const MAX_LEVEL = 20;
+function isMaxLevel(entry){ return entry.ev.reduce((a,b)=>a+b,0) >= MAX_LEVEL; }
+// Returns false (no-op) once capped, so callers can tell whether XP was actually granted.
 function grantXP(entry, xpGain, highIdx){
-  entry.xp = (entry.xp || 0) + xpGain;
   let level = entry.ev.reduce((a,b)=>a+b,0);
-  while(entry.xp >= level*10 && level>0){
+  if(level >= MAX_LEVEL) return false;
+  entry.xp = (entry.xp || 0) + xpGain;
+  while(level < MAX_LEVEL && entry.xp >= level*10 && level>0){
     entry.xp -= level*10;
     entry.ev[highIdx] = (entry.ev[highIdx]||0) + 1;
     level += 1;
   }
+  return true;
 }
 function statTotal(statsArr){ return statsArr.reduce((a,b)=>a+b,0); }
 
@@ -1642,7 +1647,9 @@ function monStatCardHtml(m, actionHtml){
     '<div class="mon-detail-name">'+m.name+' Lv '+level+'</div>' +
     trainerTypeBlockHtml(m.t1, m.t2, m.atk) +
     statRowHtml(finalStats) +
-    '<div class="stat-row"><span class="stat-chip">XP <b>'+(m.xp||0)+'</b> / '+(level*10)+' to next level</span></div>' +
+    '<div class="stat-row"><span class="stat-chip">' + (level >= MAX_LEVEL
+      ? 'XP <b>20</b> / ∞'
+      : 'XP <b>'+(m.xp||0)+'</b> / '+(level*10)+' to next level') + '</span></div>' +
     (actionHtml || '') +
   '</div>';
 }
@@ -2134,13 +2141,11 @@ async function fight(){
     const list = loadGamePokemon();
     splits.forEach(({id, xp})=>{
       const mon = list.find(x=>x.id===id);
-      if(mon) grantXP(mon, xp, opp.highIdx);
-    });
-    splits.forEach(s=>{
-      const m=list.find(x=>x.id===s.id);
-      if(!m) return;
-      e.log.push(m.name+' gained '+s.xp+' XP.');
-      e.xpRecipientIds.add(s.id); // evolution check deferred until the whole encounter ends, not mid-battle
+      if(!mon) return;
+      const capped = isMaxLevel(mon);
+      grantXP(mon, xp, opp.highIdx);
+      e.log.push(capped ? mon.name+' is already at the level cap.' : mon.name+' gained '+xp+' XP.');
+      e.xpRecipientIds.add(id); // evolution check deferred until the whole encounter ends, not mid-battle
     });
     saveGamePokemonList(list);
 
@@ -2222,15 +2227,18 @@ function chooseDefeat(){
   const splits = splitXP(e.pendingXP.total, e.pendingXP.participants);
   const list = loadGamePokemon();
   const evoMessages = [];
+  const xpMessages = [];
   splits.forEach(({id, xp})=>{
     const mon = list.find(x=>x.id===id);
     if(!mon) return;
+    const capped = isMaxLevel(mon);
     grantXP(mon, xp, e.pendingXP.highIdx);
+    xpMessages.push(capped ? mon.name+' is already at the level cap.' : mon.name+' +'+xp+' XP');
     checkAndApplyLevelEvolution(mon).forEach(msg => evoMessages.push(msg));
   });
   saveGamePokemonList(list);
   pendingMessage = 'Defeated the wild '+opp.species+'. ' +
-    splits.map(s=>{ const m=list.find(x=>x.id===s.id); return m ? (m.name+' +'+s.xp+' XP') : ''; }).join(', ') +
+    xpMessages.join(', ') +
     (evoMessages.length ? ' ' + evoMessages.join(' ') : '');
   view = 'message';
   encounter = null;
