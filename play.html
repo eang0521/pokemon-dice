@@ -83,6 +83,14 @@
     font-weight:600;
   }
   .status-gyms{ color: var(--redwood); }
+  .status-turns{
+    background: var(--sage);
+    color: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 4px 9px;
+    font-weight:600;
+  }
   .reset-btn{
     margin-left:auto;
     font-family:'IBM Plex Mono', monospace;
@@ -693,9 +701,12 @@ const GAME_KEY = 'pokemonDiceGameStateV1';
 function loadGameState(){
   try {
     const s = JSON.parse(localStorage.getItem(GAME_KEY) || 'null');
-    if(s && typeof s === 'object') return s;
+    if(s && typeof s === 'object'){
+      if(typeof s.turnCount !== 'number') s.turnCount = 0; // older saves predate the turn counter
+      return s;
+    }
   } catch(e){}
-  return { started:false, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[] };
+  return { started:false, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0 };
 }
 function saveGameState(){
   try { localStorage.setItem(GAME_KEY, JSON.stringify(gameState)); }
@@ -1130,6 +1141,7 @@ function renderStatus(){
   const badges = gameState.defeatedGymLeaders.length;
   el.innerHTML =
     '<span class="status-badges">Badges: '+badges+' / '+gymCount()+'</span>' +
+    '<span class="status-turns">Turn '+(gameState.turnCount||0)+'</span>' +
     (badges ? '<span class="status-gyms">'+gameState.defeatedGymLeaders.join(', ')+'</span>' : '') +
     '<button type="button" class="reset-btn" data-action="resetGame">Reset Game</button>';
 }
@@ -1386,7 +1398,7 @@ function beginAdventure(){
     ev: ev,
     note: 'Starter',
   });
-  gameState = { started:true, starterSpecies: sp, currentNodeId: startPick.town, defeatedGymLeaders: [] };
+  gameState = { started:true, starterSpecies: sp, currentNodeId: startPick.town, defeatedGymLeaders: [], turnCount: 0 };
   saveGameState();
   view = 'board';
   render();
@@ -1407,6 +1419,8 @@ function resetGame(){
 function rollMovement(){
   const n = rand(6);
   movement = { total:n };
+  gameState.turnCount = (gameState.turnCount || 0) + 1;
+  saveGameState();
   view = 'moving';
   render();
 }
