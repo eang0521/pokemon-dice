@@ -58,7 +58,7 @@
 | 34 | Abomasnow | Grass/Ice *(migrant)* | 5 | 5 | 4 | 5 | 5 | 3 |
 | 35 | Delibird | Ice/Flying *(migrant)* | 3 | 3 | 3 | 4 | 3 | 4 |
 
-## #36–48: Pewter City — Route 3 & Mt. Moon
+## #36–49: Pewter City — Route 3 & Mt. Moon
 
 *Rocky foothills and the classic meteorite cave.*
 
@@ -75,222 +75,223 @@
 | 44 | Parasect | Bug/Grass | 3 | 5 | 5 | 3 | 5 | 2 |
 | 45 | Zubat | Poison/Flying | 2 | 3 | 2 | 2 | 2 | 3 |
 | 46 | Golbat | Poison/Flying | 4 | 5 | 4 | 4 | 4 | 5 |
-| 47 | Spearow | Normal/Flying | 2 | 3 | 2 | 2 | 2 | 4 |
-| 48 | Fearow | Normal/Flying | 4 | 5 | 4 | 3 | 3 | 6 |
+| 47 | Crobat | Poison/Flying *(new evolution)* | 5 | 5 | 5 | 4 | 5 | 7 |
+| 48 | Spearow | Normal/Flying | 2 | 3 | 2 | 2 | 2 | 4 |
+| 49 | Fearow | Normal/Flying | 4 | 5 | 4 | 3 | 3 | 6 |
 
-## #49–72: Cerulean City — Route 4, Cerulean Cave, Routes 5/9/24/25
+## #50–73: Cerulean City — Route 4, Cerulean Cave, Routes 5/9/24/25
 
 *Aquarium city, the deepened cave that gives it its Dark-leaning wildlife, and Nugget Bridge.*
 
 | # | Pokémon | Type | Die 1 | Die 2 | Die 3 | Die 4 | Die 5 | Die 6 |
 |---|---|---|---|---|---|---|---|---|
-| 49 | Staryu | Water | 2 | 3 | 3 | 4 | 3 | 5 |
-| 50 | Starmie | Water/Psychic | 3 | 4 | 5 | 6 | 5 | 7 |
-| 51 | Psyduck | Water | 3 | 3 | 3 | 4 | 3 | 3 |
-| 52 | Golduck | Water | 5 | 5 | 4 | 5 | 5 | 5 |
-| 53 | Poliwag | Water | 2 | 3 | 2 | 2 | 2 | 5 |
-| 54 | Poliwhirl | Water | 4 | 4 | 4 | 3 | 3 | 5 |
-| 55 | Poliwrath | Water/Fighting | 5 | 5 | 5 | 4 | 5 | 4 |
-| 56 | Politoed | Water *(new evolution)* | 5 | 4 | 4 | 5 | 6 | 4 |
-| 57 | Slowpoke | Water/Psychic | 5 | 4 | 4 | 2 | 2 | 1 |
-| 58 | Slowbro | Water/Psychic | 5 | 4 | 6 | 6 | 5 | 2 |
-| 59 | Slowking | Water/Psychic *(new evolution)* | 5 | 4 | 5 | 6 | 6 | 2 |
-| 60 | Shellder | Water | 2 | 4 | 6 | 3 | 1 | 2 |
-| 61 | Cloyster | Water/Ice | 3 | 5 | 10 | 5 | 3 | 4 |
-| 62 | Horsea | Water | 2 | 2 | 4 | 4 | 1 | 3 |
-| 63 | Seadra | Water | 3 | 4 | 5 | 5 | 3 | 5 |
-| 64 | Kingdra | Water/Dragon *(new evolution)* | 4 | 5 | 5 | 5 | 5 | 5 |
-| 65 | Sableye | Dark/Ghost *(migrant)* | 3 | 4 | 4 | 4 | 4 | 3 |
-| 66 | Absol | Dark *(migrant)* | 4 | 7 | 3 | 4 | 3 | 4 |
-| 67 | Bagon | Dragon *(migrant)* | 3 | 4 | 3 | 2 | 2 | 3 |
-| 68 | Shelgon | Dragon *(migrant)* | 4 | 5 | 6 | 3 | 3 | 3 |
-| 69 | Salamence | Dragon/Flying *(migrant)* | 5 | 8 | 5 | 6 | 5 | 6 |
-| 70 | Deino | Dark/Dragon *(migrant)* | 3 | 4 | 3 | 3 | 3 | 2 |
-| 71 | Zweilous | Dark/Dragon *(migrant)* | 4 | 5 | 4 | 4 | 4 | 3 |
-| 72 | Hydreigon | Dark/Dragon *(migrant)* | 5 | 6 | 5 | 7 | 5 | 6 |
+| 50 | Staryu | Water | 2 | 3 | 3 | 4 | 3 | 5 |
+| 51 | Starmie | Water/Psychic | 3 | 4 | 5 | 6 | 5 | 7 |
+| 52 | Psyduck | Water | 3 | 3 | 3 | 4 | 3 | 3 |
+| 53 | Golduck | Water | 5 | 5 | 4 | 5 | 5 | 5 |
+| 54 | Poliwag | Water | 2 | 3 | 2 | 2 | 2 | 5 |
+| 55 | Poliwhirl | Water | 4 | 4 | 4 | 3 | 3 | 5 |
+| 56 | Poliwrath | Water/Fighting | 5 | 5 | 5 | 4 | 5 | 4 |
+| 57 | Politoed | Water *(new evolution)* | 5 | 4 | 4 | 5 | 6 | 4 |
+| 58 | Slowpoke | Water/Psychic | 5 | 4 | 4 | 2 | 2 | 1 |
+| 59 | Slowbro | Water/Psychic | 5 | 4 | 6 | 6 | 5 | 2 |
+| 60 | Slowking | Water/Psychic *(new evolution)* | 5 | 4 | 5 | 6 | 6 | 2 |
+| 61 | Shellder | Water | 2 | 4 | 6 | 3 | 1 | 2 |
+| 62 | Cloyster | Water/Ice | 3 | 5 | 10 | 5 | 3 | 4 |
+| 63 | Horsea | Water | 2 | 2 | 4 | 4 | 1 | 3 |
+| 64 | Seadra | Water | 3 | 4 | 5 | 5 | 3 | 5 |
+| 65 | Kingdra | Water/Dragon *(new evolution)* | 4 | 5 | 5 | 5 | 5 | 5 |
+| 66 | Sableye | Dark/Ghost *(migrant)* | 3 | 4 | 4 | 4 | 4 | 3 |
+| 67 | Absol | Dark *(migrant)* | 4 | 7 | 3 | 4 | 3 | 4 |
+| 68 | Bagon | Dragon *(migrant)* | 3 | 4 | 3 | 2 | 2 | 3 |
+| 69 | Shelgon | Dragon *(migrant)* | 4 | 5 | 6 | 3 | 3 | 3 |
+| 70 | Salamence | Dragon/Flying *(migrant)* | 5 | 8 | 5 | 6 | 5 | 6 |
+| 71 | Deino | Dark/Dragon *(migrant)* | 3 | 4 | 3 | 3 | 3 | 2 |
+| 72 | Zweilous | Dark/Dragon *(migrant)* | 4 | 5 | 4 | 4 | 4 | 3 |
+| 73 | Hydreigon | Dark/Dragon *(migrant)* | 5 | 6 | 5 | 7 | 5 | 6 |
 
-## #73–90: Saffron City — Routes 5/6/7/8
+## #74–91: Saffron City — Routes 5/6/7/8
 
 *No gym anymore, but still Neo Kanto's biggest city and its four-way hub — Silph Co.'s research culture shows in the dex.*
 
 | # | Pokémon | Type | Die 1 | Die 2 | Die 3 | Die 4 | Die 5 | Die 6 |
 |---|---|---|---|---|---|---|---|---|
-| 73 | Abra | Psychic | 1 | 1 | 1 | 6 | 3 | 5 |
-| 74 | Kadabra | Psychic | 2 | 2 | 2 | 7 | 4 | 6 |
-| 75 | Alakazam | Psychic | 3 | 3 | 3 | 8 | 5 | 7 |
-| 76 | Meowth | Normal | 2 | 3 | 2 | 2 | 2 | 5 |
-| 77 | Persian | Normal | 4 | 4 | 3 | 4 | 4 | 7 |
-| 78 | Drowzee | Psychic | 3 | 3 | 3 | 2 | 5 | 2 |
-| 79 | Hypno | Psychic | 5 | 4 | 4 | 4 | 7 | 4 |
-| 80 | Mr. Mime | Psychic/Fairy | 2 | 3 | 4 | 6 | 7 | 5 |
-| 81 | Porygon | Normal | 4 | 3 | 4 | 5 | 4 | 2 |
-| 82 | Porygon2 | Normal *(new evolution)* | 5 | 5 | 5 | 6 | 5 | 3 |
-| 83 | Porygon-Z | Normal *(new evolution)* | 5 | 5 | 4 | 8 | 4 | 5 |
-| 84 | Munna | Psychic *(migrant)* | 4 | 1 | 3 | 4 | 3 | 1 |
-| 85 | Musharna | Psychic *(migrant)* | 7 | 3 | 5 | 6 | 5 | 2 |
-| 86 | Girafarig | Normal/Psychic *(migrant)* | 4 | 5 | 4 | 5 | 4 | 5 |
-| 87 | Chatot | Normal/Flying *(migrant)* | 4 | 4 | 3 | 5 | 2 | 5 |
-| 88 | Lunatone | Rock/Psychic *(migrant)* | 5 | 3 | 4 | 5 | 5 | 4 |
-| 89 | Solrock | Rock/Psychic *(migrant)* | 5 | 5 | 5 | 3 | 4 | 4 |
-| 90 | Klefki | Steel/Fairy *(migrant)* | 3 | 5 | 5 | 5 | 5 | 4 |
+| 74 | Abra | Psychic | 1 | 1 | 1 | 6 | 3 | 5 |
+| 75 | Kadabra | Psychic | 2 | 2 | 2 | 7 | 4 | 6 |
+| 76 | Alakazam | Psychic | 3 | 3 | 3 | 8 | 5 | 7 |
+| 77 | Meowth | Normal | 2 | 3 | 2 | 2 | 2 | 5 |
+| 78 | Persian | Normal | 4 | 4 | 3 | 4 | 4 | 7 |
+| 79 | Drowzee | Psychic | 3 | 3 | 3 | 2 | 5 | 2 |
+| 80 | Hypno | Psychic | 5 | 4 | 4 | 4 | 7 | 4 |
+| 81 | Mr. Mime | Psychic/Fairy | 2 | 3 | 4 | 6 | 7 | 5 |
+| 82 | Porygon | Normal | 4 | 3 | 4 | 5 | 4 | 2 |
+| 83 | Porygon2 | Normal *(new evolution)* | 5 | 5 | 5 | 6 | 5 | 3 |
+| 84 | Porygon-Z | Normal *(new evolution)* | 5 | 5 | 4 | 8 | 4 | 5 |
+| 85 | Munna | Psychic *(migrant)* | 4 | 1 | 3 | 4 | 3 | 1 |
+| 86 | Musharna | Psychic *(migrant)* | 7 | 3 | 5 | 6 | 5 | 2 |
+| 87 | Girafarig | Normal/Psychic *(migrant)* | 4 | 5 | 4 | 5 | 4 | 5 |
+| 88 | Chatot | Normal/Flying *(migrant)* | 4 | 4 | 3 | 5 | 2 | 5 |
+| 89 | Lunatone | Rock/Psychic *(migrant)* | 5 | 3 | 4 | 5 | 5 | 4 |
+| 90 | Solrock | Rock/Psychic *(migrant)* | 5 | 5 | 5 | 3 | 4 | 4 |
+| 91 | Klefki | Steel/Fairy *(migrant)* | 3 | 5 | 5 | 5 | 5 | 4 |
 
-## #91–112: Vermilion City — Routes 11/12, the harbor
+## #92–113: Vermilion City — Routes 11/12, the harbor
 
 *Shipping-and-fabrication megaport; the harbor migrants that outcompeted Goldeen live here too.*
 
 | # | Pokémon | Type | Die 1 | Die 2 | Die 3 | Die 4 | Die 5 | Die 6 |
 |---|---|---|---|---|---|---|---|---|
-| 91 | Ekans | Poison | 2 | 3 | 3 | 2 | 3 | 3 |
-| 92 | Arbok | Poison | 3 | 5 | 4 | 4 | 5 | 5 |
-| 93 | Machop | Fighting | 4 | 5 | 3 | 2 | 2 | 2 |
-| 94 | Machoke | Fighting | 5 | 6 | 4 | 3 | 3 | 3 |
-| 95 | Machamp | Fighting | 5 | 7 | 5 | 4 | 5 | 3 |
-| 96 | Magnemite | Electric/Steel | 1 | 2 | 4 | 5 | 3 | 3 |
-| 97 | Magneton | Electric/Steel | 3 | 3 | 5 | 7 | 4 | 4 |
-| 98 | Magnezone | Electric/Steel *(new evolution)* | 4 | 4 | 7 | 7 | 5 | 3 |
-| 99 | Voltorb | Electric | 2 | 2 | 3 | 3 | 3 | 6 |
-| 100 | Electrode | Electric | 3 | 3 | 4 | 5 | 5 | 9 |
-| 101 | Electabuzz | Electric | 4 | 5 | 3 | 5 | 5 | 6 |
-| 102 | Electivire | Electric *(new evolution)* | 4 | 7 | 4 | 5 | 5 | 5 |
-| 103 | Snorlax | Normal | 9 | 6 | 4 | 4 | 6 | 2 |
-| 104 | Joltik | Bug/Electric *(migrant)* | 3 | 3 | 3 | 3 | 3 | 4 |
-| 105 | Galvantula | Bug/Electric *(migrant)* | 4 | 4 | 3 | 6 | 3 | 6 |
-| 106 | Skarmory | Steel/Flying *(migrant)* | 4 | 5 | 8 | 2 | 4 | 4 |
-| 107 | Mawile | Steel/Fairy *(migrant)* | 3 | 5 | 5 | 3 | 3 | 3 |
-| 108 | Finneon | Water *(migrant)* | 3 | 3 | 3 | 3 | 3 | 4 |
-| 109 | Lumineon | Water *(migrant)* | 4 | 4 | 4 | 4 | 5 | 5 |
-| 110 | Wingull | Water/Flying *(migrant)* | 2 | 2 | 2 | 3 | 2 | 5 |
-| 111 | Pelipper | Water/Flying *(migrant)* | 3 | 3 | 6 | 5 | 4 | 4 |
-| 112 | Luvdisc | Water *(migrant)* | 2 | 2 | 3 | 2 | 4 | 6 |
+| 92 | Ekans | Poison | 2 | 3 | 3 | 2 | 3 | 3 |
+| 93 | Arbok | Poison | 3 | 5 | 4 | 4 | 5 | 5 |
+| 94 | Machop | Fighting | 4 | 5 | 3 | 2 | 2 | 2 |
+| 95 | Machoke | Fighting | 5 | 6 | 4 | 3 | 3 | 3 |
+| 96 | Machamp | Fighting | 5 | 7 | 5 | 4 | 5 | 3 |
+| 97 | Magnemite | Electric/Steel | 1 | 2 | 4 | 5 | 3 | 3 |
+| 98 | Magneton | Electric/Steel | 3 | 3 | 5 | 7 | 4 | 4 |
+| 99 | Magnezone | Electric/Steel *(new evolution)* | 4 | 4 | 7 | 7 | 5 | 3 |
+| 100 | Voltorb | Electric | 2 | 2 | 3 | 3 | 3 | 6 |
+| 101 | Electrode | Electric | 3 | 3 | 4 | 5 | 5 | 9 |
+| 102 | Electabuzz | Electric | 4 | 5 | 3 | 5 | 5 | 6 |
+| 103 | Electivire | Electric *(new evolution)* | 4 | 7 | 4 | 5 | 5 | 5 |
+| 104 | Snorlax | Normal | 9 | 6 | 4 | 4 | 6 | 2 |
+| 105 | Joltik | Bug/Electric *(migrant)* | 3 | 3 | 3 | 3 | 3 | 4 |
+| 106 | Galvantula | Bug/Electric *(migrant)* | 4 | 4 | 3 | 6 | 3 | 6 |
+| 107 | Skarmory | Steel/Flying *(migrant)* | 4 | 5 | 8 | 2 | 4 | 4 |
+| 108 | Mawile | Steel/Fairy *(migrant)* | 3 | 5 | 5 | 3 | 3 | 3 |
+| 109 | Finneon | Water *(migrant)* | 3 | 3 | 3 | 3 | 3 | 4 |
+| 110 | Lumineon | Water *(migrant)* | 4 | 4 | 4 | 4 | 5 | 5 |
+| 111 | Wingull | Water/Flying *(migrant)* | 2 | 2 | 2 | 3 | 2 | 5 |
+| 112 | Pelipper | Water/Flying *(migrant)* | 3 | 3 | 6 | 5 | 4 | 4 |
+| 113 | Luvdisc | Water *(migrant)* | 2 | 2 | 3 | 2 | 4 | 6 |
 
-## #113–128: Lavender Town — Route 10, Power Plant, Rock Tunnel, Pokémon Tower
+## #114–129: Lavender Town — Route 10, Power Plant, Rock Tunnel, Pokémon Tower
 
 *The reopened Tower and the long cave-and-tech corridor running back to Cerulean via Power Plant.*
 
 | # | Pokémon | Type | Die 1 | Die 2 | Die 3 | Die 4 | Die 5 | Die 6 |
 |---|---|---|---|---|---|---|---|---|
-| 113 | Cubone | Ground | 3 | 3 | 5 | 2 | 3 | 2 |
-| 114 | Marowak | Ground | 3 | 5 | 6 | 3 | 5 | 3 |
-| 115 | Gastly | Ghost/Poison | 2 | 2 | 2 | 6 | 2 | 5 |
-| 116 | Haunter | Ghost/Poison | 3 | 3 | 3 | 7 | 3 | 5 |
-| 117 | Gengar | Ghost/Poison | 3 | 4 | 3 | 7 | 4 | 6 |
-| 118 | Rhyhorn | Ground/Rock | 5 | 5 | 5 | 2 | 2 | 1 |
-| 119 | Rhydon | Ground/Rock | 6 | 7 | 7 | 3 | 3 | 2 |
-| 120 | Rhyperior | Ground/Rock *(new evolution)* | 7 | 8 | 7 | 3 | 3 | 2 |
-| 121 | Diglett | Ground | 1 | 3 | 1 | 2 | 3 | 5 |
-| 122 | Dugtrio | Ground | 2 | 6 | 3 | 3 | 4 | 7 |
-| 123 | Duskull | Ghost *(migrant)* | 1 | 2 | 5 | 2 | 5 | 1 |
-| 124 | Dusclops | Ghost *(migrant)* | 2 | 4 | 7 | 3 | 7 | 1 |
-| 125 | Dusknoir | Ghost *(migrant)* | 3 | 6 | 8 | 4 | 8 | 3 |
-| 126 | Litwick | Ghost/Fire *(migrant)* | 3 | 2 | 3 | 4 | 3 | 1 |
-| 127 | Lampent | Ghost/Fire *(migrant)* | 3 | 2 | 3 | 5 | 3 | 3 |
-| 128 | Chandelure | Ghost/Fire *(migrant)* | 3 | 3 | 5 | 8 | 5 | 5 |
+| 114 | Cubone | Ground | 3 | 3 | 5 | 2 | 3 | 2 |
+| 115 | Marowak | Ground | 3 | 5 | 6 | 3 | 5 | 3 |
+| 116 | Gastly | Ghost/Poison | 2 | 2 | 2 | 6 | 2 | 5 |
+| 117 | Haunter | Ghost/Poison | 3 | 3 | 3 | 7 | 3 | 5 |
+| 118 | Gengar | Ghost/Poison | 3 | 4 | 3 | 7 | 4 | 6 |
+| 119 | Rhyhorn | Ground/Rock | 5 | 5 | 5 | 2 | 2 | 1 |
+| 120 | Rhydon | Ground/Rock | 6 | 7 | 7 | 3 | 3 | 2 |
+| 121 | Rhyperior | Ground/Rock *(new evolution)* | 7 | 8 | 7 | 3 | 3 | 2 |
+| 122 | Diglett | Ground | 1 | 3 | 1 | 2 | 3 | 5 |
+| 123 | Dugtrio | Ground | 2 | 6 | 3 | 3 | 4 | 7 |
+| 124 | Duskull | Ghost *(migrant)* | 1 | 2 | 5 | 2 | 5 | 1 |
+| 125 | Dusclops | Ghost *(migrant)* | 2 | 4 | 7 | 3 | 7 | 1 |
+| 126 | Dusknoir | Ghost *(migrant)* | 3 | 6 | 8 | 4 | 8 | 3 |
+| 127 | Litwick | Ghost/Fire *(migrant)* | 3 | 2 | 3 | 4 | 3 | 1 |
+| 128 | Lampent | Ghost/Fire *(migrant)* | 3 | 2 | 3 | 5 | 3 | 3 |
+| 129 | Chandelure | Ghost/Fire *(migrant)* | 3 | 3 | 5 | 8 | 5 | 5 |
 
 *(Diglett/Dugtrio relocated here from the removed Diglett's Cave — Rock Tunnel fits the mole-burrow habitat. Flag if you'd rather they sit at Pewter/Route 3 instead.)*
 
-## #129–142: Celadon City — Routes 16/17 (Cycling Road)
+## #130–143: Celadon City — Routes 16/17 (Cycling Road)
 
 *The Department Store's greenhouse district, now a full botanical zone.*
 
 | # | Pokémon | Type | Die 1 | Die 2 | Die 3 | Die 4 | Die 5 | Die 6 |
 |---|---|---|---|---|---|---|---|---|
-| 129 | Oddish | Grass/Poison | 3 | 3 | 3 | 4 | 4 | 2 |
-| 130 | Gloom | Grass/Poison | 3 | 4 | 4 | 5 | 4 | 2 |
-| 131 | Vileplume | Grass/Poison | 4 | 5 | 5 | 6 | 5 | 3 |
-| 132 | Bellossom | Grass *(new evolution)* | 4 | 5 | 5 | 5 | 6 | 3 |
-| 133 | Bellsprout | Grass/Poison | 3 | 4 | 2 | 4 | 2 | 2 |
-| 134 | Weepinbell | Grass/Poison | 4 | 5 | 3 | 5 | 3 | 3 |
-| 135 | Victreebel | Grass/Poison | 5 | 6 | 4 | 6 | 3 | 4 |
-| 136 | Tangela | Grass | 4 | 3 | 7 | 6 | 2 | 3 |
-| 137 | Tangrowth | Grass *(new evolution)* | 6 | 6 | 7 | 6 | 3 | 3 |
-| 138 | Exeggcute | Grass/Psychic | 3 | 2 | 5 | 3 | 3 | 2 |
-| 139 | Exeggutor | Grass/Psychic | 5 | 5 | 5 | 7 | 4 | 3 |
-| 140 | Cottonee | Grass/Fairy *(migrant)* | 2 | 2 | 3 | 2 | 3 | 4 |
-| 141 | Whimsicott | Grass/Fairy *(migrant)* | 3 | 4 | 5 | 4 | 4 | 7 |
-| 142 | Carnivine | Grass *(migrant)* | 4 | 6 | 4 | 5 | 4 | 3 |
+| 130 | Oddish | Grass/Poison | 3 | 3 | 3 | 4 | 4 | 2 |
+| 131 | Gloom | Grass/Poison | 3 | 4 | 4 | 5 | 4 | 2 |
+| 132 | Vileplume | Grass/Poison | 4 | 5 | 5 | 6 | 5 | 3 |
+| 133 | Bellossom | Grass *(new evolution)* | 4 | 5 | 5 | 5 | 6 | 3 |
+| 134 | Bellsprout | Grass/Poison | 3 | 4 | 2 | 4 | 2 | 2 |
+| 135 | Weepinbell | Grass/Poison | 4 | 5 | 3 | 5 | 3 | 3 |
+| 136 | Victreebel | Grass/Poison | 5 | 6 | 4 | 6 | 3 | 4 |
+| 137 | Tangela | Grass | 4 | 3 | 7 | 6 | 2 | 3 |
+| 138 | Tangrowth | Grass *(new evolution)* | 6 | 6 | 7 | 6 | 3 | 3 |
+| 139 | Exeggcute | Grass/Psychic | 3 | 2 | 5 | 3 | 3 | 2 |
+| 140 | Exeggutor | Grass/Psychic | 5 | 5 | 5 | 7 | 4 | 3 |
+| 141 | Cottonee | Grass/Fairy *(migrant)* | 2 | 2 | 3 | 2 | 3 | 4 |
+| 142 | Whimsicott | Grass/Fairy *(migrant)* | 3 | 4 | 5 | 4 | 4 | 7 |
+| 143 | Carnivine | Grass *(migrant)* | 4 | 6 | 4 | 5 | 4 | 3 |
 
-## #143–168: Fuchsia City — Routes 13/14/15/18/19, Kanto Wildlife Preserve
+## #144–169: Fuchsia City — Routes 13/14/15/18/19, Kanto Wildlife Preserve
 
 *The old Safari Zone, now a legally protected reserve — the dex's biggest habitat zone, same as it was originally.*
 
 | # | Pokémon | Type | Die 1 | Die 2 | Die 3 | Die 4 | Die 5 | Die 6 |
 |---|---|---|---|---|---|---|---|---|
-| 143 | Nidoran♀ | Poison | 3 | 3 | 3 | 2 | 2 | 2 |
-| 144 | Nidorina | Poison | 4 | 4 | 4 | 3 | 3 | 3 |
-| 145 | Nidoqueen | Poison/Ground | 5 | 5 | 5 | 4 | 5 | 4 |
-| 146 | Nidoran♂ | Poison | 3 | 3 | 2 | 2 | 2 | 3 |
-| 147 | Nidorino | Poison | 3 | 4 | 3 | 3 | 3 | 4 |
-| 148 | Nidoking | Poison/Ground | 5 | 6 | 4 | 5 | 4 | 5 |
-| 149 | Scyther | Bug/Flying | 4 | 6 | 5 | 3 | 5 | 6 |
-| 150 | Scizor | Bug/Steel *(new evolution)* | 4 | 7 | 6 | 3 | 5 | 4 |
-| 151 | Pinsir | Bug | 4 | 7 | 6 | 3 | 4 | 5 |
-| 152 | Tauros | Normal | 4 | 6 | 5 | 2 | 4 | 6 |
-| 153 | Chansey | Normal | 14 | 0 | 0 | 2 | 6 | 3 |
-| 154 | Blissey | Normal *(new evolution)* | 15 | 1 | 1 | 4 | 8 | 3 |
-| 155 | Lickitung | Normal | 5 | 3 | 4 | 3 | 4 | 2 |
-| 156 | Lickilicky | Normal *(new evolution)* | 6 | 5 | 5 | 5 | 5 | 3 |
-| 157 | Farfetch'd | Normal/Flying | 3 | 4 | 3 | 3 | 4 | 3 |
-| 158 | Sirfetch'd | Fighting *(new evolution)* | 4 | 8 | 5 | 4 | 5 | 4 |
-| 159 | Hitmonlee | Fighting | 3 | 7 | 3 | 2 | 6 | 5 |
-| 160 | Hitmonchan | Fighting | 3 | 6 | 5 | 2 | 6 | 4 |
-| 161 | Mankey | Fighting | 2 | 5 | 2 | 2 | 3 | 4 |
-| 162 | Primeape | Fighting | 4 | 6 | 3 | 3 | 4 | 5 |
-| 163 | Koffing | Poison | 2 | 4 | 5 | 3 | 3 | 2 |
-| 164 | Weezing | Poison | 4 | 5 | 7 | 5 | 4 | 3 |
-| 165 | Stunfisk | Ground/Electric *(migrant)* | 6 | 4 | 5 | 5 | 6 | 2 |
-| 166 | Illumise | Bug *(migrant)* | 4 | 3 | 3 | 4 | 4 | 5 |
-| 167 | Volbeat | Bug *(migrant)* | 4 | 4 | 3 | 3 | 4 | 5 |
-| 168 | Jynx | Ice/Psychic | 4 | 3 | 2 | 7 | 5 | 5 |
+| 144 | Nidoran♀ | Poison | 3 | 3 | 3 | 2 | 2 | 2 |
+| 145 | Nidorina | Poison | 4 | 4 | 4 | 3 | 3 | 3 |
+| 146 | Nidoqueen | Poison/Ground | 5 | 5 | 5 | 4 | 5 | 4 |
+| 147 | Nidoran♂ | Poison | 3 | 3 | 2 | 2 | 2 | 3 |
+| 148 | Nidorino | Poison | 3 | 4 | 3 | 3 | 3 | 4 |
+| 149 | Nidoking | Poison/Ground | 5 | 6 | 4 | 5 | 4 | 5 |
+| 150 | Scyther | Bug/Flying | 4 | 6 | 5 | 3 | 5 | 6 |
+| 151 | Scizor | Bug/Steel *(new evolution)* | 4 | 7 | 6 | 3 | 5 | 4 |
+| 152 | Pinsir | Bug | 4 | 7 | 6 | 3 | 4 | 5 |
+| 153 | Tauros | Normal | 4 | 6 | 5 | 2 | 4 | 6 |
+| 154 | Chansey | Normal | 14 | 0 | 0 | 2 | 6 | 3 |
+| 155 | Blissey | Normal *(new evolution)* | 15 | 1 | 1 | 4 | 8 | 3 |
+| 156 | Lickitung | Normal | 5 | 3 | 4 | 3 | 4 | 2 |
+| 157 | Lickilicky | Normal *(new evolution)* | 6 | 5 | 5 | 5 | 5 | 3 |
+| 158 | Farfetch'd | Normal/Flying | 3 | 4 | 3 | 3 | 4 | 3 |
+| 159 | Sirfetch'd | Fighting *(new evolution)* | 4 | 8 | 5 | 4 | 5 | 4 |
+| 160 | Hitmonlee | Fighting | 3 | 7 | 3 | 2 | 6 | 5 |
+| 161 | Hitmonchan | Fighting | 3 | 6 | 5 | 2 | 6 | 4 |
+| 162 | Mankey | Fighting | 2 | 5 | 2 | 2 | 3 | 4 |
+| 163 | Primeape | Fighting | 4 | 6 | 3 | 3 | 4 | 5 |
+| 164 | Koffing | Poison | 2 | 4 | 5 | 3 | 3 | 2 |
+| 165 | Weezing | Poison | 4 | 5 | 7 | 5 | 4 | 3 |
+| 166 | Stunfisk | Ground/Electric *(migrant)* | 6 | 4 | 5 | 5 | 6 | 2 |
+| 167 | Illumise | Bug *(migrant)* | 4 | 3 | 3 | 4 | 4 | 5 |
+| 168 | Volbeat | Bug *(migrant)* | 4 | 4 | 3 | 3 | 4 | 5 |
+| 169 | Jynx | Ice/Psychic | 4 | 3 | 2 | 7 | 5 | 5 |
 
-## #169–189: Cinnabar Island — Route 20, Seafoam Islands, Cinnabar Mansion
+## #170–190: Cinnabar Island — Route 20, Seafoam Islands, Cinnabar Mansion
 
 *Rebuilt geothermal complex after the volcanic reawakening — Fire stays as strong here as ever.*
 
 | # | Pokémon | Type | Die 1 | Die 2 | Die 3 | Die 4 | Die 5 | Die 6 |
 |---|---|---|---|---|---|---|---|---|
-| 169 | Vulpix | Fire | 2 | 2 | 2 | 3 | 4 | 4 |
-| 170 | Ninetales | Fire | 4 | 4 | 4 | 5 | 6 | 6 |
-| 171 | Growlithe | Fire | 3 | 4 | 3 | 4 | 3 | 3 |
-| 172 | Arcanine | Fire | 5 | 6 | 5 | 6 | 5 | 5 |
-| 173 | Ponyta | Fire | 3 | 5 | 3 | 4 | 4 | 5 |
-| 174 | Rapidash | Fire | 4 | 6 | 4 | 5 | 5 | 6 |
-| 175 | Magmar | Fire | 4 | 5 | 3 | 6 | 5 | 5 |
-| 176 | Magmortar | Fire *(new evolution)* | 4 | 5 | 4 | 7 | 5 | 5 |
-| 177 | Seel | Water | 4 | 3 | 3 | 3 | 4 | 3 |
-| 178 | Dewgong | Water/Ice | 5 | 4 | 5 | 4 | 5 | 4 |
-| 179 | Tentacool | Water/Poison | 2 | 2 | 2 | 3 | 6 | 4 |
-| 180 | Tentacruel | Water/Poison | 5 | 4 | 4 | 5 | 7 | 6 |
-| 181 | Kabuto | Rock/Water | 2 | 5 | 5 | 3 | 3 | 3 |
-| 182 | Kabutops | Rock/Water | 3 | 7 | 6 | 4 | 4 | 5 |
-| 183 | Aerodactyl | Rock/Flying | 5 | 6 | 4 | 3 | 4 | 7 |
-| 184 | Larvesta | Bug/Fire *(migrant)* | 3 | 5 | 3 | 3 | 3 | 3 |
-| 185 | Volcarona | Bug/Fire *(migrant)* | 5 | 3 | 4 | 8 | 6 | 6 |
-| 186 | Torkoal | Fire *(migrant)* | 4 | 5 | 8 | 5 | 4 | 1 |
-| 187 | Relicanth | Water/Rock *(migrant)* | 6 | 5 | 7 | 3 | 4 | 3 |
-| 188 | Corsola | Water/Rock *(migrant)* | 4 | 3 | 5 | 4 | 5 | 2 |
-| 189 | Lapras | Water/Ice | 7 | 5 | 5 | 5 | 5 | 3 |
+| 170 | Vulpix | Fire | 2 | 2 | 2 | 3 | 4 | 4 |
+| 171 | Ninetales | Fire | 4 | 4 | 4 | 5 | 6 | 6 |
+| 172 | Growlithe | Fire | 3 | 4 | 3 | 4 | 3 | 3 |
+| 173 | Arcanine | Fire | 5 | 6 | 5 | 6 | 5 | 5 |
+| 174 | Ponyta | Fire | 3 | 5 | 3 | 4 | 4 | 5 |
+| 175 | Rapidash | Fire | 4 | 6 | 4 | 5 | 5 | 6 |
+| 176 | Magmar | Fire | 4 | 5 | 3 | 6 | 5 | 5 |
+| 177 | Magmortar | Fire *(new evolution)* | 4 | 5 | 4 | 7 | 5 | 5 |
+| 178 | Seel | Water | 4 | 3 | 3 | 3 | 4 | 3 |
+| 179 | Dewgong | Water/Ice | 5 | 4 | 5 | 4 | 5 | 4 |
+| 180 | Tentacool | Water/Poison | 2 | 2 | 2 | 3 | 6 | 4 |
+| 181 | Tentacruel | Water/Poison | 5 | 4 | 4 | 5 | 7 | 6 |
+| 182 | Kabuto | Rock/Water | 2 | 5 | 5 | 3 | 3 | 3 |
+| 183 | Kabutops | Rock/Water | 3 | 7 | 6 | 4 | 4 | 5 |
+| 184 | Aerodactyl | Rock/Flying | 5 | 6 | 4 | 3 | 4 | 7 |
+| 185 | Larvesta | Bug/Fire *(migrant)* | 3 | 5 | 3 | 3 | 3 | 3 |
+| 186 | Volcarona | Bug/Fire *(migrant)* | 5 | 3 | 4 | 8 | 6 | 6 |
+| 187 | Torkoal | Fire *(migrant)* | 4 | 5 | 8 | 5 | 4 | 1 |
+| 188 | Relicanth | Water/Rock *(migrant)* | 6 | 5 | 7 | 3 | 4 | 3 |
+| 189 | Corsola | Water/Rock *(migrant)* | 4 | 3 | 5 | 4 | 5 | 2 |
+| 190 | Lapras | Water/Ice | 7 | 5 | 5 | 5 | 5 | 3 |
 
-## #190–192: Victory Road (Route 23)
+## #191–193: Victory Road (Route 23)
 
 *Elite-Four-gated final stretch to Indigo Plateau.*
 
 | # | Pokémon | Type | Die 1 | Die 2 | Die 3 | Die 4 | Die 5 | Die 6 |
 |---|---|---|---|---|---|---|---|---|
-| 190 | Dratini | Dragon | 2 | 4 | 3 | 3 | 3 | 3 |
-| 191 | Dragonair | Dragon | 3 | 5 | 4 | 4 | 4 | 4 |
-| 192 | Dragonite | Dragon/Flying | 5 | 8 | 5 | 6 | 6 | 5 |
+| 191 | Dratini | Dragon | 2 | 4 | 3 | 3 | 3 | 3 |
+| 192 | Dragonair | Dragon | 3 | 5 | 4 | 4 | 4 | 4 |
+| 193 | Dragonite | Dragon/Flying | 5 | 8 | 5 | 6 | 6 | 5 |
 
 ## Legendary / Mythical (7)
 
 | # | Pokémon | Type | Location tie | Die 1 | Die 2 | Die 3 | Die 4 | Die 5 | Die 6 |
 |---|---|---|---|---|---|---|---|---|---|
-| 193 | Articuno | Ice/Flying | Seafoam Islands | 5 | 5 | 6 | 5 | 7 | 5 |
-| 194 | Zapdos | Electric/Flying | Power Plant | 5 | 5 | 5 | 7 | 5 | 6 |
-| 195 | Moltres | Fire/Flying | Cinnabar's reawakened volcano | 5 | 6 | 5 | 7 | 5 | 5 |
-| 196 | Mewtwo | Psychic | Cerulean Cave | 6 | 6 | 5 | 9 | 5 | 7 |
-| 197 | Mew | Psychic | Unfixed — wandering mythic | 6 | 6 | 6 | 6 | 6 | 6 |
-| 198 | Genesect | Bug/Steel | Cinnabar geothermal complex — postgame | 4 | 7 | 5 | 7 | 5 | 6 |
-| 199 | Latios | Dragon/Psychic | Roams the open water of Route 20/Seafoam | 5 | 5 | 5 | 7 | 6 | 6 |
+| 194 | Articuno | Ice/Flying | Seafoam Islands | 5 | 5 | 6 | 5 | 7 | 5 |
+| 195 | Zapdos | Electric/Flying | Power Plant | 5 | 5 | 5 | 7 | 5 | 6 |
+| 196 | Moltres | Fire/Flying | Cinnabar's reawakened volcano | 5 | 6 | 5 | 7 | 5 | 5 |
+| 197 | Mewtwo | Psychic | Cerulean Cave | 6 | 6 | 5 | 9 | 5 | 7 |
+| 198 | Mew | Psychic | Unfixed — wandering mythic | 6 | 6 | 6 | 6 | 6 | 6 |
+| 199 | Genesect | Bug/Steel | Cinnabar geothermal complex — postgame | 4 | 7 | 5 | 7 | 5 | 6 |
+| 200 | Latios | Dragon/Psychic | Roams the open water of Route 20/Seafoam | 5 | 5 | 5 | 7 | 6 | 6 |
 
 **Only one species rolls a literal 0-face: Chansey**, on both its Attack and Defense dice (base 5 each) — the famously fragile offense/defense that comes with its huge HP/SpD. Nothing else in the dex drops all the way to zero on any stat.
 

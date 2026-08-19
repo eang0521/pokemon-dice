@@ -67,6 +67,7 @@
 | Clefairy → Clefable | Moon Stone |
 | Paras → Parasect | Level 7 |
 | Zubat → Golbat | Level 7 |
+| Golbat → Crobat | Friendship (catch Lv +4) |
 | Spearow → Fearow | Level 6 |
 
 ## Cerulean City
@@ -207,7 +208,7 @@
 ## Notes
 
 - **Pure trade evolutions** (Graveler, Kadabra, Machoke, Haunter — the ones with no item of their own) all use a **Linking Cord**, found at Saffron City, matching Calli's precedent — no actual trade happens, it's an item evolution like any other.
-- **Friendship evolutions** (Chansey→Blissey) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11); it still gets the same buffered "proper level" as a stone evolution from a base stage for trainer-roster purposes. Eevee→Espeon/Umbreon use Sun Stone/Moon Stone instead of friendship.
+- **Friendship evolutions** (Golbat→Crobat, Chansey→Blissey) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11); it still gets the same buffered "proper level" as a stone evolution from a base stage for trainer-roster purposes. Eevee→Espeon/Umbreon use Sun Stone/Moon Stone instead of friendship.
 - **Location-based evolutions** (Magneton→Magnezone) get the same treatment as trade evolutions — a buffered level from their pre-evolution, with the location itself (a specific route/dungeon) as flavor rather than a hard gameplay gate.
 - **Legendaries/Mythicals don't evolve** and aren't listed above — see `NeoKanto_Regional_Dex.md`'s closing section for the full list of seven.
 - **Every species not listed under its zone's "Does not evolve" rows and not appearing as an evolution target elsewhere is a base, unevolved Pokémon** with no further stages of its own (e.g., Alakazam, Gengar, Golem — all reached via trade evolution above, all endpoints).
