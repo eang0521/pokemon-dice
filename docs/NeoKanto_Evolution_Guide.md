@@ -46,14 +46,14 @@
 |---|---|
 | Caterpie → Metapod | Level 3 |
 | Metapod → Butterfree | Level 4 |
-| Pikachu → Raichu | Thunder Stone → Level 7 |
+| Pikachu → Raichu | Thunder Stone |
 | Sandshrew → Sandslash | Level 7 |
-| Jigglypuff → Wigglytuff | Moon Stone → Level 7 |
-| Eevee → Vaporeon | Water Stone → Level 7 |
-| Eevee → Jolteon | Thunder Stone → Level 7 |
-| Eevee → Flareon | Fire Stone → Level 7 |
-| Eevee → Espeon | Sun Stone → Level 7 |
-| Eevee → Umbreon | Moon Stone → Level 7 |
+| Jigglypuff → Wigglytuff | Moon Stone |
+| Eevee → Vaporeon | Water Stone |
+| Eevee → Jolteon | Thunder Stone |
+| Eevee → Flareon | Fire Stone |
+| Eevee → Espeon | Sun Stone |
+| Eevee → Umbreon | Moon Stone |
 | Snover → Abomasnow | Level 10 |
 | Delibird | Does not evolve |
 
@@ -62,9 +62,9 @@
 | Evolution | Method |
 |---|---|
 | Geodude → Graveler | Level 7 |
-| Graveler → Golem | Trade → Level 10 |
-| Onix → Steelix | Trade holding Metal Coat → Level 7 |
-| Clefairy → Clefable | Moon Stone → Level 7 |
+| Graveler → Golem | Trade |
+| Onix → Steelix | Trade holding Metal Coat |
+| Clefairy → Clefable | Moon Stone |
 | Paras → Parasect | Level 7 |
 | Zubat → Golbat | Level 7 |
 | Spearow → Fearow | Level 6 |
@@ -73,16 +73,16 @@
 
 | Evolution | Method |
 |---|---|
-| Staryu → Starmie | Water Stone → Level 7 |
+| Staryu → Starmie | Water Stone |
 | Psyduck → Golduck | Level 9 |
 | Poliwag → Poliwhirl | Level 7 |
-| Poliwhirl → Poliwrath | Water Stone → Level 10 |
-| Poliwhirl → Politoed | Trade holding King's Rock → Level 10 |
+| Poliwhirl → Poliwrath | Water Stone |
+| Poliwhirl → Politoed | Trade holding King's Rock |
 | Slowpoke → Slowbro | Level 10 |
 | Slowpoke → Slowking | Trade holding King's Rock → Level 10 |
-| Shellder → Cloyster | Water Stone → Level 7 |
+| Shellder → Cloyster | Water Stone |
 | Horsea → Seadra | Level 9 |
-| Seadra → Kingdra | Trade holding Dragon Scale → Level 12 |
+| Seadra → Kingdra | Trade holding Dragon Scale |
 | Sableye | Does not evolve |
 | Absol | Does not evolve |
 | Bagon → Shelgon | Level 8 |
@@ -95,13 +95,13 @@
 | Evolution | Method |
 |---|---|
 | Abra → Kadabra | Level 5 |
-| Kadabra → Alakazam | Trade → Level 8 |
+| Kadabra → Alakazam | Trade |
 | Meowth → Persian | Level 8 |
 | Drowzee → Hypno | Level 8 |
 | Mr. Mime | Does not evolve |
-| Porygon → Porygon2 | Trade holding Upgrade → Level 7 |
-| Porygon2 → Porygon-Z | Trade holding Dubious Disc → Level 10 |
-| Munna → Musharna | Moon Stone → Level 7 |
+| Porygon → Porygon2 | Trade holding Upgrade |
+| Porygon2 → Porygon-Z | Trade holding Dubious Disc |
+| Munna → Musharna | Moon Stone |
 | Girafarig | Does not evolve |
 | Chatot | Does not evolve |
 | Lunatone | Does not evolve |
@@ -114,11 +114,11 @@
 |---|---|
 | Ekans → Arbok | Level 7 |
 | Machop → Machoke | Level 8 |
-| Machoke → Machamp | Trade → Level 11 |
+| Machoke → Machamp | Trade |
 | Magnemite → Magneton | Level 8 |
-| Magneton → Magnezone | Leveled at a special magnetic site → Level 11 |
+| Magneton → Magnezone | Leveled at a special magnetic site |
 | Voltorb → Electrode | Level 8 |
-| Electabuzz → Electivire | Trade holding Electirizer → Level 7 |
+| Electabuzz → Electivire | Trade holding Electirizer |
 | Snorlax | Does not evolve |
 | Joltik → Galvantula | Level 10 |
 | Skarmory | Does not evolve |
@@ -133,27 +133,27 @@
 |---|---|
 | Cubone → Marowak | Level 8 |
 | Gastly → Haunter | Level 7 |
-| Haunter → Gengar | Trade → Level 10 |
+| Haunter → Gengar | Trade |
 | Rhyhorn → Rhydon | Level 11 |
-| Rhydon → Rhyperior | Trade holding Protector → Level 14 |
+| Rhydon → Rhyperior | Trade holding Protector |
 | Diglett → Dugtrio | Level 8 |
 | Duskull → Dusclops | Level 10 |
-| Dusclops → Dusknoir | Trade holding Reaper Cloth → Level 13 |
+| Dusclops → Dusknoir | Trade holding Reaper Cloth |
 | Litwick → Lampent | Level 11 |
-| Lampent → Chandelure | Trade holding Dusk Stone → Level 14 |
+| Lampent → Chandelure | Trade holding Dusk Stone |
 
 ## Celadon City
 
 | Evolution | Method |
 |---|---|
 | Oddish → Gloom | Level 6 |
-| Gloom → Vileplume | Leaf Stone → Level 9 |
-| Gloom → Bellossom | Sun Stone → Level 9 |
+| Gloom → Vileplume | Leaf Stone |
+| Gloom → Bellossom | Sun Stone |
 | Bellsprout → Weepinbell | Level 6 |
-| Weepinbell → Victreebel | Leaf Stone → Level 9 |
+| Weepinbell → Victreebel | Leaf Stone |
 | Tangela → Tangrowth | Level 10 |
-| Exeggcute → Exeggutor | Leaf Stone → Level 7 |
-| Cottonee → Whimsicott | Sun Stone → Level 7 |
+| Exeggcute → Exeggutor | Leaf Stone |
+| Cottonee → Whimsicott | Sun Stone |
 | Carnivine | Does not evolve |
 
 ## Fuchsia City
@@ -161,15 +161,15 @@
 | Evolution | Method |
 |---|---|
 | Nidoran♀ → Nidorina | Level 5 |
-| Nidorina → Nidoqueen | Moon Stone → Level 8 |
+| Nidorina → Nidoqueen | Moon Stone |
 | Nidoran♂ → Nidorino | Level 5 |
-| Nidorino → Nidoking | Moon Stone → Level 8 |
-| Scyther → Scizor | Trade holding Metal Coat → Level 7 |
+| Nidorino → Nidoking | Moon Stone |
+| Scyther → Scizor | Trade holding Metal Coat |
 | Pinsir | Does not evolve |
 | Tauros | Does not evolve |
-| Chansey → Blissey | Friendship (catch Lv +4) → Level 7 |
+| Chansey → Blissey | Friendship (catch Lv +4) |
 | Lickitung → Lickilicky | Level 9 |
-| Farfetch'd → Sirfetch'd | Special battle condition → Level 7 |
+| Farfetch'd → Sirfetch'd | Special battle condition |
 | Hitmonlee | Does not evolve |
 | Hitmonchan | Does not evolve |
 | Mankey → Primeape | Level 8 |
@@ -183,10 +183,10 @@
 
 | Evolution | Method |
 |---|---|
-| Vulpix → Ninetales | Fire Stone → Level 7 |
-| Growlithe → Arcanine | Fire Stone → Level 7 |
+| Vulpix → Ninetales | Fire Stone |
+| Growlithe → Arcanine | Fire Stone |
 | Ponyta → Rapidash | Level 10 |
-| Magmar → Magmortar | Trade holding Magmarizer → Level 7 |
+| Magmar → Magmortar | Trade holding Magmarizer |
 | Seel → Dewgong | Level 9 |
 | Tentacool → Tentacruel | Level 8 |
 | Kabuto → Kabutops | Level 10 |
@@ -211,3 +211,4 @@
 - **Location-based evolutions** (Magneton→Magnezone) get the same treatment as trade evolutions — a buffered level from their pre-evolution, with the location itself (a specific route/dungeon) as flavor rather than a hard gameplay gate.
 - **Legendaries/Mythicals don't evolve** and aren't listed above — see `NeoKanto_Regional_Dex.md`'s closing section for the full list of seven.
 - **Every species not listed under its zone's "Does not evolve" rows and not appearing as an evolution target elsewhere is a base, unevolved Pokémon** with no further stages of its own (e.g., Alakazam, Gengar, Golem — all reached via trade evolution above, all endpoints).
+- **Item evolutions never trigger automatically on level-up** — every stone, trade, and special-condition method above (Slowking included) only fires when the player uses the matching option at a town that has the item; the "proper level" mentioned in the buffer-rule note above is internal trainer-roster bookkeeping only, not a level requirement the player ever needs to hit. Friendship (Chansey→Blissey) is the one exception that *is* automatic, on its own catch-Lv+4 threshold.
