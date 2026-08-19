@@ -146,7 +146,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Sableye | Does not evolve |
 | Absol | Does not evolve |
 | Houndour → Houndoom | Level 7 |
-| Nincada → Ninjask | Level 6 (Shedinja also appears if there's an open party slot and a spare Poké Ball) |
+| Nincada → Ninjask | Level 6 (also grants a Shedinja at the same level, same EVs) |
 | Vullaby → Mandibuzz | Level 13 |
 
 ## Vista Town

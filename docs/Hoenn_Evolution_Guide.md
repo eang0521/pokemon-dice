@@ -75,8 +75,7 @@ Towns are ordered by when you would first pass through them; each evolution is f
 
 | Evolution | Method |
 |---|---|
-| Nincada → Ninjask | Level 6 |
-| Nincada → Shedinja | Level 6 (simultaneous, requires empty party slot and spare Poké Ball) |
+| Nincada → Ninjask | Level 6 (also grants a Shedinja at the same level, same EVs) |
 | Skitty → Delcatty | Moon Stone |
 | Electrike → Manectric | Level 8 |
 | Magnemite → Magneton | Level 8 |
