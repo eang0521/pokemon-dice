@@ -66,10 +66,10 @@ Towns are ordered by when you would first pass through them; each evolution is f
 | Wailmer → Wailord | Level 10 |
 | Corphish → Crawdaunt | Level 8 |
 | Lileep → Cradily | Level 10 |
-| Feebas → Milotic | Trade holding Prism Scale |
+| Feebas → Milotic | Prism Scale |
 | Staryu → Starmie | Water Stone |
 | Horsea → Seadra | Level 9 |
-| Seadra → Kingdra | Trade holding Dragon Scale |
+| Seadra → Kingdra | Dragon Scale |
 
 ## Mauville City
 
@@ -105,7 +105,7 @@ Towns are ordered by when you would first pass through them; each evolution is f
 | Whismur → Loudred | Level 6 |
 | Loudred → Exploud | Level 10 |
 | Geodude → Graveler | Level 7 |
-| Graveler → Golem | Trade |
+| Graveler → Golem | Linking Cord |
 | Zubat → Golbat | Level 7 |
 | Golbat → Crobat | Friendship (catch Lv +4) |
 | Sandshrew → Sandslash | Level 7 |
@@ -120,7 +120,7 @@ Towns are ordered by when you would first pass through them; each evolution is f
 | Evolution | Method |
 |---|---|
 | Machop → Machoke | Level 8 |
-| Machoke → Machamp | Trade |
+| Machoke → Machamp | Linking Cord |
 | Numel → Camerupt | Level 9 |
 | Slugma → Magcargo | Level 10 |
 | Koffing → Weezing | Level 9 |
@@ -133,7 +133,7 @@ Towns are ordered by when you would first pass through them; each evolution is f
 | Evolution | Method |
 |---|---|
 | Abra → Kadabra | Level 5 |
-| Kadabra → Alakazam | Trade |
+| Kadabra → Alakazam | Linking Cord |
 | Aron → Lairon | Level 9 |
 | Lairon → Aggron | Level 11 |
 | Grimer → Muk | Level 10 |
@@ -173,8 +173,8 @@ Towns are ordered by when you would first pass through them; each evolution is f
 | Evolution | Method |
 |---|---|
 | Gulpin → Swalot | Level 8 |
-| Clamperl → Huntail | Trade holding Deep Sea Tooth |
-| Clamperl → Gorebyss | Trade holding Deep Sea Scale |
+| Clamperl → Huntail | Deep Sea Tooth |
+| Clamperl → Gorebyss | Deep Sea Scale |
 | Beldum → Metang | Level 6 |
 | Metang → Metagross | Level 11 |
 
@@ -184,7 +184,7 @@ Everything else in the 194-species list is either genuinely single-stage in the 
 
 ## Notes
 
-- **Trade evolutions** work the same as Calli's and Neo Kanto's precedent — an in-game trade-kiosk NPC stands in for a second physical copy.
+- **Pure trade evolutions** (Kadabra, Machoke, Graveler — the ones with no item of their own) all use a **Linking Cord**, found at Slateport City, matching Calli's and Neo Kanto's precedent — no actual trade happens, it's an item evolution like any other.
 - **Friendship evolutions** (Golbat) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11).
 - **Wurmple's split** (Silcoon/Cascoon, and consequently Beautifly/Dustox) is randomized by an internal personality value in the source game, not a player choice — this project rolls it randomly the same way, same convention as any other branching evolution (ruleset §11).
-- **Item evolutions never trigger automatically on level-up** — Water Stone, Leaf Stone, Sun Stone, Moon Stone, Fire Stone, Thunder Stone, Trade, and Friendship (catch Lv +4, the one exception that IS automatic) all work exactly like Calli's dex: the Pokémon only evolves when the player uses the matching option at a town that has the item (or, for Friendship, on its own automatic threshold). No item-based evolution in this dex has an inherent level requirement.
+- **Item evolutions never trigger automatically on level-up** — Water Stone, Leaf Stone, Sun Stone, Moon Stone, Fire Stone, Thunder Stone, Linking Cord, and Friendship (catch Lv +4, the one exception that IS automatic) all work exactly like Calli's dex: the Pokémon only evolves when the player uses the matching option at a town that has the item (or, for Friendship, on its own automatic threshold). No item-based evolution in this dex has an inherent level requirement.

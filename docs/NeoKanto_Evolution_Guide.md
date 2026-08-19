@@ -62,8 +62,8 @@
 | Evolution | Method |
 |---|---|
 | Geodude → Graveler | Level 7 |
-| Graveler → Golem | Trade |
-| Onix → Steelix | Trade holding Metal Coat |
+| Graveler → Golem | Linking Cord |
+| Onix → Steelix | Metal Coat |
 | Clefairy → Clefable | Moon Stone |
 | Paras → Parasect | Level 7 |
 | Zubat → Golbat | Level 7 |
@@ -77,12 +77,12 @@
 | Psyduck → Golduck | Level 9 |
 | Poliwag → Poliwhirl | Level 7 |
 | Poliwhirl → Poliwrath | Water Stone |
-| Poliwhirl → Politoed | Trade holding King's Rock |
+| Poliwhirl → Politoed | King's Rock |
 | Slowpoke → Slowbro | Level 10 |
-| Slowpoke → Slowking | Trade holding King's Rock → Level 10 |
+| Slowpoke → Slowking | King's Rock → Level 10 |
 | Shellder → Cloyster | Water Stone |
 | Horsea → Seadra | Level 9 |
-| Seadra → Kingdra | Trade holding Dragon Scale |
+| Seadra → Kingdra | Dragon Scale |
 | Sableye | Does not evolve |
 | Absol | Does not evolve |
 | Bagon → Shelgon | Level 8 |
@@ -95,12 +95,12 @@
 | Evolution | Method |
 |---|---|
 | Abra → Kadabra | Level 5 |
-| Kadabra → Alakazam | Trade |
+| Kadabra → Alakazam | Linking Cord |
 | Meowth → Persian | Level 8 |
 | Drowzee → Hypno | Level 8 |
 | Mr. Mime | Does not evolve |
-| Porygon → Porygon2 | Trade holding Upgrade |
-| Porygon2 → Porygon-Z | Trade holding Dubious Disc |
+| Porygon → Porygon2 | Upgrade |
+| Porygon2 → Porygon-Z | Dubious Disc |
 | Munna → Musharna | Moon Stone |
 | Girafarig | Does not evolve |
 | Chatot | Does not evolve |
@@ -114,11 +114,11 @@
 |---|---|
 | Ekans → Arbok | Level 7 |
 | Machop → Machoke | Level 8 |
-| Machoke → Machamp | Trade |
+| Machoke → Machamp | Linking Cord |
 | Magnemite → Magneton | Level 8 |
 | Magneton → Magnezone | Leveled at a special magnetic site |
 | Voltorb → Electrode | Level 8 |
-| Electabuzz → Electivire | Trade holding Electirizer |
+| Electabuzz → Electivire | Electirizer |
 | Snorlax | Does not evolve |
 | Joltik → Galvantula | Level 10 |
 | Skarmory | Does not evolve |
@@ -133,14 +133,14 @@
 |---|---|
 | Cubone → Marowak | Level 8 |
 | Gastly → Haunter | Level 7 |
-| Haunter → Gengar | Trade |
+| Haunter → Gengar | Linking Cord |
 | Rhyhorn → Rhydon | Level 11 |
-| Rhydon → Rhyperior | Trade holding Protector |
+| Rhydon → Rhyperior | Protector |
 | Diglett → Dugtrio | Level 8 |
 | Duskull → Dusclops | Level 10 |
-| Dusclops → Dusknoir | Trade holding Reaper Cloth |
+| Dusclops → Dusknoir | Reaper Cloth |
 | Litwick → Lampent | Level 11 |
-| Lampent → Chandelure | Trade holding Dusk Stone |
+| Lampent → Chandelure | Dusk Stone |
 
 ## Celadon City
 
@@ -164,7 +164,7 @@
 | Nidorina → Nidoqueen | Moon Stone |
 | Nidoran♂ → Nidorino | Level 5 |
 | Nidorino → Nidoking | Moon Stone |
-| Scyther → Scizor | Trade holding Metal Coat |
+| Scyther → Scizor | Metal Coat |
 | Pinsir | Does not evolve |
 | Tauros | Does not evolve |
 | Chansey → Blissey | Friendship (catch Lv +4) |
@@ -186,7 +186,7 @@
 | Vulpix → Ninetales | Fire Stone |
 | Growlithe → Arcanine | Fire Stone |
 | Ponyta → Rapidash | Level 10 |
-| Magmar → Magmortar | Trade holding Magmarizer |
+| Magmar → Magmortar | Magmarizer |
 | Seel → Dewgong | Level 9 |
 | Tentacool → Tentacruel | Level 8 |
 | Kabuto → Kabutops | Level 10 |
@@ -206,7 +206,7 @@
 
 ## Notes
 
-- **Trade evolutions** are treated as a standard NPC-trade-kiosk mechanic somewhere in the region (matching Calli's precedent) rather than requiring a second physical copy of the game — narratively, Neo Kanto's League runs a public trade-evolution service in every gym city.
+- **Pure trade evolutions** (Graveler, Kadabra, Machoke, Haunter — the ones with no item of their own) all use a **Linking Cord**, found at Saffron City, matching Calli's precedent — no actual trade happens, it's an item evolution like any other.
 - **Friendship evolutions** (Chansey→Blissey) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11); it still gets the same buffered "proper level" as a stone evolution from a base stage for trainer-roster purposes. Eevee→Espeon/Umbreon use Sun Stone/Moon Stone instead of friendship.
 - **Location-based evolutions** (Magneton→Magnezone) get the same treatment as trade evolutions — a buffered level from their pre-evolution, with the location itself (a specific route/dungeon) as flavor rather than a hard gameplay gate.
 - **Legendaries/Mythicals don't evolve** and aren't listed above — see `NeoKanto_Regional_Dex.md`'s closing section for the full list of seven.

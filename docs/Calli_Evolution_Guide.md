@@ -58,7 +58,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Pidgeotto → Pidgeot | Level 10 |
 | Meowth → Persian | Level 8 |
 | Gastly → Haunter | Level 7 |
-| Haunter → Gengar | Trade holding Linking Cord |
+| Haunter → Gengar | Linking Cord |
 | Drifloon → Drifblim | Level 8 |
 | Litwick → Lampent | Level 11 |
 | Lampent → Chandelure | Dusk Stone |
@@ -86,10 +86,10 @@ All level-up evolutions below are converted from their standard mainline require
 | Psyduck → Golduck | Level 9 |
 | Magikarp → Gyarados | Level 6 |
 | Machop → Machoke | Level 8 |
-| Machoke → Machamp | Trade holding Linking Cord |
-| Onix → Steelix | Trade holding Metal Coat |
+| Machoke → Machamp | Linking Cord |
+| Onix → Steelix | Metal Coat |
 | Roggenrola → Boldore | Level 7 |
-| Boldore → Gigalith | Trade holding Linking Cord |
+| Boldore → Gigalith | Linking Cord |
 | Drilbur → Excadrill | Level 9 |
 
 ## Alpine Town
@@ -100,7 +100,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Snover → Abomasnow | Level 10 |
 | Snorunt → Glalie | Level 11 |
 | Snorunt → Froslass | Dawn Stone (alt. branch) → Level 11 |
-| Sneasel → Weavile | Trade holding Razor Claw |
+| Sneasel → Weavile | Razor Claw |
 | Spheal → Sealeo | Level 9 |
 | Sealeo → Walrein | Level 11 |
 | Teddiursa → Ursaring | Level 8 |
@@ -111,9 +111,9 @@ All level-up evolutions below are converted from their standard mainline require
 | Evolution | Method |
 |---|---|
 | Geodude → Graveler | Level 7 |
-| Graveler → Golem | Trade holding Linking Cord |
+| Graveler → Golem | Linking Cord |
 | Rhyhorn → Rhydon | Level 11 |
-| Rhydon → Rhyperior | Trade holding Protector |
+| Rhydon → Rhyperior | Protector |
 | Larvitar → Pupitar | Level 8 |
 | Pupitar → Tyranitar | Level 13 |
 
@@ -172,13 +172,13 @@ All level-up evolutions below are converted from their standard mainline require
 | Litleo → Pyroar | Level 9 |
 | Sunkern → Sunflora | Sun Stone |
 | Clefairy → Clefable | Moon Stone |
-| Swirlix → Slurpuff | Trade holding Whipped Dream |
+| Swirlix → Slurpuff | Whipped Dream |
 
 ## Skyline City
 | Evolution | Method |
 |---|---|
 | Abra → Kadabra | Level 5 |
-| Kadabra → Alakazam | Trade holding Linking Cord |
+| Kadabra → Alakazam | Linking Cord |
 | Drowzee → Hypno | Level 8 |
 | Natu → Xatu | Level 7 |
 | Riolu → Lucario | Friendship (catch Lv +4) |
@@ -190,7 +190,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Evolution | Method |
 |---|---|
 | Horsea → Seadra | Level 9 |
-| Seadra → Kingdra | Trade holding Dragon Scale |
+| Seadra → Kingdra | Dragon Scale |
 | Wailmer → Wailord | Level 10 |
 | Carvanha → Sharpedo | Level 8 |
 | Frillish → Jellicent | Level 10 |
@@ -204,6 +204,6 @@ All level-up evolutions below are converted from their standard mainline require
 ---
 
 ## Notes
-- **Trade evolutions** (Machoke, Haunter, Graveler, Kadabra, Onix, Sneasel, Rhydon, Seadra, Swirlix — all of which hold an item while trading, including the plain-trade four which need a Linking Cord) work the same as mainline games — you'll need a second player, an in-game trade NPC, or whatever trade-simulation feature the final game builds in.
+- **Trade evolutions** (Machoke, Haunter, Graveler, Kadabra, Onix, Sneasel, Rhydon, Seadra, Swirlix) are really item evolutions in this game, same as any stone — no actual trade happens. Each needs its listed item (Machoke, Haunter, Graveler, and Kadabra all need a Linking Cord specifically) found at a town, same as a Water Stone or Leaf Stone.
 - **Friendship evolutions** (Golden Vein Mine's Golbat→Crobat, Igglybuff→Jigglypuff, Riolu→Lucario) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11).
 - **Magnezone's location-based evolution** is a nod to the dungeon it's associated with (Delta Hydro Station) — a nice reason to bring a mid-level Magneton there specifically.
