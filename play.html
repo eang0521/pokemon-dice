@@ -572,19 +572,34 @@
   }
   .map-encounter-types{ display:flex; gap:4px; }
   .sprite-sm{ width:36px; height:36px; object-fit:contain; image-rendering:pixelated; flex-shrink:0; transform: translateY(-20%); }
-  .section-toggle{
-    display:block;
-    width:100%;
-    text-align:left;
-    background:none;
-    border:none;
-    padding:0;
-    font-family:'Fraunces', serif;
-    font-weight:700;
-    font-size: 17px;
-    color: var(--ink);
-    cursor:pointer;
+  .tab-row{ display:flex; gap:6px; margin-bottom:16px; }
+  .tab-btn{
+    flex:1; min-width:0; padding:9px 4px;
+    font-family:'Fraunces', serif; font-weight:600; font-size:14px; line-height:1.15;
+    text-align:center; background:var(--paper); color:var(--ink);
+    border:1.5px solid var(--ink); border-radius:4px; cursor:pointer;
   }
+  @media (max-width:560px){ .tab-btn{ font-size:11.5px; padding:8px 2px; } }
+  .tab-btn.active{ background:var(--redwood); color:var(--paper); border-color:var(--redwood); }
+  .field{ margin-bottom:14px; }
+  .dex-search{
+    width:100%; font-family:'Work Sans', sans-serif; font-size:15px;
+    padding:10px 12px; background:var(--paper); border:1.5px solid var(--ink);
+    border-radius:2px; color:var(--ink);
+  }
+  .dex-count{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--sage); margin:10px 0 4px; }
+  .dex-evo-line{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink); line-height:1.5; }
+  .dex-evo-line b{ color:var(--rust); }
+  .dex-loc-line{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--redwood);
+    line-height:1.5; margin-top:6px; padding-top:6px; border-top:1px dashed var(--line);
+  }
+  .dex-loc-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--rust);
+    background:none; border:none; padding:0; text-decoration:underline; cursor:pointer;
+  }
+  .dex-loc-btn:hover{ color:var(--redwood); }
+  .dex-no-results{ text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--sage); padding:20px 0; }
 </style>
 </head>
 <body>
@@ -596,6 +611,11 @@
   <div class="status-strip" id="statusStrip"></div>
   <div class="badge-panel" id="badgePanel" style="display:none;"></div>
   <div id="app"></div>
+  <div class="tab-row" id="gameTabRow" style="display:none;">
+    <button type="button" class="tab-btn active" id="tabMapBtn" data-tab="map">Map</button>
+    <button type="button" class="tab-btn" id="tabMyPokemonBtn" data-tab="mypokemon">My Pokemon</button>
+    <button type="button" class="tab-btn" id="tabDataBtn" data-tab="data">Pok&eacute;dex</button>
+  </div>
   <div class="card" id="mapCard" style="display:none;">
     <div class="map-legend">
       <span><span class="legend-swatch legend-town"></span>Gym town</span>
@@ -608,8 +628,14 @@
     <div class="map-info" id="mapInfo"></div>
   </div>
   <div class="card" id="myPokemonCard" style="display:none;">
-    <button type="button" class="section-toggle" id="myPokemonToggle"></button>
-    <div id="myPokemonList" style="display:none;"></div>
+    <div class="card-title">My Pok&eacute;mon</div>
+    <div id="myPokemonList"></div>
+  </div>
+  <div class="card" id="dataCard" style="display:none;">
+    <div class="card-title">Pok&eacute;dex</div>
+    <div class="field"><input type="text" id="dataSearch" class="dex-search" placeholder="Search by name..."></div>
+    <div class="dex-count" id="dataCount"></div>
+    <div id="dataList"></div>
   </div>
 </div>
 
@@ -1050,6 +1076,124 @@ function buildEncounterPreviewHtml(locationId){
   return '<div class="map-encounter-title">Encounter table (2d6 sum)</div>' +
     '<div class="map-encounter-list">' + rows + '</div>';
 }
+
+/* ============ Data tab (Pokedex-style lookup, formatted like the Field Guide's
+   Pokemon Data page: type, base stats, evolution info, and where to find it) ============ */
+// A location's own id (e.g. "Route 114") isn't a map-node id -- routes/dungeons store
+// the reverse link as locationId (plain nodes) or dungeonLocationId (combo nodes), and
+// a multi-segment route has several nodes sharing one locationId; any one of them works
+// as a jump target, so just take the first match.
+function mapNodeIdForLocation(locationId){
+  const node = DATA.mapNodes.find(n => n.locationId === locationId || n.dungeonLocationId === locationId);
+  return node ? node.id : null;
+}
+function buildDataLocationIndex(){
+  const idx = {};
+  DATA.locations.forEach(loc=>{
+    loc.table.forEach((species, i)=>{
+      if(!species) return;
+      (idx[species] = idx[species] || []).push({ id: loc.id, name: loc.name, sum: i + 2 });
+    });
+  });
+  return idx;
+}
+// Mirrors index.html's evoItemLocationNote(): scans every town's placed items for one
+// that's a substring of this evolution branch's method text, and names that town.
+function evoItemLocationNote(method){
+  if(!DATA.evoItems) return '';
+  for(const townId in DATA.evoItems){
+    const hit = (DATA.evoItems[townId] || []).find(it => method.indexOf(it) !== -1);
+    if(hit){
+      const node = nodesById[townId];
+      return ' -- find it in ' + (node ? nodeDisplayName(node) : townId);
+    }
+  }
+  return '';
+}
+function dataEntryHtml(species){
+  const types = (DATA.types[species] || ['Normal', null]).filter(Boolean);
+  const dice = DATA.dice[species] || [0,0,0,0,0,0];
+  const info = DATA.evoInfo[species] || {};
+  const evolvesInto = info.evolvesInto || [];
+
+  let evoHtml = '';
+  if(info.evolvesFrom) evoHtml += '<div class="dex-evo-line">Evolves from <b>'+info.evolvesFrom+'</b></div>';
+  evolvesInto.forEach(e=>{
+    evoHtml += '<div class="dex-evo-line">Evolves into <b>'+e.species+'</b> ('+e.method+')'+evoItemLocationNote(e.method)+'</div>';
+  });
+  if(!info.evolvesFrom && !evolvesInto.length) evoHtml = '<div class="dex-evo-line">Does not evolve</div>';
+
+  const locs = dataLocationIndex[species];
+  let locHtml;
+  if(locs && locs.length){
+    locHtml = locs.map(l => {
+      const nodeId = mapNodeIdForLocation(l.id);
+      return nodeId
+        ? '<button type="button" class="dex-loc-btn" data-action="jumpToMapLocation" data-node="'+nodeId+'">'+l.name+' ('+l.sum+')</button>'
+        : (l.name + ' (' + l.sum + ')');
+    }).join(', ');
+  } else if(info.evolvesFrom){
+    locHtml = 'Evolve from <b>'+info.evolvesFrom+'</b> -- not a direct wild encounter';
+  } else {
+    locHtml = 'Starter or special -- not found in the wild';
+  }
+
+  return '<div class="mon-detail-card dex-entry" data-name="'+species.toLowerCase()+'">' +
+    spriteImgHtml(species, 'sprite-lg') +
+    '<div class="mon-detail-name">'+species+'</div>' +
+    '<div class="trainer-type-block"><span class="trainer-type-label">Type</span>' +
+      '<span class="trainer-mon-types">'+types.map(t=>trainerStylePill(t)).join('')+'</span></div>' +
+    statRowHtml(dice) +
+    evoHtml +
+    '<div class="dex-loc-line">Found: '+locHtml+'</div>' +
+  '</div>';
+}
+function buildDataTab(){
+  dataBuilt = true;
+  dataLocationIndex = buildDataLocationIndex();
+  const names = Object.keys(DATA.dice).sort((a,b)=>a.localeCompare(b));
+  document.getElementById('dataList').innerHTML = names.map(dataEntryHtml).join('');
+  document.getElementById('dataCount').textContent = names.length + ' Pokémon';
+  filterDataTab(); // re-apply any search text already typed before this lazy build ran
+}
+function filterDataTab(){
+  const q = document.getElementById('dataSearch').value.trim().toLowerCase();
+  const entries = document.querySelectorAll('#dataList .dex-entry');
+  let shown = 0;
+  entries.forEach(el=>{
+    const match = el.dataset.name.includes(q);
+    el.style.display = match ? '' : 'none';
+    if(match) shown++;
+  });
+  const listEl = document.getElementById('dataList');
+  let noResults = listEl.querySelector('.dex-no-results');
+  if(shown === 0 && entries.length){
+    if(!noResults){
+      noResults = document.createElement('div');
+      noResults.className = 'dex-no-results';
+      noResults.textContent = 'No Pokémon match that search.';
+      listEl.appendChild(noResults);
+    }
+  } else if(noResults){
+    noResults.remove();
+  }
+}
+function renderDataTab(){
+  const dataCard = document.getElementById('dataCard');
+  if(!DATA || !gameState){ dataCard.style.display = 'none'; return; }
+  dataCard.style.display = (activeGameTab === 'data') ? '' : 'none';
+  if(activeGameTab === 'data' && !dataBuilt) buildDataTab();
+}
+function showGameTab(which){
+  activeGameTab = which;
+  document.getElementById('tabMapBtn').classList.toggle('active', which === 'map');
+  document.getElementById('tabMyPokemonBtn').classList.toggle('active', which === 'mypokemon');
+  document.getElementById('tabDataBtn').classList.toggle('active', which === 'data');
+  renderGameMap();
+  renderMyPokemonSection();
+  renderDataTab();
+}
+
 // The "Move here" affordance for whichever node is currently selected in the
 // sidebar -- only offered while actively rolling movement, and only for a node
 // this roll can actually reach (never the player's own current tile, per the
@@ -1182,6 +1326,7 @@ function selectMapNode(nodeId){
   const el = document.querySelector('.map-node[data-id="'+nodeId+'"]');
   if(el) el.classList.add('selected');
   renderMapSidebar();
+  if(view === 'moving') document.getElementById('app').innerHTML = renderMovingScreen();
 }
 function moveToNode(nodeId){
   if(view !== 'moving' || !movement) return;
@@ -1195,8 +1340,13 @@ function moveToNode(nodeId){
 }
 function renderGameMap(){
   const mapCard = document.getElementById('mapCard');
-  if(!DATA || !gameState){ mapCard.style.display = 'none'; return; } // home/region-pick screen -- no region active yet
-  mapCard.style.display = '';
+  const tabRow = document.getElementById('gameTabRow');
+  if(!DATA || !gameState){ mapCard.style.display = 'none'; tabRow.style.display = 'none'; return; } // home/region-pick screen -- no region active yet
+  tabRow.style.display = '';
+  // The map SVG/sidebar stay built and synced even while the Data tab is showing,
+  // so jumping here from a Data-tab "Found" button lands on an already-correct map --
+  // only the final display toggle depends on which tab is active.
+  mapCard.style.display = (activeGameTab === 'map') ? '' : 'none';
   if(!mapBuilt) buildGameMap();
 
   document.querySelectorAll('.map-node').forEach(el=>{ el.classList.remove('player-here','can-move'); });
@@ -1450,10 +1600,12 @@ let encounter = null;     // active battle state
 let pendingMessage = '';  // for the generic message screen
 let pendingEvolveOptions = []; // for the evolve-a-Pokemon-with-a-town-item screen
 let startPick = { region:null, starter:null, town:null };
-let myPokemonOpen = false; // collapsed/expanded state of the "My Pokemon" roster section
 let myPokemonSort = 'obtained'; // 'obtained' | 'stat' | 'level' -- sort order of the roster list
 let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
 let rollingBattle = null; // { nA, nB } dice counts while the "Fight!" roll animation is playing
+let activeGameTab = 'map'; // 'map' | 'mypokemon' | 'data' -- which of the three secondary panels is showing
+let dataBuilt = false; // whether #dataList has been populated for the current DATA/region
+let dataLocationIndex = null; // species -> [{id, name, sum}] wild-encounter reverse index, built once per region
 
 /* ============ Rendering ============ */
 const STARTERS_BY_REGION = {
@@ -1549,23 +1701,19 @@ function myPokemonSortControlsHtml(){
 
 function renderMyPokemonSection(){
   const card = document.getElementById('myPokemonCard');
-  if(!gameState || !gameState.started){ card.style.display = 'none'; return; }
-  card.style.display = '';
+  if(!DATA || !gameState){ card.style.display = 'none'; return; }
+  card.style.display = (activeGameTab === 'mypokemon') ? '' : 'none';
   const mons = loadGamePokemon();
-  document.getElementById('myPokemonToggle').textContent = (myPokemonOpen ? '▼' : '▶') + ' My Pokemon (' + mons.length + ')';
-  const listEl = document.getElementById('myPokemonList');
-  listEl.style.display = myPokemonOpen ? '' : 'none';
-  if(myPokemonOpen){
-    const sorted = sortedGamePokemon(mons, myPokemonSort);
-    listEl.innerHTML = myPokemonSortControlsHtml() + (sorted.length
-      ? sorted.map(m => monStatCardHtml(m)).join('')
-      : '<div class="empty-note">No Pokemon caught yet.</div>');
-  }
+  const sorted = sortedGamePokemon(mons, myPokemonSort);
+  document.getElementById('myPokemonList').innerHTML = myPokemonSortControlsHtml() + (sorted.length
+    ? sorted.map(m => monStatCardHtml(m)).join('')
+    : '<div class="empty-note">No Pokemon caught yet.</div>');
 }
 
 function render(){
   renderStatus();
   renderGameMap();
+  renderDataTab();
   renderMyPokemonSection();
   const app = document.getElementById('app');
   if(view === 'home') app.innerHTML = renderHomeScreen();
@@ -1662,6 +1810,8 @@ function goHome(){
   view = 'home';
   encounter = null;
   movement = null;
+  activeGameTab = 'map';
+  dataBuilt = false;
   render();
 }
 function continueSlot(slot){
@@ -1674,6 +1824,8 @@ function continueSlot(slot){
   view = gameState.started ? 'board' : 'start';
   encounter = null;
   movement = null;
+  activeGameTab = 'map';
+  dataBuilt = false;
   render();
 }
 function newAdventureSlot(slot){
@@ -1699,6 +1851,8 @@ function pickRegion(key){
   updateRegionBranding(key);
   startPick.region = key;
   view = 'start';
+  activeGameTab = 'map';
+  dataBuilt = false;
   render();
 }
 
@@ -1759,10 +1913,18 @@ function renderBoardScreen(){
 
 function renderMovingScreen(){
   const node = nodesById[gameState.currentNodeId];
+  const selected = selectedMapNodeId ? nodesById[selectedMapNodeId] : null;
+  // Mirrors the map sidebar's own "Move here" affordance up here too, so picking a
+  // glowing tile doesn't require scrolling down to the map card to confirm the move.
+  const selectedHtml = selected ?
+    '<div class="card-sub" style="margin-top:10px;">Selected: '+nodeDisplayName(selected)+'</div>' +
+    moveHereHtml(selected)
+    : '';
   return '<div class="card">' +
     '<div class="card-title">Rolled a '+movement.total+'</div>' +
     '<div class="card-sub">Currently at '+nodeDisplayName(node)+' -- you must move</div>' +
     '<div class="empty-note">Click a glowing tile on the map below to move there. Closer tiles use less of the roll and forfeit the rest.</div>' +
+    selectedHtml +
   '</div>';
 }
 
@@ -2465,6 +2627,7 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'continueSlot') continueSlot(parseInt(btn.dataset.slot, 10));
   else if(action === 'newAdventureSlot') newAdventureSlot(parseInt(btn.dataset.slot, 10));
   else if(action === 'pickRegion') pickRegion(btn.dataset.region);
+  else if(action === 'moveToNode') moveToNode(btn.dataset.node);
 });
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
   if(e.target.closest('[data-action="goHome"]')){ goHome(); return; }
@@ -2477,15 +2640,21 @@ document.getElementById('mapInfo').addEventListener('click', (e)=>{
   const btn = e.target.closest('[data-action="moveToNode"]');
   if(btn) moveToNode(btn.dataset.node);
 });
-document.getElementById('myPokemonToggle').addEventListener('click', ()=>{
-  myPokemonOpen = !myPokemonOpen;
-  renderMyPokemonSection();
-});
 document.getElementById('myPokemonList').addEventListener('click', (e)=>{
   const btn = e.target.closest('[data-action="setMyPokemonSort"]');
   if(!btn) return;
   myPokemonSort = btn.dataset.sort;
   renderMyPokemonSection();
+});
+document.getElementById('tabMapBtn').addEventListener('click', ()=> showGameTab('map'));
+document.getElementById('tabMyPokemonBtn').addEventListener('click', ()=> showGameTab('mypokemon'));
+document.getElementById('tabDataBtn').addEventListener('click', ()=> showGameTab('data'));
+document.getElementById('dataSearch').addEventListener('input', filterDataTab);
+document.getElementById('dataList').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-action="jumpToMapLocation"]');
+  if(!btn) return;
+  showGameTab('map');
+  selectMapNode(btn.dataset.node);
 });
 
 render();
