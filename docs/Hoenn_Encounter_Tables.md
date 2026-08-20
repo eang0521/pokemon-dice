@@ -287,14 +287,14 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 | 2 | Zigzagoon | Normal |
 | 3 | Poochyena | Dark |
 | 4 | Abra | Psychic |
-| 5 | Kadabra | Psychic |
-| 6 | Grimer | Poison |
-| 7 | Alakazam | Psychic |
-| 8 | Aron | Steel/Rock |
-| 9 | Electrike | Electric |
-| 10 | Muk | Poison |
-| 11 | Manectric | Electric |
-| 12 | Lairon | Steel/Rock |
+| 5 | Grimer | Poison |
+| 6 | Aron | Steel/Rock |
+| 7 | Electrike | Electric |
+| 8 | Kadabra | Psychic |
+| 9 | Muk | Poison |
+| 10 | Manectric | Electric |
+| 11 | Lairon | Steel/Rock |
+| 12 | Alakazam | Psychic |
 
 ### Route 117
 
@@ -410,12 +410,12 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 | 3 | Oddish | Grass/Poison |
 | 4 | Volbeat | Bug |
 | 5 | Illumise | Bug |
-| 6 | Gloom | Grass/Poison |
-| 7 | Jigglypuff | Normal/Fairy |
+| 6 | Jigglypuff | Normal/Fairy |
+| 7 | Gloom | Grass/Poison |
 | 8 | Delcatty | Normal |
-| 9 | Vileplume | Grass/Poison |
-| 10 | Bellossom | Grass |
-| 11 | Wigglytuff | Normal/Fairy |
+| 9 | Wigglytuff | Normal/Fairy |
+| 10 | Vileplume | Grass/Poison |
+| 11 | Bellossom | Grass |
 | 12 | Ludicolo | Water/Grass |
 
 ### Routes 124–127 (shared table)
@@ -466,15 +466,15 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 |---|---|---|
 | 2 | Wurmple | Bug |
 | 3 | Shroomish | Grass |
-| 4 | Silcoon | Bug |
-| 5 | Cascoon | Bug |
-| 6 | Slakoth | Normal |
-| 7 | Taillow | Normal/Flying |
-| 8 | Nincada | Bug/Ground |
-| 9 | Beautifly | Bug/Flying |
-| 10 | Ninjask | Bug/Flying |
-| 11 | Vigoroth | Normal |
-| 12 | Breloom | Grass/Fighting |
+| 4 | Slakoth | Normal |
+| 5 | Taillow | Normal/Flying |
+| 6 | Nincada | Bug/Ground |
+| 7 | Silcoon | Bug |
+| 8 | Cascoon | Bug |
+| 9 | Ninjask | Bug/Flying |
+| 10 | Vigoroth | Normal |
+| 11 | Breloom | Grass/Fighting |
+| 12 | Beautifly | Bug/Flying |
 
 ### Rusturf Tunnel
 
@@ -532,7 +532,7 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 
 ### Mt. Chimney
 
-*Combo dungeon with Lavaridge Town. No Legendary/Mythical assigned — sum 12 is the volcano's strongest non-Legendary trophy.*
+*Combo dungeon with Lavaridge Town. Signature find: Groudon. Sum 12 is a guaranteed Groudon encounter.*
 
 | Sum | Species | Type(s) |
 |---|---|---|
@@ -546,7 +546,7 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 | 9 | Camerupt | Fire/Ground |
 | 10 | Magcargo | Fire/Rock |
 | 11 | Weezing | Poison |
-| 12 | Solrock | Rock/Psychic |
+| 12 | **Groudon** | Ground |
 
 ### New Mauville
 
@@ -594,13 +594,13 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 | 3 | Shuppet | Ghost |
 | 4 | Wynaut | Psychic |
 | 5 | Lunatone | Rock/Psychic |
-| 6 | Wobbuffet | Psychic |
-| 7 | Golbat | Poison/Flying |
-| 8 | Natu | Psychic/Flying |
+| 6 | Natu | Psychic/Flying |
+| 7 | Wobbuffet | Psychic |
+| 8 | Golbat | Poison/Flying |
 | 9 | Xatu | Psychic/Flying |
 | 10 | Banette | Ghost |
-| 11 | Crobat | Poison/Flying |
-| 12 | Dusclops | Ghost |
+| 11 | Dusclops | Ghost |
+| 12 | Crobat | Poison/Flying |
 
 ### Shoal Cave
 
@@ -616,13 +616,13 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 | 7 | Golbat | Poison/Flying |
 | 8 | Lanturn | Water/Electric |
 | 9 | Sealeo | Ice/Water |
-| 10 | Crobat | Poison/Flying |
-| 11 | Glalie | Ice |
+| 10 | Glalie | Ice |
+| 11 | Crobat | Poison/Flying |
 | 12 | **Walrein** (trophy) | Ice/Water |
 
 ### Seafloor Cavern
 
-*Signature find: Kyogre & Groudon — shared slot; rolling a 12 here means one of the two, player's/GM's choice.*
+*Signature find: Kyogre. Sum 12 is a guaranteed Kyogre encounter.*
 
 | Sum | Species | Type(s) |
 |---|---|---|
@@ -634,9 +634,9 @@ Each location has one fixed table covering sums 2–12. Early-badge players can 
 | 7 | Golbat | Poison/Flying |
 | 8 | Graveler | Rock/Ground |
 | 9 | Swalot | Poison |
-| 10 | Crobat | Poison/Flying |
-| 11 | Sharpedo | Water/Dark |
-| 12 | **Kyogre & Groudon** (shared) | Water / Ground |
+| 10 | Sharpedo | Water/Dark |
+| 11 | Crobat | Poison/Flying |
+| 12 | **Kyogre** | Water |
 
 ### Sky Pillar
 
