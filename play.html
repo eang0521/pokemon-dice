@@ -2010,7 +2010,7 @@ function renderRouteRollScreen(){
 function monEvolutionChipHtml(m){
   const info = DATA.evoInfo[m.name];
   if(!info || !info.evolvesInto || !info.evolvesInto.length){
-    return '<span class="stat-chip" style="opacity:0.6;">Fully evolved</span>';
+    return '';
   }
   const parts = info.evolvesInto.map(branch=>{
     let detail;
