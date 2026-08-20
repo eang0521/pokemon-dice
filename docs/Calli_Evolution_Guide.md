@@ -65,7 +65,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Pikachu → Raichu | Thunder Stone |
 | Voltorb → Electrode | Level 8 |
 | Magnemite → Magneton | Level 8 |
-| Magneton → Magnezone | Level up inside a magnetic-anomaly location (e.g. Delta Hydro Station or Golden Vein Mine) |
+| Magneton → Magnezone | Thunder Stone |
 
 ## Vinehaven Town
 | Evolution | Method |
@@ -206,4 +206,4 @@ All level-up evolutions below are converted from their standard mainline require
 ## Notes
 - **Trade evolutions** (Machoke, Haunter, Graveler, Kadabra, Onix, Sneasel, Rhydon, Seadra, Swirlix) are really item evolutions in this game, same as any stone — no actual trade happens. Each needs its listed item (Machoke, Haunter, Graveler, and Kadabra all need a Linking Cord specifically) found at a town, same as a Water Stone or Leaf Stone.
 - **Friendship evolutions** (Golden Vein Mine's Golbat→Crobat, Igglybuff→Jigglypuff, Riolu→Lucario) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11).
-- **Magnezone's location-based evolution** is a nod to the dungeon it's associated with (Delta Hydro Station) — a nice reason to bring a mid-level Magneton there specifically.
+- **Magneton → Magnezone** uses a Thunder Stone (found in Capitol City, same as Pikachu → Raichu) rather than a location-based trigger — the game has no mechanic to check where a Pokémon levels up, so this keeps it a real, usable evolution.
