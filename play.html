@@ -2003,6 +2003,27 @@ function renderRouteRollScreen(){
 // matching the Field Guide's own convention), every stat plus the total, and
 // current XP progress. `actionHtml`, if given, is appended inside the card
 // (e.g. a "Send Out" button); omit it for a plain read-only roster view.
+// Compact evolution status for the owned-mon card's stat row -- sits to the
+// right of the XP chip so the player can see what's coming without opening
+// the Pokedex tab. Mirrors the level/friendship-vs-item method parsing that
+// checkAndApplyLevelEvolution() and evoRequiredLevel() already use.
+function monEvolutionChipHtml(m){
+  const info = DATA.evoInfo[m.name];
+  if(!info || !info.evolvesInto || !info.evolvesInto.length){
+    return '<span class="stat-chip" style="opacity:0.6;">Fully evolved</span>';
+  }
+  const parts = info.evolvesInto.map(branch=>{
+    let detail;
+    if(branch.method.indexOf('Friendship') !== -1){
+      detail = 'Friendship, Lv ' + ((m.catchLevel||0) + 4) + '+';
+    } else {
+      const req = evoRequiredLevel(branch.method);
+      detail = req !== null ? ('Level ' + req) : branch.method;
+    }
+    return '<b>' + branch.species + '</b> (' + detail + ')';
+  });
+  return '<span class="stat-chip">Evolves into ' + parts.join(', ') + '</span>';
+}
 function monStatCardHtml(m, actionHtml){
   const level = m.ev.reduce((a,b)=>a+b,0);
   const finalStats = m.base.map((b,i)=>b+m.ev[i]);
@@ -2013,7 +2034,9 @@ function monStatCardHtml(m, actionHtml){
     statRowHtml(finalStats) +
     '<div class="stat-row"><span class="stat-chip">' + (level >= MAX_LEVEL
       ? 'XP <b>'+(m.xp||0)+'</b> / ∞'
-      : 'XP <b>'+(m.xp||0)+'</b> / '+(level*10)+' to next level') + '</span></div>' +
+      : 'XP <b>'+(m.xp||0)+'</b> / '+(level*10)+' to next level') + '</span>' +
+      monEvolutionChipHtml(m) +
+    '</div>' +
     (actionHtml || '') +
   '</div>';
 }
