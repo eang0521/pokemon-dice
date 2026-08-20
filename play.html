@@ -581,6 +581,10 @@
   }
   @media (max-width:560px){ .tab-btn{ font-size:11.5px; padding:8px 2px; } }
   .tab-btn.active{ background:var(--redwood); color:var(--paper); border-color:var(--redwood); }
+  /* Elite Four / Champion roster preview -- more tabs than fit at flex:1, so these
+     keep their natural width and the row scrolls horizontally instead of squeezing. */
+  .tab-row-scroll{ display:flex; gap:6px; margin:8px 0; overflow-x:auto; }
+  .tab-row-scroll .tab-btn{ flex:0 0 auto; padding:8px 12px; }
   .field{ margin-bottom:14px; }
   .dex-search{
     width:100%; font-family:'Work Sans', sans-serif; font-size:15px;
@@ -974,6 +978,8 @@ const nodesById = {};
 function rebuildNodesById(){
   for(const k in nodesById) delete nodesById[k];
   if(DATA) DATA.mapNodes.forEach(n=>{ nodesById[n.id] = n; });
+  mapBuilt = false; // the SVG was built from the previous region's nodes -- force a rebuild
+  selectedMapNodeId = null; // stale node id from a previous region wouldn't resolve anymore
 }
 function neighborsOf(nodeId){
   const out = [];
@@ -1054,6 +1060,7 @@ function nodeXY(n){
 }
 let mapBuilt = false;
 let selectedMapNodeId = null;
+let eliteFourPreviewTabIdx = 0; // which member's roster is showing in the E4 town's tabbed preview
 function evoItemsLineHtml(node){
   const townId = node.kind === 'combo' ? node.townId : node.id;
   const items = (DATA.evoItems && DATA.evoItems[townId]) || [];
@@ -1230,6 +1237,31 @@ function gymTeamPreviewHtml(leaderName){
   return '<div class="map-encounter-title">Current team (' + badges + ' badge' + (badges===1?'':'s') + ')</div>' +
     cards;
 }
+// Elite Four + Champion roster preview for the E4 town, shown when that node
+// is selected on the map -- same idea as gymTeamPreviewHtml() above, but with
+// one tab per member (there are too many combined rosters to list at once).
+function eliteFourTeamPreviewHtml(node){
+  if(!node || !DATA.eliteFourTownId || node.id !== DATA.eliteFourTownId) return '';
+  const members = eliteFourMembers();
+  if(!members.length) return '';
+  if(eliteFourPreviewTabIdx >= members.length) eliteFourPreviewTabIdx = 0;
+  const tabsHtml = members.map((m, i)=>
+    '<button type="button" class="tab-btn' + (i===eliteFourPreviewTabIdx?' active':'') + '" data-action="selectEliteFourPreviewTab" data-idx="' + i + '">' +
+      eliteFourMemberLabelForIndex(i) +
+    '</button>'
+  ).join('');
+  const team = rollEliteFourMemberTeam(members[eliteFourPreviewTabIdx]);
+  const cards = team.map(o=>
+    '<div class="mon-detail-card">' +
+      '<div class="mon-detail-name">' + o.species + ' Lv ' + o.level + '</div>' +
+      trainerTypeBlockHtml(o.types[0], o.types[1], o.atk) +
+      statRowHtml(o.statsArr) +
+    '</div>'
+  ).join('');
+  return '<div class="map-encounter-title">Elite Four &amp; Champion Rosters</div>' +
+    '<div class="tab-row-scroll">' + tabsHtml + '</div>' +
+    cards;
+}
 function renderMapSidebar(){
   const infoEl = document.getElementById('mapInfo');
   const n = selectedMapNodeId ? nodesById[selectedMapNodeId] : null;
@@ -1245,6 +1277,7 @@ function renderMapSidebar(){
       evoItemsLineHtml(n) +
       moveHereHtml(n) +
       gymTeamPreviewHtml(n.gymLeader) +
+      eliteFourTeamPreviewHtml(n) +
       buildEncounterPreviewHtml(n.dungeonLocationId);
     return;
   }
@@ -1266,6 +1299,7 @@ function renderMapSidebar(){
     (n.kind === 'town' ? evoItemsLineHtml(n) : '') +
     moveHereHtml(n) +
     (n.kind === 'town' ? gymTeamPreviewHtml(n.gymLeader) : '') +
+    (n.kind === 'town' ? eliteFourTeamPreviewHtml(n) : '') +
     encounterHtml;
 }
 function buildGameMap(){
@@ -1322,11 +1356,16 @@ function buildGameMap(){
 }
 function selectMapNode(nodeId){
   selectedMapNodeId = nodeId;
+  eliteFourPreviewTabIdx = 0;
   document.querySelectorAll('.map-node').forEach(el=>el.classList.remove('selected'));
   const el = document.querySelector('.map-node[data-id="'+nodeId+'"]');
   if(el) el.classList.add('selected');
   renderMapSidebar();
   if(view === 'moving') document.getElementById('app').innerHTML = renderMovingScreen();
+}
+function selectEliteFourPreviewTab(idx){
+  eliteFourPreviewTabIdx = idx;
+  renderMapSidebar();
 }
 function moveToNode(nodeId){
   if(view !== 'moving' || !movement) return;
@@ -2220,7 +2259,7 @@ function beginAdventure(){
     name: sp,
     t1: types[0] || null,
     t2: types[1] || null,
-    atk: randomAttackType(types[0], types[1]),
+    atk: types[0], // starters always get STAB on their primary type, to make early encounters easier
     base: base,
     ev: ev,
     catchLevel: ev.reduce((a,b)=>a+b,0),
@@ -2660,8 +2699,10 @@ document.getElementById('statusStrip').addEventListener('click', (e)=>{
   }
 });
 document.getElementById('mapInfo').addEventListener('click', (e)=>{
-  const btn = e.target.closest('[data-action="moveToNode"]');
-  if(btn) moveToNode(btn.dataset.node);
+  const moveBtn = e.target.closest('[data-action="moveToNode"]');
+  if(moveBtn){ moveToNode(moveBtn.dataset.node); return; }
+  const tabBtn = e.target.closest('[data-action="selectEliteFourPreviewTab"]');
+  if(tabBtn) selectEliteFourPreviewTab(parseInt(tabBtn.dataset.idx, 10));
 });
 document.getElementById('myPokemonList').addEventListener('click', (e)=>{
   const btn = e.target.closest('[data-action="setMyPokemonSort"]');
