@@ -585,6 +585,20 @@
      keep their natural width and the row scrolls horizontally instead of squeezing. */
   .tab-row-scroll{ display:flex; gap:6px; margin:8px 0; overflow-x:auto; }
   .tab-row-scroll .tab-btn{ flex:0 0 auto; padding:8px 12px; }
+  /* TM attack-type picker -- a little 5-slice strip of the wheel centered on the
+     Pokemon's current attack type, plus its own type(s) as a separate shortcut row. */
+  .tm-wheel-row{ display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px; margin:10px 0; }
+  .tm-type-btn, .tm-wheel-current{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; color:#fff;
+    text-transform:uppercase; letter-spacing:0.03em; border-radius:6px;
+    padding:10px 13px; text-align:center; text-shadow:0 1px 1px rgba(0,0,0,0.25);
+  }
+  .tm-type-btn{ border:none; cursor:pointer; }
+  .tm-type-btn:hover{ filter:brightness(1.12); transform:translateY(-1px); }
+  .tm-wheel-current{ opacity:0.55; }
+  .tm-wheel-current-label{ font-size:8px; letter-spacing:0.05em; margin-top:1px; font-weight:500; }
+  .tm-wheel-link{ color:var(--sage); font-size:15px; }
+  .tm-truetype-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
   .field{ margin-bottom:14px; }
   .dex-search{
     width:100%; font-family:'Work Sans', sans-serif; font-size:15px;
@@ -1638,6 +1652,8 @@ let pendingForfeit = 0;   // spaces forfeited by the movement that just resolved
 let encounter = null;     // active battle state
 let pendingMessage = '';  // for the generic message screen
 let pendingEvolveOptions = []; // for the evolve-a-Pokemon-with-a-town-item screen
+let pendingTmOffer = false; // true when the current message screen is a gym win -- shows a "Use a TM" option
+let tmFlow = null; // { monId } while picking a new attack type for a TM
 let startPick = { region:null, starter:null, town:null };
 let myPokemonSort = 'obtained'; // 'obtained' | 'stat' | 'level' -- sort order of the roster list
 let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
@@ -1767,6 +1783,8 @@ function render(){
   else if(view === 'catchOrDefeat') app.innerHTML = renderCatchOrDefeatScreen();
   else if(view === 'message') app.innerHTML = renderMessageScreen();
   else if(view === 'elite4Ack') app.innerHTML = renderElite4AckScreen();
+  else if(view === 'tmPickMon') app.innerHTML = renderTmPickMonScreen();
+  else if(view === 'tmPickType') app.innerHTML = renderTmPickTypeScreen();
 }
 
 // Looks up a node's display name within a SPECIFIC region's own data, without
@@ -1851,6 +1869,8 @@ function goHome(){
   movement = null;
   activeGameTab = 'map';
   dataBuilt = false;
+  tmFlow = null;
+  pendingTmOffer = false;
   render();
 }
 function continueSlot(slot){
@@ -1865,6 +1885,8 @@ function continueSlot(slot){
   movement = null;
   activeGameTab = 'map';
   dataBuilt = false;
+  tmFlow = null;
+  pendingTmOffer = false;
   render();
 }
 function newAdventureSlot(slot){
@@ -1892,6 +1914,8 @@ function pickRegion(key){
   view = 'start';
   activeGameTab = 'map';
   dataBuilt = false;
+  tmFlow = null;
+  pendingTmOffer = false;
   render();
 }
 
@@ -2226,9 +2250,113 @@ function renderCatchOrDefeatScreen(){
 }
 
 function renderMessageScreen(){
+  const tmButton = pendingTmOffer
+    ? '<button type="button" class="btn btn-wild" data-action="startTmPick">Use a TM</button>'
+    : '';
   return '<div class="card">' +
     '<div class="card-title">'+pendingMessage+'</div>' +
-    '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="endTurn">Continue</button></div>' +
+    '<div class="choice-grid">' +
+      '<button type="button" class="btn btn-primary" data-action="endTurn">Continue</button>' +
+      tmButton +
+    '</div>' +
+  '</div>';
+}
+
+// ============ TM (attack-type change) flow ============
+// Walks WHEEL by `radius` steps in each direction from `type` -- negative
+// direction (array index going down) is "counterclockwise", positive is
+// "clockwise", matching the convention fixedAttackType() already uses for
+// gym slot 3 (+1, clockwise) and slot 4 (-1, counterclockwise).
+function wheelNeighbors(type, radius){
+  const idx = WHEEL.indexOf((type||'').toLowerCase());
+  if(idx === -1) return { ccw: [], cw: [] };
+  const n = WHEEL.length;
+  const ccw = [], cw = [];
+  for(let d = radius; d >= 1; d--) ccw.push(WHEEL[(idx - d + n*radius) % n]);
+  for(let d = 1; d <= radius; d++) cw.push(WHEEL[(idx + d) % n]);
+  return { ccw, cw };
+}
+function tmTypeButtonHtml(type){
+  const c = TYPE_COLOR[type.toLowerCase()] || '#888';
+  return '<button type="button" class="tm-type-btn" data-action="chooseTmType" data-type="'+type+'" style="background:'+c+';">'+type+'</button>';
+}
+function startTmPick(){
+  pendingTmOffer = false;
+  view = 'tmPickMon';
+  render();
+}
+function skipTm(){
+  tmFlow = null;
+  endTurn();
+}
+function pickTmMon(monId){
+  tmFlow = { monId };
+  view = 'tmPickType';
+  render();
+}
+function backToTmPickMon(){
+  tmFlow = null;
+  view = 'tmPickMon';
+  render();
+}
+function chooseTmType(type){
+  if(!tmFlow) return;
+  const list = loadGamePokemon();
+  const m = list.find(x=>x.id === tmFlow.monId);
+  if(!m) return;
+  const oldAtk = m.atk;
+  m.atk = type;
+  saveGamePokemonList(list);
+  tmFlow = null;
+  pendingMessage = m.name+'\'s attack type changed from '+oldAtk+' to '+type+'!';
+  pendingTmOffer = false;
+  view = 'message';
+  render();
+}
+function renderTmPickMonScreen(){
+  const mons = loadGamePokemon();
+  const cards = mons.length
+    ? mons.map(m => monStatCardHtml(m,
+        '<div class="choice-grid" style="margin-top:8px;"><button type="button" class="btn btn-wild" data-action="pickTmMon" data-mon="'+m.id+'">Use TM on '+m.name+'</button></div>'
+      )).join('')
+    : '<div class="empty-note">No Pokemon to use a TM on.</div>';
+  return '<div class="card">' +
+    '<div class="card-title">Use a TM</div>' +
+    '<div class="card-sub">Pick a Pokemon to change its attack type.</div>' +
+    cards +
+    '<div class="choice-grid" style="margin-top:10px;"><button type="button" class="btn" data-action="skipTm">Skip TM</button></div>' +
+  '</div>';
+}
+function renderTmPickTypeScreen(){
+  const list = loadGamePokemon();
+  const m = tmFlow && list.find(x=>x.id === tmFlow.monId);
+  if(!m) return renderTmPickMonScreen();
+  const current = (m.atk||'').toLowerCase();
+  const { ccw, cw } = wheelNeighbors(current, 2);
+  const wheelSet = new Set([...ccw, ...cw]);
+  const trueTypes = [m.t1, m.t2].filter(Boolean)
+    .filter(t => t.toLowerCase() !== current && !wheelSet.has(t.toLowerCase()));
+
+  const currentPill =
+    '<span class="tm-wheel-current" style="background:'+(TYPE_COLOR[current]||'#888')+';">' +
+      current + '<div class="tm-wheel-current-label">current</div>' +
+    '</span>';
+  const stripItems = [...ccw.map(tmTypeButtonHtml), currentPill, ...cw.map(tmTypeButtonHtml)];
+  const wheelStripHtml = '<div class="tm-wheel-row">' + stripItems.join('<span class="tm-wheel-link">&rarr;</span>') + '</div>';
+
+  const trueTypeHtml = trueTypes.length
+    ? '<div class="field-label" style="margin-top:14px;">'+m.name+'\'s own type'+(trueTypes.length>1?'s':'')+'</div>' +
+      '<div class="tm-truetype-row">' + trueTypes.map(tmTypeButtonHtml).join('') + '</div>'
+    : '';
+
+  return '<div class="card">' +
+    '<div class="card-title">Use a TM on '+m.name+'</div>' +
+    '<div class="card-sub">Pick a new attack type -- limited to '+m.name+'\'s own type(s) plus the 2 types on either side of its current attack type on the wheel.</div>' +
+    monStatCardHtml(m) +
+    '<div class="field-label" style="margin-top:14px;">Wheel-adjacent types</div>' +
+    wheelStripHtml +
+    trueTypeHtml +
+    '<div class="choice-grid" style="margin-top:14px;"><button type="button" class="btn" data-action="backToTmPickMon">Back</button></div>' +
   '</div>';
 }
 
@@ -2330,6 +2458,7 @@ function chooseEvolveOption(monId, targetSpecies){
   }
   saveGamePokemonList(list);
   pendingMessage = entry.name + ' evolved!';
+  pendingTmOffer = false;
   view = 'message';
   render();
 }
@@ -2525,6 +2654,7 @@ async function fight(){
         gameState.eliteFourProgress = null;
         gameState.eliteFourTeamIds = [];
         saveGameState();
+        pendingTmOffer = false;
         view = 'message';
         encounter = null;
       } else {
@@ -2572,8 +2702,10 @@ async function fight(){
           saveGameState();
         }
         pendingMessage = 'You defeated '+e.gymLeaderName+' and earned a badge!';
+        pendingTmOffer = true;
       } else {
         pendingMessage = 'You defeated the trainer\'s whole team!';
+        pendingTmOffer = false;
       }
       pendingMessage += resolveDeferredEvolutions(e.xpRecipientIds);
       view = 'message';
@@ -2599,6 +2731,7 @@ async function fight(){
       saveGameState();
       const townName = nodeDisplayName(nodesById[gameState.currentNodeId]);
       pendingMessage = 'Your Elite Four challenge ends against '+label+'. Return to '+townName+' to continue, or leave to reset your run.';
+      pendingTmOffer = false;
       view = 'message';
       encounter = null;
     }
@@ -2613,6 +2746,7 @@ async function fight(){
   if(e.sentOutIds.length >= 6 || remainingOwned.length === 0){
     pendingMessage = (e.type==='wild') ? 'The wild '+opp.species+' got away.' : 'You had no Pokemon left and had to withdraw.';
     pendingMessage += resolveDeferredEvolutions(e.xpRecipientIds);
+    pendingTmOffer = false;
     view = 'message';
     encounter = null;
   }
@@ -2632,6 +2766,7 @@ function chooseCatch(){
     note: 'Caught in the wild',
   });
   pendingMessage = 'Caught '+opp.species+'!';
+  pendingTmOffer = false;
   view = 'message';
   encounter = null;
   render();
@@ -2654,6 +2789,7 @@ function chooseDefeat(){
   pendingMessage = 'Defeated the wild '+opp.species+'. ' +
     xpMessages.join(', ') +
     (evoMessages.length ? ' ' + evoMessages.join(' ') : '');
+  pendingTmOffer = false;
   view = 'message';
   encounter = null;
   render();
@@ -2683,6 +2819,11 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'chooseCatch') chooseCatch();
   else if(action === 'chooseDefeat') chooseDefeat();
   else if(action === 'endTurn') endTurn();
+  else if(action === 'startTmPick') startTmPick();
+  else if(action === 'skipTm') skipTm();
+  else if(action === 'pickTmMon') pickTmMon(btn.dataset.mon);
+  else if(action === 'backToTmPickMon') backToTmPickMon();
+  else if(action === 'chooseTmType') chooseTmType(btn.dataset.type);
   else if(action === 'resumeEliteFour') resumeEliteFour();
   else if(action === 'leaveEliteFourTown') leaveEliteFourTown();
   else if(action === 'continueEliteFour') continueEliteFour();
