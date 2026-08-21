@@ -447,6 +447,14 @@
     stroke-width: 3.5;
     stroke-dasharray: 2.5,2;
   }
+  /* Static (non-interactive) map preview -- used by the Custom Region generator,
+     which has no player position or click behavior to wire up yet. */
+  .map-node-static .map-node-shape{ stroke: var(--ink); stroke-width: 1.5; }
+  .map-node-central .map-node-shape{
+    stroke: var(--ink);
+    stroke-width: 3.5;
+    stroke-dasharray: 2.5,2;
+  }
   .map-node-label{
     font-family:'IBM Plex Mono', monospace;
     font-weight:600;
@@ -1368,6 +1376,357 @@ function buildGameMap(){
     svg.appendChild(g);
   });
 }
+/* ============ Custom Region Generator (docs/region-generator-rules.md) ============
+   Still being built: produces a map layout only -- no dex/gyms/encounters wired
+   up yet. Runs entirely independently of DATA/gameState/save slots; the result
+   lives only in `customRegion` and is never persisted. */
+const REGION_GEN_DIRS = { N:{dx:0,dy:-1}, S:{dx:0,dy:1}, E:{dx:1,dy:0}, W:{dx:-1,dy:0} };
+const REGION_GEN_OPPOSITE = { N:'S', S:'N', E:'W', W:'E' };
+const REGION_GEN_ALL_DIRS = ['N','S','E','W'];
+function regionGenTripleLetter(i){ const c = String.fromCharCode(65+i); return c+c+c; }
+function regionGenDoubleLetter(i){ const c = String.fromCharCode(65+i); return c+c; }
+function regionGenKey(x,y){ return x+','+y; }
+
+function generateCustomRegionOnce(){
+  const grid = new Map();
+  const edgeSet = new Set();
+  const edges = [];
+  let townCount = 0, dungeonCount = 0, routeGroupCounter = 0;
+  let minX=0,maxX=0,minY=0,maxY=0;
+
+  function addEdge(k1,k2){
+    if(k1 === k2) return;
+    const norm = k1 < k2 ? k1+'|'+k2 : k2+'|'+k1;
+    if(edgeSet.has(norm)) return;
+    edgeSet.add(norm);
+    edges.push([k1,k2]);
+  }
+  function boxAreaWith(x,y){
+    const nMinX = Math.min(minX,x), nMaxX = Math.max(maxX,x);
+    const nMinY = Math.min(minY,y), nMaxY = Math.max(maxY,y);
+    return (nMaxX-nMinX+1) * (nMaxY-nMinY+1);
+  }
+  function wouldExceedCap(x,y){ return boxAreaWith(x,y) > 160; }
+  function expandBoxTo(x,y){
+    minX = Math.min(minX,x); maxX = Math.max(maxX,x);
+    minY = Math.min(minY,y); maxY = Math.max(maxY,y);
+  }
+  function placeTown(x,y){
+    const tile = { x, y, kind:'town', townIndex: townCount++, hasDungeon:false };
+    grid.set(regionGenKey(x,y), tile);
+    expandBoxTo(x,y);
+    return tile;
+  }
+  function placeDungeon(x,y){
+    const tile = { x, y, kind:'dungeon', dungeonIndex: dungeonCount++ };
+    grid.set(regionGenKey(x,y), tile);
+    expandBoxTo(x,y);
+    return tile;
+  }
+  function placeRoute(x,y,groupId){
+    const tile = { x, y, kind:'route', groupId };
+    grid.set(regionGenKey(x,y), tile);
+    expandBoxTo(x,y);
+    return tile;
+  }
+
+  const central = placeTown(0,0);
+  central.isCentral = true;
+
+  const queue = [];
+  for(const d of REGION_GEN_ALL_DIRS) queue.push({ originX:0, originY:0, dir:d });
+
+  function rollLength(){ return [1,1,2,2,3,3][rand(6)-1]; }
+
+  function findNearestOccupied(fromX, fromY, dir){
+    const d = REGION_GEN_DIRS[dir];
+    let x = fromX + d.dx, y = fromY + d.dy, gap = 0;
+    while(x >= minX && x <= maxX && y >= minY && y <= maxY){
+      if(grid.has(regionGenKey(x,y))) return { x, y, gap };
+      x += d.dx; y += d.dy; gap++;
+    }
+    return null;
+  }
+
+  function processRouteJob(job){
+    const { originX, originY, dir } = job;
+    const d = REGION_GEN_DIRS[dir];
+    const steps = rollLength();
+    const hasDungeonExtra = rand(6) >= 5;
+    const tokens = new Array(steps).fill('route');
+    if(hasDungeonExtra){
+      const slot = Math.floor(Math.random() * (steps+1));
+      tokens.splice(slot, 0, 'dungeon');
+    }
+    const gid = routeGroupCounter++;
+    const placedTiles = [], placedAny = [];
+    let lastKeyPlaced = regionGenKey(originX, originY);
+    let completedFully = true;
+    let cx = originX, cy = originY;
+
+    for(let i=0; i<tokens.length; i++){
+      const nx = cx + d.dx, ny = cy + d.dy;
+      const nk = regionGenKey(nx,ny);
+      if(grid.has(nk)){
+        addEdge(lastKeyPlaced, nk);
+        completedFully = false; cx = null;
+        break;
+      }
+      if(wouldExceedCap(nx,ny)){
+        if(placedAny.length){
+          const last = placedAny[placedAny.length-1];
+          if(last.kind !== 'dungeon'){
+            last.kind = 'dungeon';
+            last.dungeonIndex = dungeonCount++;
+            const idxInRoute = placedTiles.indexOf(last);
+            if(idxInRoute !== -1) placedTiles.splice(idxInRoute, 1);
+          }
+        }
+        completedFully = false; cx = null;
+        break;
+      }
+      let tile;
+      if(tokens[i] === 'dungeon') tile = placeDungeon(nx,ny);
+      else { tile = placeRoute(nx,ny,gid); placedTiles.push(tile); }
+      placedAny.push(tile);
+      addEdge(lastKeyPlaced, nk);
+      lastKeyPlaced = nk; cx = nx; cy = ny;
+    }
+
+    if(!completedFully || cx === null) return;
+
+    const tx = cx + d.dx, ty = cy + d.dy;
+    const tk = regionGenKey(tx,ty);
+    if(grid.has(tk)){ addEdge(lastKeyPlaced, tk); return; }
+    if(wouldExceedCap(tx,ty)){
+      if(placedTiles.length){
+        const last = placedTiles[placedTiles.length-1];
+        if(last.kind !== 'dungeon'){ last.kind = 'dungeon'; last.dungeonIndex = dungeonCount++; }
+      }
+      return;
+    }
+    const adjacentTowns = [];
+    for(const ad of REGION_GEN_ALL_DIRS){
+      const ax = tx + REGION_GEN_DIRS[ad].dx, ay = ty + REGION_GEN_DIRS[ad].dy;
+      const ak = regionGenKey(ax,ay);
+      if(grid.has(ak) && grid.get(ak).kind === 'town') adjacentTowns.push(ak);
+    }
+    if(adjacentTowns.length){
+      const extra = placeRoute(tx,ty,gid);
+      placedTiles.push(extra);
+      addEdge(lastKeyPlaced, tk);
+      for(const ak of adjacentTowns) addEdge(tk, ak);
+      return;
+    }
+    const newTown = placeTown(tx,ty);
+    addEdge(lastKeyPlaced, tk);
+    if(rand(6) === 6){ newTown.hasDungeon = true; newTown.dungeonIndex = dungeonCount++; }
+    for(const od of REGION_GEN_ALL_DIRS){
+      if(od === REGION_GEN_OPPOSITE[dir]) continue;
+      if(rand(6) >= 4) queue.push({ originX: tx, originY: ty, dir: od });
+    }
+  }
+
+  while(queue.length) processRouteJob(queue.shift());
+
+  // Spur pass -- every town, in creation order, checks all 4 directions.
+  const townTiles = [...grid.values()].filter(t=>t.kind==='town').sort((a,b)=>a.townIndex-b.townIndex);
+  for(const town of townTiles){
+    for(const d of REGION_GEN_ALL_DIRS){
+      const ax = town.x + REGION_GEN_DIRS[d].dx, ay = town.y + REGION_GEN_DIRS[d].dy;
+      const ak = regionGenKey(ax,ay), tk = regionGenKey(town.x, town.y);
+      if(grid.has(ak)){ addEdge(tk, ak); continue; }
+      const found = findNearestOccupied(town.x, town.y, d);
+      if(!found || found.gap > 4) continue;
+      const gid = routeGroupCounter++;
+      const dungeonSlotIdx = (rand(6) >= 5) ? Math.floor(Math.random()*found.gap) : -1;
+      let px = town.x, py = town.y, lastK = tk;
+      for(let i=0; i<found.gap; i++){
+        px += REGION_GEN_DIRS[d].dx; py += REGION_GEN_DIRS[d].dy;
+        const pk = regionGenKey(px,py);
+        if(i === dungeonSlotIdx) placeDungeon(px,py);
+        else placeRoute(px,py,gid);
+        addEdge(lastK, pk);
+        lastK = pk;
+      }
+      addEdge(lastK, regionGenKey(found.x, found.y));
+    }
+  }
+
+  // Renumber routes via a randomly-cornered sweep.
+  const nsPick = rand(2)===1 ? 'N' : 'S';
+  const ewPick = rand(2)===1 ? 'E' : 'W';
+  const outerAxis = (rand(2)===1) ? 'NS' : 'EW';
+  function axisRange(axis, pick){
+    const arr = [];
+    if(axis === 'NS'){
+      if(pick === 'S') for(let y=maxY;y>=minY;y--) arr.push(y);
+      else for(let y=minY;y<=maxY;y++) arr.push(y);
+    } else {
+      if(pick === 'E') for(let x=maxX;x>=minX;x--) arr.push(x);
+      else for(let x=minX;x<=maxX;x++) arr.push(x);
+    }
+    return arr;
+  }
+  let nextRouteNum = 1;
+  const groupInfo = new Map();
+  function visit(x,y){
+    const t = grid.get(regionGenKey(x,y));
+    if(!t || t.kind !== 'route') return;
+    let gi = groupInfo.get(t.groupId);
+    if(!gi){ gi = { number: nextRouteNum++, tiles: [] }; groupInfo.set(t.groupId, gi); }
+    gi.tiles.push(t);
+  }
+  if(outerAxis === 'NS'){
+    for(const y of axisRange('NS', nsPick)) for(const x of axisRange('EW', ewPick)) visit(x,y);
+  } else {
+    for(const x of axisRange('EW', ewPick)) for(const y of axisRange('NS', nsPick)) visit(x,y);
+  }
+  for(const gi of groupInfo.values()){
+    gi.tiles.forEach((t,idx)=>{
+      t.finalId = gi.tiles.length === 1 ? String(gi.number) : (gi.number + 'abcdefghijklmnopqrstuvwxyz'[idx]);
+    });
+  }
+
+  for(const t of grid.values()){
+    if(t.kind === 'town') t.finalId = regionGenTripleLetter(t.townIndex);
+    else if(t.kind === 'dungeon') t.finalId = regionGenDoubleLetter(t.dungeonIndex);
+  }
+  for(const t of townTiles){
+    if(t.hasDungeon) t.dungeonFinalId = regionGenDoubleLetter(t.dungeonIndex);
+  }
+
+  let totalTowns = 0, totalDungeons = 0;
+  for(const t of grid.values()){
+    if(t.kind === 'town'){ totalTowns++; if(t.hasDungeon) totalDungeons++; }
+    else if(t.kind === 'dungeon') totalDungeons++;
+  }
+  return { grid, edges, minX, maxX, minY, maxY, totalTowns, totalDungeons, totalRoutes: nextRouteNum-1 };
+}
+
+function buildCustomRegionOutput(r){
+  const mapNodes = [];
+  const idByKey = {};
+  for(const [k,t] of r.grid) idByKey[k] = t.finalId;
+  for(const [,t] of r.grid){
+    const col = t.x - r.minX + 1, row = t.y - r.minY + 1;
+    if(t.kind === 'route'){
+      mapNodes.push({ id:t.finalId, kind:'route', row, col });
+    } else if(t.kind === 'dungeon'){
+      mapNodes.push({ id:t.finalId, kind:'dungeon', row, col });
+    } else if(t.hasDungeon){
+      mapNodes.push({ id:t.finalId, kind:'combo', row, col, townId:t.finalId, townName:t.finalId,
+        dungeonId:t.dungeonFinalId, dungeonName:t.dungeonFinalId, gymLeader:null, central: !!t.isCentral });
+    } else {
+      mapNodes.push({ id:t.finalId, kind:'town', row, col, gymLeader:null, central: !!t.isCentral });
+    }
+  }
+  const mapEdges = r.edges.map(([k1,k2]) => [idByKey[k1], idByKey[k2]]);
+
+  const townBearing = mapNodes.filter(n=>n.kind==='town' || n.kind==='combo');
+  for(let i=townBearing.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [townBearing[i], townBearing[j]] = [townBearing[j], townBearing[i]];
+  }
+  townBearing.slice(0, Math.min(8, townBearing.length)).forEach(n=>{ n.gymLeader = true; });
+
+  return {
+    mapNodes, mapEdges,
+    maxRow: Math.max(...mapNodes.map(n=>n.row)),
+    maxCol: Math.max(...mapNodes.map(n=>n.col)),
+    totalTowns: r.totalTowns, totalDungeons: r.totalDungeons, totalRoutes: r.totalRoutes,
+  };
+}
+
+function generateCustomRegionData(){
+  for(let i=0;i<500;i++){
+    const r = generateCustomRegionOnce();
+    if(r.totalTowns >= 10 && r.totalTowns <= 16 && r.totalDungeons >= 8 && r.totalDungeons <= 14){
+      return buildCustomRegionOutput(r);
+    }
+  }
+  return buildCustomRegionOutput(generateCustomRegionOnce()); // practically unreachable
+}
+
+// Read-only SVG string for the custom-region preview -- same shapes/colors as
+// buildGameMap()'s imperative DOM version, but no click handlers or player-
+// position state, since this is a map-only preview with no game attached yet.
+function customRegionMapSvgHtml(region){
+  const byId = {};
+  region.mapNodes.forEach(n => byId[n.id] = n);
+  const w = region.maxCol * CELL, h = region.maxRow * CELL;
+  let svg = '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'">';
+  region.mapEdges.forEach(([a,b])=>{
+    const na = byId[a], nb = byId[b];
+    if(!na || !nb) return;
+    const pa = nodeXY(na), pb = nodeXY(nb);
+    svg += '<line class="map-edge" x1="'+pa.x+'" y1="'+pa.y+'" x2="'+pb.x+'" y2="'+pb.y+'"></line>';
+  });
+  region.mapNodes.forEach(n=>{
+    const p = nodeXY(n);
+    svg += '<g class="map-node-static'+(n.central?' map-node-central':'')+'">';
+    if(n.kind === 'town'){
+      const s = 11;
+      const fill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
+      svg += '<rect class="map-node-shape" x="'+(p.x-s)+'" y="'+(p.y-s)+'" width="'+(s*2)+'" height="'+(s*2)+'" fill="'+fill+'"></rect>' +
+        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y+3)+'" text-anchor="middle" font-size="8">'+n.id+'</text>';
+    } else if(n.kind === 'dungeon'){
+      const s = 11;
+      const points = [[p.x,p.y-s],[p.x-s,p.y+s*0.8],[p.x+s,p.y+s*0.8]].map(pt=>pt.join(',')).join(' ');
+      svg += '<polygon class="map-node-shape" points="'+points+'" fill="var(--rust)"></polygon>' +
+        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y+21)+'" text-anchor="middle" font-size="6.5">'+n.id+'</text>';
+    } else if(n.kind === 'combo'){
+      const w2 = 12, hTop = 10, hBottom = 12;
+      const topFill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
+      const topPts = [[p.x-w2,p.y-hTop],[p.x+w2,p.y-hTop],[p.x+w2,p.y],[p.x-w2,p.y]].map(pt=>pt.join(',')).join(' ');
+      const bottomPts = [[p.x-w2,p.y],[p.x+w2,p.y],[p.x,p.y+hBottom]].map(pt=>pt.join(',')).join(' ');
+      svg += '<polygon class="map-node-shape" points="'+topPts+'" fill="'+topFill+'"></polygon>' +
+        '<polygon class="map-node-shape" points="'+bottomPts+'" fill="var(--rust)"></polygon>' +
+        '<line class="map-node-divider" x1="'+(p.x-w2)+'" y1="'+p.y+'" x2="'+(p.x+w2)+'" y2="'+p.y+'"></line>' +
+        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y-3)+'" text-anchor="middle" font-size="7">'+n.townId+'</text>' +
+        '<text class="map-node-label map-node-label-light" x="'+p.x+'" y="'+(p.y+9)+'" text-anchor="middle" font-size="6">'+n.dungeonId+'</text>';
+    } else {
+      const rr = 11;
+      const fontSize = n.id.length >= 3 ? 6.5 : 7.5;
+      svg += '<circle class="map-node-shape" cx="'+p.x+'" cy="'+p.y+'" r="'+rr+'" fill="var(--sage)"></circle>' +
+        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y+2.5)+'" text-anchor="middle" font-size="'+fontSize+'">'+n.id+'</text>';
+    }
+    svg += '</g>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+function renderCustomRegionMapScreen(){
+  if(!customRegion) customRegion = generateCustomRegionData();
+  const r = customRegion;
+  return '<div class="card">' +
+    '<div class="card-title">Custom Region <span style="font-weight:400; font-size:0.65em; color:var(--redwood);">(Still being built)</span></div>' +
+    '<div class="card-sub">Randomly generated with the region generator -- '+r.totalTowns+' towns, '+r.totalDungeons+' dungeons, '+r.totalRoutes+' routes. Map only for now; no starters, gyms, or encounters yet.</div>' +
+    '<div class="map-legend">' +
+      '<span><span class="legend-swatch legend-town"></span>Gym town</span>' +
+      '<span><span class="legend-swatch legend-town-nogym"></span>Town, no gym</span>' +
+      '<span><span class="legend-swatch legend-dungeon"></span>Dungeon</span>' +
+      '<span><span class="legend-swatch legend-route"></span>Route</span>' +
+      '<span>&#9634;&#8209;&#8209; dashed = Central City</span>' +
+    '</div>' +
+    '<div class="map-scroll">' + customRegionMapSvgHtml(r) + '</div>' +
+    '<div class="choice-grid" style="margin-top:10px;">' +
+      '<button type="button" class="btn btn-primary" data-action="generateCustomRegion">Generate Another</button>' +
+      '<button type="button" class="btn" data-action="backToRegionPick">Back</button>' +
+    '</div>' +
+  '</div>';
+}
+function generateCustomRegion(){
+  customRegion = generateCustomRegionData();
+  view = 'customRegionMap';
+  render();
+}
+function backToRegionPick(){
+  customRegion = null;
+  view = 'regionPick';
+  render();
+}
+
 function selectMapNode(nodeId){
   selectedMapNodeId = nodeId;
   eliteFourPreviewTabIdx = 0;
@@ -1660,6 +2019,7 @@ let pendingMessage = '';  // for the generic message screen
 let pendingEvolveOptions = []; // for the evolve-a-Pokemon-with-a-town-item screen
 let pendingTmOffer = false; // true when the current message screen is a gym win -- shows a "Use a TM" option
 let tmFlow = null; // { monId } while picking a new attack type for a TM
+let customRegion = null; // generated { mapNodes, mapEdges, ... } for the Custom Region map preview
 let startPick = { region:null, starter:null, town:null };
 let myPokemonSort = 'obtained'; // 'obtained' | 'stat' | 'level' -- sort order of the roster list
 let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
@@ -1791,6 +2151,7 @@ function render(){
   else if(view === 'elite4Ack') app.innerHTML = renderElite4AckScreen();
   else if(view === 'tmPickMon') app.innerHTML = renderTmPickMonScreen();
   else if(view === 'tmPickType') app.innerHTML = renderTmPickTypeScreen();
+  else if(view === 'customRegionMap') app.innerHTML = renderCustomRegionMapScreen();
 }
 
 // Looks up a node's display name within a SPECIFIC region's own data, without
@@ -1847,7 +2208,11 @@ function renderRegionPickScreen(){
       '<div class="save-slot-title">'+region.label+'</div>' +
       '<div class="save-slot-meta">'+(blurbs[key]||'')+'</div>' +
     '</div>';
-  }).join('');
+  }).join('') +
+    '<div class="save-slot-card" data-action="generateCustomRegion" style="cursor:pointer; border-style:dashed;">' +
+      '<div class="save-slot-title">Custom Region <span style="font-weight:400; font-size:0.7em; color:var(--redwood);">(Still being built)</span></div>' +
+      '<div class="save-slot-meta">A freshly randomized region layout from the region generator. Map preview only for now -- picking this shows the map, not a playable adventure.</div>' +
+    '</div>';
   return '<div class="card">' +
     '<div class="card-title">Choose Your Region</div>' +
     '<div class="card-sub">This adventure will take place here from start to finish</div>' +
@@ -1877,6 +2242,7 @@ function goHome(){
   dataBuilt = false;
   tmFlow = null;
   pendingTmOffer = false;
+  customRegion = null;
   render();
 }
 function continueSlot(slot){
@@ -2834,6 +3200,8 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'pickTmMon') pickTmMon(btn.dataset.mon);
   else if(action === 'backToTmPickMon') backToTmPickMon();
   else if(action === 'chooseTmType') chooseTmType(btn.dataset.type);
+  else if(action === 'generateCustomRegion') generateCustomRegion();
+  else if(action === 'backToRegionPick') backToRegionPick();
   else if(action === 'resumeEliteFour') resumeEliteFour();
   else if(action === 'leaveEliteFourTown') leaveEliteFourTown();
   else if(action === 'continueEliteFour') continueEliteFour();
