@@ -96,7 +96,7 @@ All level-up evolutions below are converted from their standard mainline require
 | Evolution | Method |
 |---|---|
 | Swinub → Piloswine | Level 9 |
-| Piloswine → Mamoswine | Must know the move Ancient Power, then level up |
+| Piloswine → Mamoswine | Level up while its attack type is Rock |
 | Snover → Abomasnow | Level 10 |
 | Snorunt → Glalie | Level 11 |
 | Snorunt → Froslass | Dawn Stone (alt. branch) → Level 11 |
@@ -207,3 +207,4 @@ All level-up evolutions below are converted from their standard mainline require
 - **Trade evolutions** (Machoke, Haunter, Graveler, Kadabra, Onix, Sneasel, Rhydon, Seadra, Swirlix) are really item evolutions in this game, same as any stone — no actual trade happens. Each needs its listed item (Machoke, Haunter, Graveler, and Kadabra all need a Linking Cord specifically) found at a town, same as a Water Stone or Leaf Stone.
 - **Friendship evolutions** (Golden Vein Mine's Golbat→Crobat, Igglybuff→Jigglypuff, Riolu→Lucario) trigger the first time the Pokémon levels up to at least 4 levels above the level it was obtained at — this game tracks no hidden friendship stat, so that's the concrete, player-trackable stand-in (ruleset §11).
 - **Magneton → Magnezone** uses a Thunder Stone (found in Capitol City, same as Pikachu → Raichu) rather than a location-based trigger — the game has no mechanic to check where a Pokémon levels up, so this keeps it a real, usable evolution.
+- **Piloswine → Mamoswine** checks attack type instead of a known move — this game has no move-tracking system, so "knows Ancient Power" is stood in for by "attack type is Rock" at the moment it levels up, the closest checkable equivalent. A gym-won TM can shift Piloswine's attack type toward Rock if it isn't already there (Rock sits 1 wheel-step from Piloswine's own Ground type and 2 from its own Ice type, so it's reachable via the wheel from either).
