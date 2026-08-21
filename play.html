@@ -1604,6 +1604,53 @@ function generateCustomRegionOnce(){
   return { grid, edges, minX, maxX, minY, maxY, totalTowns, totalDungeons, totalRoutes: nextRouteNum-1 };
 }
 
+// Elite Four spur: a random town that has 3 clear, in-bounds cells in some
+// direction gets, in order going outward, one more route tile (the highest
+// route number), a Victory Road dungeon ("VR"), and the Elite Four town
+// ("ELI") -- fixed ids, so they never collide with the AA/BB.. or AAA/BBB..
+// auto-naming (both require two/three of the SAME letter).
+function threeClearCellsInDir(r, x, y, dir){
+  const d = REGION_GEN_DIRS[dir];
+  for(let step=1; step<=3; step++){
+    const nx = x + d.dx*step, ny = y + d.dy*step;
+    if(nx < r.minX || nx > r.maxX || ny < r.minY || ny > r.maxY) return false;
+    if(r.grid.has(regionGenKey(nx,ny))) return false;
+  }
+  return true;
+}
+function findEliteFourPlacement(r){
+  const towns = [...r.grid.values()].filter(t=>t.kind==='town');
+  const candidates = [];
+  for(const t of towns){
+    const validDirs = REGION_GEN_ALL_DIRS.filter(d => threeClearCellsInDir(r, t.x, t.y, d));
+    if(validDirs.length) candidates.push({ town:t, validDirs });
+  }
+  if(!candidates.length) return null;
+  const chosen = candidates[Math.floor(Math.random()*candidates.length)];
+  const dir = chosen.validDirs[Math.floor(Math.random()*chosen.validDirs.length)];
+  return { town: chosen.town, dir };
+}
+function attachEliteFour(r, placement){
+  const { town, dir } = placement;
+  const d = REGION_GEN_DIRS[dir];
+  const routeX = town.x + d.dx, routeY = town.y + d.dy;
+  const vrX = town.x + d.dx*2, vrY = town.y + d.dy*2;
+  const eliX = town.x + d.dx*3, eliY = town.y + d.dy*3;
+  const townKey = regionGenKey(town.x, town.y);
+  const routeKey = regionGenKey(routeX, routeY);
+  const vrKey = regionGenKey(vrX, vrY);
+  const eliKey = regionGenKey(eliX, eliY);
+
+  r.grid.set(routeKey, { x:routeX, y:routeY, kind:'route', finalId: String(r.totalRoutes+1) });
+  r.grid.set(vrKey, { x:vrX, y:vrY, kind:'dungeon', finalId:'VR' });
+  r.grid.set(eliKey, { x:eliX, y:eliY, kind:'town', finalId:'ELI', hasDungeon:false, isEliteFour:true });
+
+  r.edges.push([townKey, routeKey]);
+  r.edges.push([routeKey, vrKey]);
+  r.edges.push([vrKey, eliKey]);
+  r.totalRoutes += 1;
+}
+
 function buildCustomRegionOutput(r){
   const mapNodes = [];
   const idByKey = {};
@@ -1618,12 +1665,13 @@ function buildCustomRegionOutput(r){
       mapNodes.push({ id:t.finalId, kind:'combo', row, col, townId:t.finalId, townName:t.finalId,
         dungeonId:t.dungeonFinalId, dungeonName:t.dungeonFinalId, gymLeader:null, central: !!t.isCentral });
     } else {
-      mapNodes.push({ id:t.finalId, kind:'town', row, col, gymLeader:null, central: !!t.isCentral });
+      mapNodes.push({ id:t.finalId, kind:'town', row, col, gymLeader:null, central: !!t.isCentral, eliteFour: !!t.isEliteFour });
     }
   }
   const mapEdges = r.edges.map(([k1,k2]) => [idByKey[k1], idByKey[k2]]);
 
-  const townBearing = mapNodes.filter(n=>n.kind==='town' || n.kind==='combo');
+  // The Elite Four town is never a gym town -- excluded from the pool.
+  const townBearing = mapNodes.filter(n=>(n.kind==='town' || n.kind==='combo') && !n.eliteFour);
   for(let i=townBearing.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
     [townBearing[i], townBearing[j]] = [townBearing[j], townBearing[i]];
@@ -1634,18 +1682,28 @@ function buildCustomRegionOutput(r){
     mapNodes, mapEdges,
     maxRow: Math.max(...mapNodes.map(n=>n.row)),
     maxCol: Math.max(...mapNodes.map(n=>n.col)),
-    totalTowns: r.totalTowns, totalDungeons: r.totalDungeons, totalRoutes: r.totalRoutes,
+    totalTowns: mapNodes.filter(n=>n.kind==='town' || n.kind==='combo').length,
+    totalDungeons: mapNodes.filter(n=>n.kind==='dungeon' || n.kind==='combo').length,
+    totalRoutes: r.totalRoutes,
   };
 }
 
 function generateCustomRegionData(){
   for(let i=0;i<500;i++){
     const r = generateCustomRegionOnce();
-    if(r.totalTowns >= 10 && r.totalTowns <= 16 && r.totalDungeons >= 8 && r.totalDungeons <= 14){
-      return buildCustomRegionOutput(r);
-    }
+    if(r.totalTowns < 10 || r.totalTowns > 16) continue;
+    if(r.totalDungeons < 8 || r.totalDungeons > 13) continue;
+    const placement = findEliteFourPlacement(r);
+    if(!placement) continue;
+    attachEliteFour(r, placement);
+    return buildCustomRegionOutput(r);
   }
-  return buildCustomRegionOutput(generateCustomRegionOnce()); // practically unreachable
+  // Practically unreachable given typical map sizes -- keep the UI functional
+  // even if 500 attempts somehow never satisfy every constraint at once.
+  const r = generateCustomRegionOnce();
+  const placement = findEliteFourPlacement(r);
+  if(placement) attachEliteFour(r, placement);
+  return buildCustomRegionOutput(r);
 }
 
 // Read-only SVG string for the custom-region preview -- same shapes/colors as
