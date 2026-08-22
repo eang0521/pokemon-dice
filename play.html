@@ -3335,7 +3335,7 @@ function customRegionFixedAttackType(species, slotKey){
   return WHEEL[finalIdx];
 }
 function memberInfo(species, slotKey, level){
-  return { species, level, atk: cap(customRegionFixedAttackType(species, slotKey)) };
+  return { species, level, slotKey, atk: cap(customRegionFixedAttackType(species, slotKey)) };
 }
 // Gyms: attack-type "slot" follows stat RANK (rank 1/highest = slot "1", the
 // ace) rather than final display position, matching how Calli's own gym data
