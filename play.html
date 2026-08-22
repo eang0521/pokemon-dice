@@ -1433,14 +1433,44 @@ const STARTER_LINE_POOL = [
   { basic:'Nacli', stage1:'Naclstack', stage2:'Garganacl', lvl1:7, lvl2:10, t1:'Rock', t2:null, dice:[3,3,4,2,2,1] },
   { basic:'Tinkatink', stage1:'Tinkatuff', stage2:'Tinkaton', lvl1:7, lvl2:10, t1:'Fairy', t2:'Steel', dice:[3,3,3,2,4,3] },
 ];
-// Fisher-Yates partial shuffle, first 3 -- three distinct lines, uniformly
-// random, no duplicate species across the trio.
+// Every type across a starter line's whole evolution (Basic + Stage1 + Stage2),
+// not just the Basic form shown on the card -- looked up from NATIONAL_DEX
+// (declared below) since STARTER_LINE_POOL only carries the Basic's own types.
+function allTypesForStarterLine(line){
+  const types = new Set();
+  [line.basic, line.stage1, line.stage2].forEach(name=>{
+    const row = NATIONAL_DEX[name];
+    if(row){ types.add(row[0]); if(row[1]) types.add(row[1]); }
+  });
+  return types;
+}
+// Randomly draws 3 starter lines with zero type overlap between them anywhere
+// in their evolution (e.g. picking Charmander -- Fire/Fire/Fire+Flying -- rules
+// out every other line that carries Fire OR Flying at any stage, not just ones
+// whose Basic form does). Reshuffles and retries on the rare shuffle order that
+// can't complete a valid trio via a single greedy left-to-right pass.
 function pickRandomStarterLines(){
   const pool = STARTER_LINE_POOL.slice();
-  for(let i=pool.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+  for(let attempt=0; attempt<200; attempt++){
+    for(let i=pool.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const picked = [];
+    const usedTypes = new Set();
+    for(const line of pool){
+      const lineTypes = allTypesForStarterLine(line);
+      let conflict = false;
+      for(const t of lineTypes){ if(usedTypes.has(t)){ conflict = true; break; } }
+      if(conflict) continue;
+      picked.push(line);
+      lineTypes.forEach(t=>usedTypes.add(t));
+      if(picked.length === 3) break;
+    }
+    if(picked.length === 3) return picked;
   }
+  // Practically unreachable given the pool's type spread -- keep the UI
+  // functional rather than leaving starters unpicked.
   return pool.slice(0,3);
 }
 
@@ -1940,7 +1970,6 @@ const NATIONAL_DEX = {
   "Charmander":["Fire",null,2,3,2,3,3,4],
   "Lairon":["Steel","Rock",3,5,8,3,3,2],
   "Mantine":["Water","Flying",5,2,4,5,8,4],
-  "Ho-oh":["Fire","Flying",6,7,5,6,9,5],
   "Ledyba":["Bug","Flying",2,1,2,2,5,3],
   "Kilowattrel":["Electric","Flying",4,4,3,6,3,7],
   "Scizor":["Bug","Steel",4,7,6,3,5,4],
@@ -2343,7 +2372,8 @@ const NATIONAL_DEX = {
   "Pawmi":["Electric",null,3,3,1,2,1,3],
   "Cyclizar":["Dragon","Normal",4,5,4,5,4,7],
   "Smeargle":["Normal",null,3,1,2,1,3,4],
-  "Cubchoo":["Ice",null,3,4,2,3,2,2]
+  "Cubchoo":["Ice",null,3,4,2,3,2,2],
+  "Phione":["Water",null,5,5,5,5,5,5]
 };
 
 // Every eligible evolution family (base form's whole tree, branches included) as a flat
@@ -2471,7 +2501,6 @@ const EVOLUTION_FAMILIES = [
   [["Hitmontop",0]],
   [["Miltank",0]],
   [["Larvitar",0],["Pupitar",1],["Tyranitar",2]],
-  [["Ho-oh",0]],
   [["Treecko",0],["Grovyle",1],["Sceptile",2]],
   [["Torchic",0],["Combusken",1],["Blaziken",2]],
   [["Mudkip",0],["Marshtomp",1],["Swampert",2]],
@@ -2797,7 +2826,191 @@ const EVOLUTION_FAMILIES = [
   [["Gouging Fire",0]],
   [["Raging Bolt",0]],
   [["Iron Boulder",0]],
-  [["Iron Crown",0]]
+  [["Iron Crown",0]],
+  [["Phione",0]]
+];
+// Legendary/Mythical species excluded from NATIONAL_DEX/EVOLUTION_FAMILIES --
+// hand-placed via LEGENDARY_GROUPS below instead of the normal random-family
+// loop. Same [type1, type2 or null, HP, Atk, Def, SpA, SpD, Spe] shape as
+// NATIONAL_DEX. Evolved-only forms of an in-pool evolutionary line (Cosmoem/
+// Solgaleo/Lunala, Urshifu, Silvally, Melmetal, Naganadel) are omitted here --
+// only their catchable base form (Cosmog/Kubfu/Type: Null/Meltan/Poipole) is a
+// placeable candidate; the player evolves it normally from there.
+const LEGENDARY_DEX = {
+  "Articuno":["Ice","Flying",5,5,6,5,7,5],
+  "Zapdos":["Electric","Flying",5,5,5,7,5,6],
+  "Moltres":["Fire","Flying",5,6,5,7,5,5],
+  "Mewtwo":["Psychic",null,6,6,5,9,5,7],
+  "Mew":["Psychic",null,6,6,6,6,6,6],
+  "Raikou":["Electric",null,5,5,4,7,6,7],
+  "Entei":["Fire",null,7,7,5,5,4,6],
+  "Suicune":["Water",null,6,4,7,5,7,5],
+  "Lugia":["Psychic","Flying",6,5,7,5,9,6],
+  "Ho-oh":["Fire","Flying",6,7,5,6,9,5],
+  "Celebi":["Psychic","Grass",6,6,6,6,6,6],
+  "Regirock":["Rock",null,5,6,11,3,6,3],
+  "Regice":["Ice",null,5,3,6,6,11,3],
+  "Registeel":["Steel",null,5,4,9,4,9,3],
+  "Latias":["Dragon","Psychic",5,5,5,6,7,6],
+  "Latios":["Dragon","Psychic",5,5,5,7,6,6],
+  "Kyogre":["Water",null,6,6,5,9,8,5],
+  "Groudon":["Ground",null,6,9,8,6,5,5],
+  "Rayquaza":["Dragon","Flying",6,9,5,9,5,5],
+  "Jirachi":["Steel","Psychic",6,6,6,6,6,6],
+  "Deoxys":["Psychic",null,3,9,3,9,3,9],
+  "Uxie":["Psychic",null,4,4,7,4,7,5],
+  "Mesprit":["Psychic",null,5,6,6,6,6,5],
+  "Azelf":["Psychic",null,4,7,4,7,4,7],
+  "Dialga":["Steel","Dragon",6,7,7,9,6,5],
+  "Palkia":["Water","Dragon",5,7,6,9,7,6],
+  "Heatran":["Fire","Steel",5,5,6,7,6,4],
+  "Regigigas":["Normal",null,6,9,6,5,6,6],
+  "Giratina":["Ghost","Dragon",9,6,7,6,7,5],
+  "Cresselia":["Psychic",null,7,4,6,4,7,5],
+  "Manaphy":["Water",null,6,6,6,6,6,6],
+  "Darkrai":["Dark",null,4,5,5,8,5,7],
+  "Shaymin":["Grass",null,6,6,6,6,6,6],
+  "Arceus":["Normal",null,7,7,7,7,7,7],
+  "Victini":["Psychic","Fire",6,6,6,6,6,6],
+  "Cobalion":["Steel","Fighting",5,5,7,5,4,6],
+  "Terrakion":["Rock","Fighting",5,7,5,4,5,6],
+  "Virizion":["Grass","Fighting",5,5,4,5,7,6],
+  "Tornadus":["Flying",null,5,7,4,7,5,6],
+  "Thundurus":["Electric","Flying",5,7,4,7,5,6],
+  "Reshiram":["Dragon","Fire",6,7,6,9,7,5],
+  "Zekrom":["Dragon","Electric",6,9,7,7,6,5],
+  "Landorus":["Ground","Flying",5,7,5,7,5,6],
+  "Kyurem":["Dragon","Ice",7,7,5,7,5,5],
+  "Keldeo":["Water","Fighting",5,4,5,7,5,6],
+  "Meloetta":["Normal","Psychic",6,4,4,7,7,5],
+  "Genesect":["Bug","Steel",4,7,5,7,5,6],
+  "Xerneas":["Fairy",null,7,7,5,7,6,6],
+  "Yveltal":["Dark","Flying",7,7,5,7,6,6],
+  "Zygarde":["Dragon","Ground",6,6,7,5,5,5],
+  "Diancie":["Rock","Fairy",3,6,9,6,9,3],
+  "Hoopa":["Psychic","Ghost",5,6,3,9,7,4],
+  "Volcanion":["Fire","Water",5,6,7,7,5,4],
+  "Type: Null":["Normal",null,5,5,5,5,5,3],
+  "Silvally":["Normal",null,5,5,5,5,5,5],
+  "Tapu Koko":["Electric","Fairy",4,7,5,5,4,7],
+  "Tapu Lele":["Psychic","Fairy",4,5,4,7,7,5],
+  "Tapu Bulu":["Grass","Fairy",4,7,7,5,5,4],
+  "Tapu Fini":["Water","Fairy",4,4,7,5,7,5],
+  "Cosmog":["Psychic",null,2,2,2,2,2,2],
+  "Cosmoem":["Psychic",null,2,2,7,2,7,2],
+  "Solgaleo":["Psychic","Steel",8,8,6,6,5,6],
+  "Lunala":["Psychic","Ghost",8,6,5,8,6,6],
+  "Nihilego":["Rock","Poison",6,3,3,7,7,6],
+  "Buzzwole":["Bug","Fighting",6,8,8,3,3,5],
+  "Pheromosa":["Bug","Fighting",4,8,2,8,2,9],
+  "Xurkitree":["Electric",null,5,5,4,10,4,5],
+  "Celesteela":["Steel","Flying",6,6,6,6,6,3],
+  "Kartana":["Grass","Steel",3,10,7,3,2,6],
+  "Guzzlord":["Dark","Dragon",13,6,3,6,3,2],
+  "Necrozma":["Psychic",null,6,6,6,7,5,5],
+  "Magearna":["Steel","Fairy",5,5,7,7,7,4],
+  "Marshadow":["Fighting","Ghost",5,7,5,5,5,7],
+  "Poipole":["Poison",null,4,4,4,4,4,4],
+  "Naganadel":["Poison","Dragon",4,4,4,7,4,7],
+  "Stakataka":["Rock","Steel",3,7,12,3,6,1],
+  "Blacephalon":["Fire","Ghost",3,7,3,9,5,6],
+  "Zeraora":["Electric",null,5,6,4,6,5,8],
+  "Meltan":["Steel",null,3,4,4,3,2,2],
+  "Melmetal":["Steel",null,8,8,8,5,4,2],
+  "Zacian":["Fairy",null,5,7,7,5,7,8],
+  "Zamazenta":["Fighting",null,5,7,7,5,7,8],
+  "Eternatus":["Poison","Dragon",8,5,5,8,5,7],
+  "Kubfu":["Fighting",null,3,5,3,3,3,4],
+  "Urshifu":["Fighting","Dark",6,7,6,4,3,6],
+  "Zarude":["Dark","Grass",6,7,6,4,5,6],
+  "Regieleki":["Electric",null,5,6,3,6,3,11],
+  "Regidrago":["Dragon",null,11,6,3,6,3,5],
+  "Glastrier":["Ice",null,6,8,7,4,6,2],
+  "Spectrier":["Ghost",null,6,4,3,8,5,7],
+  "Calyrex":["Psychic","Grass",6,5,5,5,5,5],
+  "Wo-Chien":["Dark","Grass",5,5,6,5,8,4],
+  "Chien-Pao":["Dark","Ice",5,7,5,5,4,8],
+  "Ting-Lu":["Dark","Ground",9,6,7,3,5,3],
+  "Chi-Yu":["Dark","Fire",3,5,5,8,7,6],
+  "Koraidon":["Fighting","Dragon",6,8,7,5,6,8],
+  "Miraidon":["Electric","Dragon",6,5,6,8,7,8],
+  "Okidogi":["Poison","Fighting",5,7,7,3,5,5],
+  "Munkidori":["Poison","Psychic",5,4,4,7,5,6],
+  "Fezandipiti":["Poison","Fairy",5,5,5,4,7,6],
+  "Ogerpon":["Grass",null,5,7,5,3,5,6],
+  "Terapagos":["Normal",null,5,4,5,4,5,3],
+  "Pecharunt":["Poison","Ghost",5,5,9,5,5,5]
+};
+
+// Every Legendary/Mythical "unit" that must be placed together or not at all --
+// canonical duos/trios/quads first, then every remaining species solo. Used by
+// placeLegendariesInDungeons() to fill the reserved 12-slot of every standalone
+// (non-town-attached) dungeon at the start of region generation.
+const LEGENDARY_GROUPS = [
+  ["Articuno","Zapdos","Moltres"],
+  ["Raikou","Entei","Suicune"],
+  ["Regirock","Regice","Registeel"],
+  ["Latias","Latios"],
+  ["Kyogre","Groudon","Rayquaza"],
+  ["Uxie","Mesprit","Azelf"],
+  ["Dialga","Palkia","Giratina"],
+  ["Cobalion","Terrakion","Virizion"],
+  ["Reshiram","Zekrom","Kyurem"],
+  ["Tornadus","Thundurus","Landorus"],
+  ["Tapu Koko","Tapu Lele","Tapu Bulu","Tapu Fini"],
+  ["Regieleki","Regidrago"],
+  ["Glastrier","Spectrier"],
+  ["Okidogi","Munkidori","Fezandipiti"],
+  ["Wo-Chien","Chien-Pao","Ting-Lu","Chi-Yu"],
+  ["Koraidon","Miraidon"],
+  ["Xerneas","Yveltal","Zygarde"],
+  ["Mewtwo"],
+  ["Mew"],
+  ["Lugia"],
+  ["Ho-oh"],
+  ["Celebi"],
+  ["Jirachi"],
+  ["Deoxys"],
+  ["Heatran"],
+  ["Regigigas"],
+  ["Cresselia"],
+  ["Manaphy"],
+  ["Darkrai"],
+  ["Shaymin"],
+  ["Arceus"],
+  ["Victini"],
+  ["Keldeo"],
+  ["Meloetta"],
+  ["Genesect"],
+  ["Diancie"],
+  ["Hoopa"],
+  ["Volcanion"],
+  ["Type: Null"],
+  ["Cosmog"],
+  ["Nihilego"],
+  ["Buzzwole"],
+  ["Pheromosa"],
+  ["Xurkitree"],
+  ["Celesteela"],
+  ["Kartana"],
+  ["Guzzlord"],
+  ["Necrozma"],
+  ["Magearna"],
+  ["Marshadow"],
+  ["Poipole"],
+  ["Stakataka"],
+  ["Blacephalon"],
+  ["Zeraora"],
+  ["Meltan"],
+  ["Zacian"],
+  ["Zamazenta"],
+  ["Eternatus"],
+  ["Kubfu"],
+  ["Zarude"],
+  ["Calyrex"],
+  ["Ogerpon"],
+  ["Terapagos"],
+  ["Pecharunt"]
 ];
 // ---- Type wheel: each type's (east,north) unit direction on the compass --
 // sin = East-West component (positive = East), cos = South-North component
@@ -2846,11 +3059,21 @@ function scoreTableForFamily(table, lineScore, lineDir){
   let dotType = 0;
   for(const t in lineScore){ if(routeScore[t]) dotType += routeScore[t]*lineScore[t]; }
   const dotDir = lineDir.e*table.normEast + lineDir.n*table.normNorth;
-  return dotType + dotDir + Math.random();
+  return dotType*5 + dotDir + Math.random();
 }
-function placeFormsInTable(table, forms){
+// The stat total of the family's own fully-evolved form(s) -- averaged across
+// branch endpoints when the family's final stage splits (e.g. Vileplume/
+// Bellossom) -- applied to every member of the family regardless of that
+// member's own stage, as a signal of "how strong does this line end up."
+function familyFinalEvoTotal(family){
+  const maxStage = Math.max(...family.map(([,s])=>s));
+  const finals = family.filter(([,s])=>s===maxStage).map(([n])=>n);
+  const totals = finals.map(n => NATIONAL_DEX[n].slice(2).reduce((a,b)=>a+b,0));
+  return totals.reduce((a,b)=>a+b,0) / totals.length;
+}
+function placeFormsInTable(table, forms, finalEvoTotal){
   forms.forEach(([name, stage])=>{
-    table.members.push({ name, stage });
+    table.members.push({ name, stage, finalEvoTotal });
     const row = NATIONAL_DEX[name];
     table.typeCounts[row[0]] = (table.typeCounts[row[0]]||0) + 1; table.typeTotal++;
     if(row[1]){ table.typeCounts[row[1]] = (table.typeCounts[row[1]]||0) + 1; table.typeTotal++; }
@@ -2875,18 +3098,18 @@ function buildRegionTables(region){
       const key = 'route:'+routeNum;
       (groups[key] = groups[key] || { kind:'route', id:'Route '+routeNum, tiles:[] }).tiles.push(n);
     } else if(n.kind === 'dungeon'){
-      groups['dungeon:'+n.id] = { kind:'dungeon', id:n.id, tiles:[n] };
+      groups['dungeon:'+n.id] = { kind:'dungeon', id:n.id, tiles:[n], standalone:true };
     } else if(n.kind === 'combo'){
-      groups['dungeon:'+n.dungeonId] = { kind:'dungeon', id:n.dungeonId, tiles:[n] };
+      groups['dungeon:'+n.dungeonId] = { kind:'dungeon', id:n.dungeonId, tiles:[n], standalone:false };
     }
   });
   const tables = Object.values(groups).map(g=>{
     const avgRow = g.tiles.reduce((a,t)=>a+t.row,0) / g.tiles.length;
     const avgCol = g.tiles.reduce((a,t)=>a+t.col,0) / g.tiles.length;
     return {
-      id: g.id, kind: g.kind,
+      id: g.id, kind: g.kind, standalone: !!g.standalone,
       east: avgCol - originCol, north: originRow - avgRow,
-      members: [], typeCounts: {}, typeTotal: 0,
+      members: [], typeCounts: {}, typeTotal: 0, capacity: 11, legendary: null,
     };
   });
   const maxRadius = Math.max(1e-9, ...tables.map(t=>Math.hypot(t.east, t.north)));
@@ -2909,31 +3132,34 @@ function populateRegionTables(tables){
   }
 
   for(const family of families){
-    const openTables = tables.filter(t=>t.members.length < 11);
+    const openTables = tables.filter(t=>t.members.length < t.capacity);
     if(!openTables.length) break;
 
     const lineScore = familyTypeScore(family);
     const lineDir = typeScoreDirection(lineScore);
+    const finalEvoTotal = familyFinalEvoTotal(family);
     const scored = openTables.map(t=>({ t, score: scoreTableForFamily(t, lineScore, lineDir) }));
-    const qualifying = scored.filter(s => (11 - s.t.members.length) >= family.length);
+    const qualifying = scored.filter(s => (s.t.capacity - s.t.members.length) >= family.length);
 
     if(qualifying.length >= 2){
       qualifying.sort((a,b)=>b.score-a.score);
-      placeFormsInTable(qualifying[0].t, family);
-      placeFormsInTable(qualifying[1].t, family);
+      placeFormsInTable(qualifying[0].t, family, finalEvoTotal);
+      placeFormsInTable(qualifying[1].t, family, finalEvoTotal);
     } else {
       scored.sort((a,b)=>{
-        const roomA = 11-a.t.members.length, roomB = 11-b.t.members.length;
+        const roomA = a.t.capacity-a.t.members.length, roomB = b.t.capacity-b.t.members.length;
         return roomB !== roomA ? roomB-roomA : b.score-a.score;
       });
       const target = scored[0].t;
-      placeFormsInTable(target, family.slice(0, 11-target.members.length));
+      placeFormsInTable(target, family.slice(0, target.capacity-target.members.length), finalEvoTotal);
     }
   }
 }
 
 // Step 5/final sort: every member of a table is ranked by adjusted stat
-// total + a per-stage bonus (0/3/7 for Basic/Stage1/Stage2) + rand()*3, then
+// total + a per-stage bonus (0/3/7 for Basic/Stage1/Stage2) + the family's own
+// final-evolution stat total squared/100 (rewards lines that end up strong,
+// even for a member that's still an early stage itself) + rand()*7, then
 // filed lowest-to-highest into the table's 11 encounter slots (2d6 sums 2-12
 // in order).
 function sortAndFillTable(table){
@@ -2941,14 +3167,75 @@ function sortAndFillTable(table){
     const dice = NATIONAL_DEX[m.name].slice(2);
     const base = dice.reduce((a,b)=>a+b, 0);
     const bonus = m.stage === 0 ? 0 : (m.stage === 1 ? 3 : 7);
-    return { name: m.name, sort: base + bonus + Math.random()*3 };
+    const finalEvoBoost = (m.finalEvoTotal * m.finalEvoTotal) / 100;
+    return { name: m.name, sort: base + bonus + finalEvoBoost + Math.random()*7 };
   });
   ranked.sort((a,b)=>a.sort-b.sort);
-  table.table = ranked.map(r=>r.name);
+  const names = ranked.map(r=>r.name);
+  if(table.legendary) names.push(table.legendary); // always the 12 slot, never scored into the normal sort
+  table.table = names;
+}
+
+// { type: fraction } for a single Legendary/Mythical species -- same shape as
+// familyTypeScore()'s output, sourced from LEGENDARY_DEX instead of
+// NATIONAL_DEX since these species are excluded from the normal dex.
+function legendaryTypeScore(name){
+  const row = LEGENDARY_DEX[name];
+  const score = {};
+  if(row[1]){ score[row[0]] = 0.5; score[row[1]] = 0.5; } else { score[row[0]] = 1; }
+  return score;
+}
+function placeLegendaryInTable(table, name){
+  table.legendary = name;
+  table.capacity = 10; // reserve the 12 slot -- the normal family loop only ever sees 10 open here
+  const row = LEGENDARY_DEX[name];
+  table.typeCounts[row[0]] = (table.typeCounts[row[0]]||0) + 1; table.typeTotal++;
+  if(row[1]){ table.typeCounts[row[1]] = (table.typeCounts[row[1]]||0) + 1; table.typeTotal++; }
+}
+// Randomly draws whole Legendary/Mythical groups (duo/trio/quad members always
+// placed together, everything else solo) until `n` individual species have
+// been gathered or no remaining group fits what's left -- a group that can't
+// fit in the remaining budget is discarded and a different one is tried, per
+// the "if not, try to select a different legend/mythic Pokemon" rule.
+function selectLegendaryUnits(n){
+  const pool = LEGENDARY_GROUPS.slice();
+  const selected = [];
+  let remaining = n;
+  while(remaining > 0 && pool.length){
+    const idx = Math.floor(Math.random()*pool.length);
+    const group = pool.splice(idx, 1)[0];
+    if(group.length <= remaining){
+      selected.push(...group);
+      remaining -= group.length;
+    }
+  }
+  return selected;
+}
+// Step 0 of region-dex generation: one Legendary/Mythical per standalone
+// (non-town-attached) dungeon, filling its 12 slot, placed one at a time in
+// selection order into whichever remaining eligible dungeon scores highest
+// for that specific species (same dotType*5 + dotDir + rand() formula as the
+// normal loop) -- so a group's members tend to scatter into dungeons that
+// each suit their own individual typing, not pile into one.
+function placeLegendariesInDungeons(tables){
+  const eligible = tables.filter(t=>t.standalone);
+  const legendaries = selectLegendaryUnits(eligible.length);
+  const available = eligible.slice();
+  legendaries.forEach(name=>{
+    if(!available.length) return;
+    const lineScore = legendaryTypeScore(name);
+    const lineDir = typeScoreDirection(lineScore);
+    const scored = available.map(t=>({ t, score: scoreTableForFamily(t, lineScore, lineDir) }));
+    scored.sort((a,b)=>b.score-a.score);
+    const target = scored[0].t;
+    placeLegendaryInTable(target, name);
+    available.splice(available.indexOf(target), 1);
+  });
 }
 
 function populateRegionDex(region){
   const tables = buildRegionTables(region);
+  placeLegendariesInDungeons(tables);
   populateRegionTables(tables);
   tables.forEach(sortAndFillTable);
   region.locations = tables.map(t=>({ id:t.id, kind:t.kind, table:t.table }));
@@ -3355,12 +3642,13 @@ function buildCustomRegionEncounterHtml(region, tableId){
   const loc = region.locations.find(l => l.id === tableId);
   if(!loc) return '';
   const rows = loc.table.map((species, i)=>{
-    const row = NATIONAL_DEX[species];
+    const row = NATIONAL_DEX[species] || LEGENDARY_DEX[species];
     const types = [row[0], row[1]].filter(Boolean);
+    const legendary = !NATIONAL_DEX[species];
     return '<div class="map-encounter-row">' +
       '<span class="map-encounter-sum">' + (i+2) + '</span>' +
       spriteImgHtml(species, 'sprite-sm') +
-      '<span class="map-encounter-name">' + species + '</span>' +
+      '<span class="map-encounter-name">' + species + (legendary ? ' ★' : '') + '</span>' +
       '<span class="map-encounter-types">' + types.map(t=>typePillHtml(t)).join('') + '</span>' +
     '</div>';
   }).join('');
@@ -3397,7 +3685,7 @@ function renderCustomRegionMapScreen(){
   const r = customRegion;
   return '<div class="card">' +
     '<div class="card-title">Custom Region <span style="font-weight:400; font-size:0.65em; color:var(--redwood);">(Still being built)</span></div>' +
-    '<div class="card-sub">Randomly generated with the region generator -- '+r.totalTowns+' towns, '+r.totalDungeons+' dungeons, '+r.totalRoutes+' routes, '+r.locations.length+' wild encounter tables stocked ('+r.locations.reduce((a,t)=>a+t.table.length,0)+' Pokemon placed). Still no gyms or trainers yet.</div>' +
+    '<div class="card-sub">Randomly generated with the region generator -- '+r.totalTowns+' towns, '+r.totalDungeons+' dungeons, '+r.totalRoutes+' routes, '+r.locations.length+' wild encounter tables stocked ('+r.locations.reduce((a,t)=>a+t.table.length,0)+' Pokemon placed, including '+r.locations.reduce((a,t)=>a+(NATIONAL_DEX[t.table[10]]?0:1),0)+' Legendary/Mythical). Still no gyms or trainers yet.</div>' +
     '<div class="card-sub" style="margin-top:-4px;">Starter Options</div>' +
     '<div class="starter-grid">' + customRegionStarterCardsHtml(r.starters) + '</div>' +
     '<div class="map-legend">' +
