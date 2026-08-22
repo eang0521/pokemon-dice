@@ -3368,17 +3368,67 @@ function buildEscalatingTeamMembers(names, orderMap, slotSequence, levels){
   });
 }
 
+// Grows every type's list toward 5 members, entirely from this region's own
+// drafted candidates (gymDraft.log) -- never the national dex. Per type,
+// increasingly permissive strategies: same type + unused, same type + reuse
+// (already sitting in some other list), then -- last resort -- one step
+// around the attack-type wheel (random direction first, then the other) to
+// borrow a candidate of an adjacent type instead, also unused-then-reuse.
+// Runs across ALL 18 types before Elite Four/gym selection, since either one
+// might come up short (see conversation) and neither is decided yet.
+function growTypeLists(gymDraft){
+  const usedFinals = new Set();
+  Object.values(gymDraft.lists).forEach(list=>list.forEach(n=>usedFinals.add(n)));
+  const growthCompletionOrder = [];
+
+  function tryFillOne(searchType, list, allowReuse){
+    const match = gymDraft.log.find(e => e.type===searchType && !list.includes(e.chosenFinal) &&
+      (allowReuse || !usedFinals.has(e.chosenFinal)));
+    if(!match) return false;
+    list.push(match.chosenFinal);
+    usedFinals.add(match.chosenFinal);
+    return true;
+  }
+  function growList(type){
+    const list = gymDraft.lists[type];
+    if(list.length === 5) return;
+    while(list.length < 5 && tryFillOne(type, list, false)){}
+    while(list.length < 5 && tryFillOne(type, list, true)){}
+    while(list.length < 5){
+      const idx = WHEEL.indexOf(type.toLowerCase());
+      const firstDir = Math.random() < 0.5 ? 1 : -1;
+      let filled = false;
+      for(const d of [firstDir, -firstDir]){
+        const adjType = cap(WHEEL[(idx + d + WHEEL.length) % WHEEL.length]);
+        if(tryFillOne(adjType, list, false) || tryFillOne(adjType, list, true)){ filled = true; break; }
+      }
+      if(!filled) break; // truly stuck -- not enough regional candidates exist, list stays short
+    }
+    if(list.length === 5) growthCompletionOrder.push(type);
+  }
+
+  [4,3,2,1,0].forEach(size=>{
+    Object.keys(gymDraft.lists)
+      .filter(t => gymDraft.lists[t].length === size && !gymDraft.completionOrder.includes(t))
+      .sort((a,b)=> (gymDraft.firstAdded[a]??Infinity) - (gymDraft.firstAdded[b]??Infinity))
+      .forEach(growList);
+  });
+
+  return { usedFinals, growthCompletionOrder };
+}
+
 // Elite Four (top 4 complete gym lists by total team stat, weakest-to-
 // strongest into slots 1-4), the 8 regular gym teams (next complete lists in
-// draw order, backfilled from progressively smaller lists if short), and the
-// Champion (leftover lines never used in a gym/E4 team, drawn 3 at a time --
-// highest stat total in each trio, skipping a trio whose pick would be a
-// type's 3rd appearance on the team -- until 6 members are seated). See
-// conversation for the full spec; final in-team ordering for each uses its
-// own fixed final ordering (gyms sort ascending by level, ace last on a tie;
-// E4/Champion use their own fixed rank->position permutation, E4_ORDER/CHAMP_ORDER).
+// draw order), and the Champion (leftover lines never used in a gym/E4 team,
+// drawn 3 at a time -- highest stat total in each trio, skipping a trio
+// whose pick would be a type's 3rd appearance on the team -- until 6 members
+// are seated). See conversation for the full spec; final in-team ordering
+// for each uses its own fixed final ordering (gyms sort ascending by level,
+// ace last on a tie; E4/Champion use their own fixed rank->position
+// permutation, E4_ORDER/CHAMP_ORDER).
 function buildGymEliteFourChampion(gymDraft){
-  const completeTypes = gymDraft.completionOrder.slice();
+  const { usedFinals, growthCompletionOrder } = growTypeLists(gymDraft);
+  const completeTypes = gymDraft.completionOrder.concat(growthCompletionOrder);
 
   const withSums = completeTypes.map(type=>({
     type,
@@ -3387,82 +3437,20 @@ function buildGymEliteFourChampion(gymDraft){
   withSums.sort((a,b)=>b.sum-a.sum);
   const e4Types = withSums.slice(0,4).map(w=>w.type).reverse();
   const e4TypeSet = new Set(e4Types);
-  const e4Finals = new Set(e4Types.flatMap(t=>gymDraft.lists[t]));
   const eliteFour = e4Types.map((type,i)=>({
     type,
     members: buildEscalatingTeamMembers(gymDraft.lists[type], E4_ORDER, SLOT_SEQUENCE_5, E4_SLOT_LEVELS[i]),
   }));
 
-  let gymTypes = completeTypes.filter(t=>!e4TypeSet.has(t)).slice(0,8);
-
-  const usedFinals = new Set(e4Finals);
-  gymTypes.forEach(t=>gymDraft.lists[t].forEach(n=>usedFinals.add(n)));
-
-  // Two full passes down the same size ladder (4,3,2,1): first honoring "not
-  // already used anywhere," then -- only if that whole pass still leaves us
-  // short of 8 -- a second pass that allows reusing a Pokemon already sitting
-  // in another gym's roster (never an Elite Four one), just never twice in
-  // the SAME roster.
-  function backfillPass(size, allowReuse){
-    if(gymTypes.length >= 8) return;
-    const candidates = Object.keys(gymDraft.lists)
-      .filter(t => gymDraft.lists[t].length === size && !completeTypes.includes(t) && !gymTypes.includes(t))
-      .sort((a,b)=> gymDraft.firstAdded[a]-gymDraft.firstAdded[b]);
-    for(const type of candidates){
-      if(gymTypes.length >= 8) break;
-      const list = gymDraft.lists[type];
-      list.forEach(n=>usedFinals.add(n));
-      let complete = true;
-      while(list.length < 5){
-        const match = gymDraft.log.find(e => e.type===type && !list.includes(e.chosenFinal) &&
-          (allowReuse ? !e4Finals.has(e.chosenFinal) : !usedFinals.has(e.chosenFinal)));
-        if(!match){ complete = false; break; }
-        list.push(match.chosenFinal);
-        usedFinals.add(match.chosenFinal);
-      }
-      if(complete) gymTypes.push(type);
-    }
-  }
-  [4,3,2,1].forEach(size=>backfillPass(size, false));
-  if(gymTypes.length < 8) [4,3,2,1].forEach(size=>backfillPass(size, true));
-
-  // Absolute last resort -- guarantees exactly 8 gyms every time, even for a
-  // tiny map whose wild-table loop barely drew enough families to stock the
-  // routes, let alone complete 12 different type rosters. Pulls straight from
-  // the full national dex (every type has vastly more than 5 species in it)
-  // rather than only what happened to get drafted this run.
-  if(gymTypes.length < 8){
-    const typeIndex = {};
-    Object.keys(TYPE_WHEEL).forEach(t=>{ typeIndex[t] = []; });
-    Object.keys(NATIONAL_DEX).forEach(sp=>{
-      const row = NATIONAL_DEX[sp];
-      typeIndex[row[0]].push(sp);
-      if(row[1]) typeIndex[row[1]].push(sp);
-    });
-    const remainingTypes = Object.keys(TYPE_WHEEL).filter(t=>!e4TypeSet.has(t) && !gymTypes.includes(t));
-    for(let i=remainingTypes.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [remainingTypes[i], remainingTypes[j]] = [remainingTypes[j], remainingTypes[i]];
-    }
-    for(const type of remainingTypes){
-      if(gymTypes.length >= 8) break;
-      const list = gymDraft.lists[type];
-      while(list.length < 5){
-        const pick = typeIndex[type].find(sp=>!list.includes(sp) && !usedFinals.has(sp))
-          || typeIndex[type].find(sp=>!list.includes(sp) && !e4Finals.has(sp))
-          || typeIndex[type].find(sp=>!list.includes(sp));
-        if(!pick) break;
-        list.push(pick);
-        usedFinals.add(pick);
-      }
-      if(list.length === 5) gymTypes.push(type);
-    }
-  }
-
+  const gymTypes = completeTypes.filter(t=>!e4TypeSet.has(t)).slice(0,8);
   const gyms = gymTypes.map(type=>({
     type,
     members: buildGymTeamMembers(gymDraft.lists[type]),
   }));
+
+  const shortfalls = [];
+  if(e4Types.length < 4) shortfalls.push('Could not make 4 full Elite Four teams, only '+e4Types.length+' used.');
+  if(gymTypes.length < 8) shortfalls.push('Could not make 8 full gym teams, only '+gymTypes.length+' used.');
 
   const leftover = gymDraft.log.filter(e => !usedFinals.has(e.chosenFinal));
   const champTypeCounts = {};
@@ -3479,7 +3467,7 @@ function buildGymEliteFourChampion(gymDraft){
   }
   const champion = { members: buildEscalatingTeamMembers(championPicks, CHAMP_ORDER, SLOT_SEQUENCE_6, CHAMPION_SLOT_LEVELS) };
 
-  return { eliteFour, gyms, champion };
+  return { eliteFour, gyms, champion, shortfalls };
 }
 
 // ---- Type tables (dungeons/routes: % breakdown of their own encounter
@@ -3581,10 +3569,11 @@ function populateRegionDex(region){
     if(n.kind==='town' || n.kind==='combo') n.typeTable = computeTownTypeTable(region, n.id);
   });
 
-  const { eliteFour, gyms, champion } = buildGymEliteFourChampion(gymDraft);
+  const { eliteFour, gyms, champion, shortfalls } = buildGymEliteFourChampion(gymDraft);
   region.eliteFourTeams = eliteFour.map(e=>({ label: e.type+' E4 Member', members: e.members }));
   region.championTeam = { label: 'Champion', members: champion.members };
   region.gymTeams = assignGymTowns(region, gyms);
+  region.dexWarnings = shortfalls;
   return region;
 }
 
@@ -4070,9 +4059,15 @@ function selectCustomRegionE4Tab(idx){
 function renderCustomRegionMapScreen(){
   if(!customRegion) customRegion = generateCustomRegionData();
   const r = customRegion;
+  const warningsHtml = (r.dexWarnings && r.dexWarnings.length)
+    ? '<div style="background:var(--rust); color:var(--paper); padding:8px 12px; border-radius:6px; margin-bottom:8px; font-family:\'IBM Plex Mono\', monospace; font-size:12px;">' +
+        r.dexWarnings.map(w=>'&#9888; '+w).join('<br>') +
+      '</div>'
+    : '';
   return '<div class="card">' +
     '<div class="card-title">Custom Region <span style="font-weight:400; font-size:0.65em; color:var(--redwood);">(Still being built)</span></div>' +
-    '<div class="card-sub">Randomly generated with the region generator -- '+r.totalTowns+' towns, '+r.totalDungeons+' dungeons, '+r.totalRoutes+' routes, '+r.locations.length+' wild encounter tables stocked ('+r.locations.reduce((a,t)=>a+t.table.length,0)+' Pokemon placed, including '+r.locations.reduce((a,t)=>a+(NATIONAL_DEX[t.table[10]]?0:1),0)+' Legendary/Mythical). Still no gyms or trainers yet.</div>' +
+    warningsHtml +
+    '<div class="card-sub">Randomly generated with the region generator -- '+r.totalTowns+' towns, '+r.totalDungeons+' dungeons, '+r.totalRoutes+' routes, '+r.locations.length+' wild encounter tables stocked ('+r.locations.reduce((a,t)=>a+t.table.length,0)+' Pokemon placed, including '+r.locations.reduce((a,t)=>a+(NATIONAL_DEX[t.table[10]]?0:1),0)+' Legendary/Mythical). Still no trainers yet.</div>' +
     '<div class="card-sub" style="margin-top:-4px;">Starter Options</div>' +
     '<div class="starter-grid">' + customRegionStarterCardsHtml(r.starters) + '</div>' +
     '<div class="map-legend">' +
