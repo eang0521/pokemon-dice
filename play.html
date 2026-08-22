@@ -3551,36 +3551,36 @@ function optimalTypeAssignment(gymTypes, townTypeTables){
 // display name so it matches the string convention DATA.gymLeaders uses in
 // real regions.
 // ---- Town/city name generator ----
-// Two ways a name gets built, chosen randomly each time: a WHOLE real name
-// used as-is (e.g. "Cerulean"), or a COMBINATION assembled from a real
-// name's own two halves (e.g. Littleroot -> "Little" + "root", freely
-// recombined with other names' halves -- "Little"+"gem", "Sand"+"root",
-// etc. -- for far more possibilities than the fixed whole-name list alone).
-// Both are grouped by the type their real gym leader (or overall flavor) is
-// associated with; NEUTRAL has no strong type tie.
+// Two ways a name gets built each time: a WHOLE single word (~1/4 of towns
+// -- a real-feeling but invented type-flavored word, colors and descriptive
+// terms mixed in, never an actual mainline Pokemon town/city name -- so any
+// resemblance to one is coincidental, not copied), or a COMBINATION
+// assembled from two generic word-fragments (e.g. "Little" + "root" ->
+// "Littleroot" -- if that happens to land on a real name, that's the
+// "unless it gets randomly generated" case, not something hardcoded).
+// Both are grouped by the type they evoke; NEUTRAL has no strong type tie.
 const TOWN_NAME_WHOLE = {
-  Fire: ['Cinnabar','Dalizapa'],
-  Water: ['Cerulean','Sootopolis','Pastoria','Cascarrafa'],
-  Grass: ['Celadon','Eterna','Artazon','Coumarine'],
-  Electric: ['Vermilion','Nimbasa','Levincia'],
-  Ice: ['Mahogany','Icirrus','Circhester','Glaseado'],
-  Fighting: ['Cianwood','Dewford','Shalour','Stow-on-Side'],
-  Poison: ['Fuchsia','Po'],
-  Ground: ['Viridian','Zapapico'],
-  Flying: ['Violet'],
-  Psychic: ['Saffron','Anistar','Alfornada'],
-  Bug: ['Azalea','Castelia','Santalune','Cortondo'],
-  Rock: ['Pewter','Oreburgh','Cyllage','Geosenge'],
-  Ghost: ['Ecruteak','Montenevera'],
-  Dragon: ['Opelucid'],
-  Dark: ['Spikemuth'],
-  Steel: ['Olivine'],
-  Fairy: ['Laverre'],
-  Normal: ['Nacrene','Medali','Striaton'],
+  Fire: ['Ember','Blaze','Amber','Sienna','Cinder','Copper','Ruby','Flare','Russet','Vermeil'],
+  Water: ['Cobalt','Teal','Marina','Tide','Cascade','Sapphire','Lagoon','Coral','Aquamarine','Bayside'],
+  Grass: ['Verdant','Emerald','Meadow','Clover','Fern','Moss','Bloom','Jade','Willow','Thicket'],
+  Electric: ['Voltage','Static','Spark','Ion','Surge','Volt','Radiant','Neon','Flash','Charge'],
+  Ice: ['Frost','Glacier','Crystal','Pearl','Alpine','Boreal','Rime','Chill','Winter','Arctic'],
+  Fighting: ['Titan','Boulder','Rugged','Vigor','Bronze','Anvil','Summit','Bastion','Rally','Fortitude'],
+  Poison: ['Amethyst','Nightshade','Bramble','Fume','Venom','Murk','Bane','Thistle','Miasma','Toxica'],
+  Ground: ['Sandstone','Canyon','Terra','Mesa','Adobe','Dune','Bedrock','Loam','Basin','Quarry'],
+  Flying: ['Skyward','Zephyr','Gale','Breeze','Nimbus','Cirrus','Aloft','Windward','Talon','Soar'],
+  Psychic: ['Mystic','Nova','Ether','Arcane','Zenith','Prisma','Halo','Enigma','Astra','Reverie'],
+  Bug: ['Hive','Chrysalis','Verdigris','Nectar','Cocoon','Mantis','Thorne','Glimmer','Swarm','Chitin'],
+  Rock: ['Granite','Quartz','Basalt','Flint','Cobble','Obsidian','Marble','Shale','Onyx','Pebble'],
+  Ghost: ['Shadow','Wraith','Phantom','Specter','Haunt','Gloom','Nocturne','Wisp','Eerie','Grim'],
+  Dragon: ['Wyvern','Drake','Fang','Serpent','Scale','Tempest','Draco','Coil','Ridge','Crag'],
+  Dark: ['Umbra','Midnight','Raven','Shade','Eclipse','Void','Ebony','Nightfall','Obscura','Dusk'],
+  Steel: ['Iron','Chrome','Alloy','Ferrous','Gunmetal','Titanium','Bolt','Rivet','Forge','Girder'],
+  Fairy: ['Rose','Blossom','Sprite','Dawn','Prism','Charm','Petal','Lilac','Whimsy','Opal'],
+  Normal: ['Harmony','Union','Haven','Prairie','Commons','Homestead','Plainview','Steady','Everdale','Meridian'],
 };
-const TOWN_NAME_WHOLE_NEUTRAL = ['Pallet','Lavender','Celestic','Nuvema','Accumula','Couriway',
-  'Cabo Poco','Los Platos','Mesagoza','Paniola','Konikoni','Heahea','Malie','Iki','Tapu',
-  'Ever Grande','Jubilife','Indigo'];
+const TOWN_NAME_WHOLE_NEUTRAL = ['Vale','Horizon','Solstice','Crest','Wayside','Concord',
+  'Century','Founders','Journey','Anchor'];
 const TOWN_NAME_PREFIX = {
   Rock: ['Rust'],
   Ground: ['Drift'],
@@ -3639,37 +3639,43 @@ function shuffled(arr){
   }
   return a;
 }
-// Tries every whole name and every prefix*suffix combination for one type
-// (both pools shuffled, whole-vs-combination order itself randomized) and
-// returns the first not already used.
-function tryNameForType(type, usedNames){
+function tryWholeForType(type, usedNames){
   const wholes = type ? (TOWN_NAME_WHOLE[type]||[]) : TOWN_NAME_WHOLE_NEUTRAL;
+  return shuffled(wholes).find(w=>!usedNames.has(w)) || null;
+}
+function tryComboForType(type, usedNames){
   const prefixes = shuffled((type ? (TOWN_NAME_PREFIX[type]||[]) : []).concat(TOWN_NAME_PREFIX_NEUTRAL));
   const suffixes = shuffled((type ? (TOWN_NAME_SUFFIX[type]||[]) : []).concat(TOWN_NAME_SUFFIX_NEUTRAL));
-  const tryWhole = () => shuffled(wholes).find(w=>!usedNames.has(w));
-  const tryCombo = () => {
-    for(const p of prefixes) for(const s of suffixes){
-      const combo = p + s;
-      if(!usedNames.has(combo)) return combo;
-    }
-    return null;
-  };
-  const attempts = Math.random() < 0.5 ? [tryWhole, tryCombo] : [tryCombo, tryWhole];
+  for(const p of prefixes) for(const s of suffixes){
+    const combo = p + s;
+    if(!usedNames.has(combo)) return combo;
+  }
+  return null;
+}
+// Tries the preferred mode (whole-word or combination, decided once per town
+// by generateTownName) for this type first, falling back to the other mode
+// only if that type's preferred-mode pool is already spent this region.
+function tryNameForType(type, usedNames, preferWhole){
+  const attempts = preferWhole ? [tryWholeForType, tryComboForType] : [tryComboForType, tryWholeForType];
   for(const attempt of attempts){
-    const found = attempt();
+    const found = attempt(type, usedNames);
     if(found) return found;
   }
   return null;
 }
 // Picks a name themed to the town's own type table (weighted by percentage
-// squared, retrying a different type if the first choice's whole+combination
-// pool is already exhausted this region) as either a real whole name or a
-// combination assembled from two real names' own halves, then a probabilistic
-// City/Town suffix -- gym towns lean City, non-gym towns lean Town, but
-// neither is guaranteed. Tracks used base names (pre-suffix) in `usedNames`.
+// squared, retrying a different type if the first choice's pool is already
+// exhausted this region). About 1/4 of towns get a single invented whole
+// word (colors/descriptive terms, never a real Pokemon town name outright);
+// the rest get a combination of two generic word-fragments (which CAN
+// coincidentally land on a real name, unlike the whole-word pool, but isn't
+// built from one on purpose). Then a probabilistic City/Town suffix -- gym
+// towns lean City, non-gym towns lean Town, but neither is guaranteed.
+// Tracks used base names (pre-suffix) in `usedNames`.
 function generateTownName(typeTable, hasGym, usedNames){
   const cityChance = hasGym ? 0.75 : 0.25;
   const suffix = Math.random() < cityChance ? 'City' : 'Town';
+  const preferWhole = Math.random() < 0.25;
 
   const remainingTypes = new Set(Object.keys(typeTable||{}));
   let base = null;
@@ -3679,15 +3685,15 @@ function generateTownName(typeTable, hasGym, usedNames){
     const type = pickWeightedType(filtered);
     if(!type) break;
     remainingTypes.delete(type);
-    base = tryNameForType(type, usedNames);
+    base = tryNameForType(type, usedNames, preferWhole);
   }
-  if(!base) base = tryNameForType(null, usedNames); // neutral pool
+  if(!base) base = tryNameForType(null, usedNames, preferWhole); // neutral pool
   if(!base){
     // Last resort -- every typed AND neutral pool exhausted (hundreds of
     // combinations vs. a region's max of 16 towns, so practically
     // unreachable) -- sweep every type's pool regardless of this town's own.
     for(const t of Object.keys(TOWN_NAME_WHOLE)){
-      base = tryNameForType(t, usedNames);
+      base = tryNameForType(t, usedNames, preferWhole);
       if(base) break;
     }
   }
