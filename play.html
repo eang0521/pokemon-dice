@@ -3300,9 +3300,70 @@ function orderTeam(names, orderMap, randMax){
   return orderMap.map(idx=>ranked[idx]).filter(Boolean);
 }
 
+// ---- Levels + attack types (see Calli_Gym_Leaders.md / Calli_Elite_Four.md
+// and the real fixedAttackType()/rollGymTeam() code for where these come
+// from). No live badge counter exists yet for a Custom Region preview, so
+// gyms are shown as if the player were on their 8th badge (badges=7) --
+// levels = badges + {5,4,4,5,3} for the ace/2nd/3rd/4th/5th slots, same
+// formula rollGymTeam() uses. Elite Four/Champion reuse Calli's own fixed
+// per-slot level table verbatim (E4 escalates gently 1->4, Champion sits at
+// the same ceiling as E4 #4 with one extra slot).
+const GYM_SLOT_LEVELS = { '1':12, '2':11, '3':11, '4':12, '5':10 };
+const E4_SLOT_LEVELS = [
+  { '1':11, '2':12, '3':12, '4':13, 'ace':13 },
+  { '1':12, '2':12, '3':13, '4':13, 'ace':14 },
+  { '1':12, '2':13, '3':13, '4':14, 'ace':14 },
+  { '1':13, '2':13, '3':14, '4':14, 'ace':15 },
+];
+const CHAMPION_SLOT_LEVELS = { '1':13, '2':13, '3':14, '4':14, '5':15, 'ace':15 };
+const SLOT_SEQUENCE_5 = ['1','2','3','4','ace'];
+const SLOT_SEQUENCE_6 = ['1','2','3','4','5','ace'];
+
+// Same rule as the real game's fixedAttackType(), but sourced from
+// NATIONAL_DEX -- Custom Region generation runs independently of the active
+// game's DATA (which fixedAttackType() itself reads from, and which may not
+// even exist yet if no adventure has been started).
+function customRegionFixedAttackType(species, slotKey){
+  const row = NATIONAL_DEX[species];
+  const primary = (row[0] || 'Normal').toLowerCase();
+  const secondary = row[1] ? row[1].toLowerCase() : null;
+  const baseType = (slotKey === '2') ? (secondary || primary) : primary;
+  const idx = WHEEL.indexOf(baseType);
+  let shift = 0;
+  if(slotKey === '3') shift = 1;
+  if(slotKey === '4') shift = -1;
+  const finalIdx = ((idx + shift) % WHEEL.length + WHEEL.length) % WHEEL.length;
+  return WHEEL[finalIdx];
+}
+function memberInfo(species, slotKey, level){
+  return { species, level, atk: cap(customRegionFixedAttackType(species, slotKey)) };
+}
+// Gyms: attack-type "slot" follows stat RANK (rank 1/highest = slot "1", the
+// ace) rather than final display position, matching how Calli's own gym data
+// authors slot identity independently of rollGymTeam()'s sendOrder reshuffle.
+function buildGymTeamMembers(names){
+  const ranked = rankByStatPlusRand(names, 5);
+  const info = ranked.map((sp,i)=>{
+    const slotKey = String(i+1);
+    return memberInfo(sp, slotKey, GYM_SLOT_LEVELS[slotKey]);
+  });
+  return GYM_ORDER.map(idx=>info[idx]).filter(Boolean);
+}
+// Elite Four/Champion: slot identity follows final display POSITION instead
+// (position 0 -> "1", ..., last -> "ace"), matching how the real E4/Champion
+// data lists slots 1..ace in that exact left-to-right order with no separate
+// send-order reshuffle.
+function buildEscalatingTeamMembers(names, orderMap, slotSequence, levels){
+  const ordered = orderTeam(names, orderMap, 5);
+  return ordered.map((sp,i)=>{
+    const slotKey = slotSequence[i] || 'ace';
+    return memberInfo(sp, slotKey, levels[slotKey] || levels.ace);
+  });
+}
+
 // Elite Four (top 4 complete gym lists by total team stat, weakest-to-
 // strongest into slots 1-4), the 8 regular gym teams (next complete lists in
-// draw order, backfilled from 4- or 3-member lists if short), and the
+// draw order, backfilled from progressively smaller lists if short), and the
 // Champion (leftover lines never used in a gym/E4 team, drawn 3 at a time --
 // highest stat total in each trio, skipping a trio whose pick would be a
 // type's 3rd appearance on the team -- until 6 members are seated). See
@@ -3318,31 +3379,35 @@ function buildGymEliteFourChampion(gymDraft){
   withSums.sort((a,b)=>b.sum-a.sum);
   const e4Types = withSums.slice(0,4).map(w=>w.type).reverse();
   const e4TypeSet = new Set(e4Types);
-  const eliteFour = e4Types.map(type=>({
+  const e4Finals = new Set(e4Types.flatMap(t=>gymDraft.lists[t]));
+  const eliteFour = e4Types.map((type,i)=>({
     type,
-    members: orderTeam(gymDraft.lists[type], E4_ORDER, 5),
+    members: buildEscalatingTeamMembers(gymDraft.lists[type], E4_ORDER, SLOT_SEQUENCE_5, E4_SLOT_LEVELS[i]),
   }));
 
   let gymTypes = completeTypes.filter(t=>!e4TypeSet.has(t)).slice(0,8);
 
-  const usedFinals = new Set();
-  e4Types.forEach(t=>gymDraft.lists[t].forEach(n=>usedFinals.add(n)));
+  const usedFinals = new Set(e4Finals);
   gymTypes.forEach(t=>gymDraft.lists[t].forEach(n=>usedFinals.add(n)));
 
-  function backfill(size){
+  // Two full passes down the same size ladder (4,3,2,1): first honoring "not
+  // already used anywhere," then -- only if that whole pass still leaves us
+  // short of 8 -- a second pass that allows reusing a Pokemon already sitting
+  // in another gym's roster (never an Elite Four one), just never twice in
+  // the SAME roster.
+  function backfillPass(size, allowReuse){
+    if(gymTypes.length >= 8) return;
     const candidates = Object.keys(gymDraft.lists)
       .filter(t => gymDraft.lists[t].length === size && !completeTypes.includes(t) && !gymTypes.includes(t))
       .sort((a,b)=> gymDraft.firstAdded[a]-gymDraft.firstAdded[b]);
     for(const type of candidates){
       if(gymTypes.length >= 8) break;
       const list = gymDraft.lists[type];
-      // This list's own pre-existing members were never marked used (they were
-      // never part of a complete list before now) -- mark them first so the
-      // search below can't re-pick one of them as its own "new" 5th member.
       list.forEach(n=>usedFinals.add(n));
       let complete = true;
       while(list.length < 5){
-        const match = gymDraft.log.find(e => e.type===type && !usedFinals.has(e.chosenFinal));
+        const match = gymDraft.log.find(e => e.type===type && !list.includes(e.chosenFinal) &&
+          (allowReuse ? !e4Finals.has(e.chosenFinal) : !usedFinals.has(e.chosenFinal)));
         if(!match){ complete = false; break; }
         list.push(match.chosenFinal);
         usedFinals.add(match.chosenFinal);
@@ -3350,12 +3415,12 @@ function buildGymEliteFourChampion(gymDraft){
       if(complete) gymTypes.push(type);
     }
   }
-  if(gymTypes.length < 8) backfill(4);
-  if(gymTypes.length < 8) backfill(3);
+  [4,3,2,1].forEach(size=>backfillPass(size, false));
+  if(gymTypes.length < 8) [4,3,2,1].forEach(size=>backfillPass(size, true));
 
   const gyms = gymTypes.map(type=>({
     type,
-    members: orderTeam(gymDraft.lists[type], GYM_ORDER, 5),
+    members: buildGymTeamMembers(gymDraft.lists[type]),
   }));
 
   const leftover = gymDraft.log.filter(e => !usedFinals.has(e.chosenFinal));
@@ -3371,7 +3436,7 @@ function buildGymEliteFourChampion(gymDraft){
     championPicks.push(best.chosenFinal);
     champTypeCounts[best.type] = (champTypeCounts[best.type]||0) + 1;
   }
-  const champion = { members: orderTeam(championPicks, CHAMP_ORDER, 5) };
+  const champion = { members: buildEscalatingTeamMembers(championPicks, CHAMP_ORDER, SLOT_SEQUENCE_6, CHAMPION_SLOT_LEVELS) };
 
   return { eliteFour, gyms, champion };
 }
@@ -3826,11 +3891,11 @@ function buildCustomRegionEncounterHtml(region, tableId){
   return '<div class="map-encounter-title">Encounter table (2d6 sum)</div>' +
     '<div class="map-encounter-list">' + rows + '</div>';
 }
-function customRegionMonCardHtml(name){
-  const row = NATIONAL_DEX[name];
+function customRegionMonCardHtml(member){
+  const row = NATIONAL_DEX[member.species];
   return '<div class="mon-detail-card">' +
-    '<div class="mon-detail-name">' + name + '</div>' +
-    trainerTypeBlockHtml(row[0], row[1], row[0]) +
+    '<div class="mon-detail-name">' + member.species + ' Lv ' + member.level + '</div>' +
+    trainerTypeBlockHtml(row[0], row[1], member.atk) +
     statRowHtml(row.slice(2)) +
   '</div>';
 }
