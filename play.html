@@ -3368,18 +3368,17 @@ function buildEscalatingTeamMembers(names, orderMap, slotSequence, levels){
   });
 }
 
-// Grows every type's list toward 5 members, entirely from this region's own
-// drafted candidates (gymDraft.log) -- never the national dex. Per type,
-// increasingly permissive strategies: same type + unused, same type + reuse
-// (already sitting in some other list), then -- last resort -- one step
-// around the attack-type wheel (random direction first, then the other) to
-// borrow a candidate of an adjacent type instead, also unused-then-reuse.
-// Runs across ALL 18 types before Elite Four/gym selection, since either one
-// might come up short (see conversation) and neither is decided yet.
-function growTypeLists(gymDraft){
-  const usedFinals = new Set();
-  Object.values(gymDraft.lists).forEach(list=>list.forEach(n=>usedFinals.add(n)));
-  const growthCompletionOrder = [];
+// Grows up to `neededCount` MORE type lists to 5 members, entirely from this
+// region's own drafted candidates (gymDraft.log) -- never the national dex,
+// and never touching a type in `skipTypes` (already locked in elsewhere).
+// Per type, increasingly permissive strategies: same type + unused, same
+// type + reuse (already sitting in some other list), then -- last resort --
+// one step around the attack-type wheel (random direction first, then the
+// other) to borrow a candidate of an adjacent type instead, also
+// unused-then-reuse. Stops as soon as `neededCount` new completions happen.
+function growTypeListsUntil(gymDraft, usedFinals, skipTypes, neededCount){
+  const newlyCompleted = [];
+  if(neededCount <= 0) return newlyCompleted;
 
   function tryFillOne(searchType, list, allowReuse){
     const match = gymDraft.log.find(e => e.type===searchType && !list.includes(e.chosenFinal) &&
@@ -3404,33 +3403,46 @@ function growTypeLists(gymDraft){
       }
       if(!filled) break; // truly stuck -- not enough regional candidates exist, list stays short
     }
-    if(list.length === 5) growthCompletionOrder.push(type);
+    if(list.length === 5) newlyCompleted.push(type);
   }
 
-  [4,3,2,1,0].forEach(size=>{
-    Object.keys(gymDraft.lists)
-      .filter(t => gymDraft.lists[t].length === size && !gymDraft.completionOrder.includes(t))
-      .sort((a,b)=> (gymDraft.firstAdded[a]??Infinity) - (gymDraft.firstAdded[b]??Infinity))
-      .forEach(growList);
-  });
-
-  return { usedFinals, growthCompletionOrder };
+  for(const size of [4,3,2,1,0]){
+    if(newlyCompleted.length >= neededCount) break;
+    const candidates = Object.keys(gymDraft.lists)
+      .filter(t => gymDraft.lists[t].length === size && !skipTypes.has(t))
+      .sort((a,b)=> (gymDraft.firstAdded[a]??Infinity) - (gymDraft.firstAdded[b]??Infinity));
+    for(const type of candidates){
+      if(newlyCompleted.length >= neededCount) break;
+      growList(type);
+    }
+  }
+  return newlyCompleted;
 }
 
-// Elite Four (top 4 complete gym lists by total team stat, weakest-to-
-// strongest into slots 1-4), the 8 regular gym teams (next complete lists in
-// draw order), and the Champion (leftover lines never used in a gym/E4 team,
-// drawn 3 at a time -- highest stat total in each trio, skipping a trio
-// whose pick would be a type's 3rd appearance on the team -- until 6 members
-// are seated). See conversation for the full spec; final in-team ordering
-// for each uses its own fixed final ordering (gyms sort ascending by level,
-// ace last on a tie; E4/Champion use their own fixed rank->position
-// permutation, E4_ORDER/CHAMP_ORDER).
+// Elite Four is decided FIRST, from naturally-complete (pure single-type)
+// lists only, top 4 by total team stat -- the type-growth/rescue chain only
+// runs for Elite Four if there aren't even 4 naturally-complete lists to
+// choose from, and even then grows only as many extra types as needed to
+// reach exactly 4, so an Elite Four team is cross-type (via wheel rotation)
+// only when truly unavoidable. The 8 regular gyms are decided AFTER, from
+// whatever complete lists are left (natural first, in draw order, then
+// grown/rescued same as before) -- and the Champion is the leftover lines
+// never used in a gym/E4 team, drawn 3 at a time (highest stat total in each
+// trio, skipping a trio whose pick would be a type's 3rd appearance on the
+// team) until 6 members are seated. See conversation for the full spec;
+// final in-team ordering for each uses its own fixed ordering (gyms sort
+// ascending by level, ace last on a tie; E4/Champion use their own fixed
+// rank->position permutation, E4_ORDER/CHAMP_ORDER).
 function buildGymEliteFourChampion(gymDraft){
-  const { usedFinals, growthCompletionOrder } = growTypeLists(gymDraft);
-  const completeTypes = gymDraft.completionOrder.concat(growthCompletionOrder);
+  const usedFinals = new Set();
+  Object.values(gymDraft.lists).forEach(list=>list.forEach(n=>usedFinals.add(n)));
 
-  const withSums = completeTypes.map(type=>({
+  let e4CandidateTypes = gymDraft.completionOrder.slice();
+  if(e4CandidateTypes.length < 4){
+    const grown = growTypeListsUntil(gymDraft, usedFinals, new Set(e4CandidateTypes), 4 - e4CandidateTypes.length);
+    e4CandidateTypes = e4CandidateTypes.concat(grown);
+  }
+  const withSums = e4CandidateTypes.map(type=>({
     type,
     sum: gymDraft.lists[type].reduce((a,n)=>a+statTotalOf(n), 0),
   }));
@@ -3442,15 +3454,16 @@ function buildGymEliteFourChampion(gymDraft){
     members: buildEscalatingTeamMembers(gymDraft.lists[type], E4_ORDER, SLOT_SEQUENCE_5, E4_SLOT_LEVELS[i]),
   }));
 
-  const gymTypes = completeTypes.filter(t=>!e4TypeSet.has(t)).slice(0,8);
+  let gymCandidateTypes = gymDraft.completionOrder.filter(t=>!e4TypeSet.has(t));
+  if(gymCandidateTypes.length < 8){
+    const grown = growTypeListsUntil(gymDraft, usedFinals, new Set([...e4TypeSet, ...gymCandidateTypes]), 8 - gymCandidateTypes.length);
+    gymCandidateTypes = gymCandidateTypes.concat(grown);
+  }
+  const gymTypes = gymCandidateTypes.slice(0,8);
   const gyms = gymTypes.map(type=>({
     type,
     members: buildGymTeamMembers(gymDraft.lists[type]),
   }));
-
-  const shortfalls = [];
-  if(e4Types.length < 4) shortfalls.push('Could not make 4 full Elite Four teams, only '+e4Types.length+' used.');
-  if(gymTypes.length < 8) shortfalls.push('Could not make 8 full gym teams, only '+gymTypes.length+' used.');
 
   const leftover = gymDraft.log.filter(e => !usedFinals.has(e.chosenFinal));
   const champTypeCounts = {};
@@ -3467,7 +3480,7 @@ function buildGymEliteFourChampion(gymDraft){
   }
   const champion = { members: buildEscalatingTeamMembers(championPicks, CHAMP_ORDER, SLOT_SEQUENCE_6, CHAMPION_SLOT_LEVELS) };
 
-  return { eliteFour, gyms, champion, shortfalls };
+  return { eliteFour, gyms, champion };
 }
 
 // ---- Type tables (dungeons/routes: % breakdown of their own encounter
@@ -3569,11 +3582,10 @@ function populateRegionDex(region){
     if(n.kind==='town' || n.kind==='combo') n.typeTable = computeTownTypeTable(region, n.id);
   });
 
-  const { eliteFour, gyms, champion, shortfalls } = buildGymEliteFourChampion(gymDraft);
+  const { eliteFour, gyms, champion } = buildGymEliteFourChampion(gymDraft);
   region.eliteFourTeams = eliteFour.map(e=>({ label: e.type+' E4 Member', members: e.members }));
   region.championTeam = { label: 'Champion', members: champion.members };
   region.gymTeams = assignGymTowns(region, gyms);
-  region.dexWarnings = shortfalls;
   return region;
 }
 
@@ -3894,7 +3906,12 @@ function generateCustomRegionData(){
     const placement = findEliteFourPlacement(r);
     if(!placement) continue;
     attachEliteFour(r, placement);
-    return populateRegionDex(buildCustomRegionOutput(r));
+    const region = populateRegionDex(buildCustomRegionOutput(r));
+    // A full 4 Elite Four + 8 gym dex is now expected to succeed essentially
+    // always (see conversation); on the rare region where it still doesn't,
+    // just re-roll the whole thing from scratch rather than surfacing it.
+    if(region.eliteFourTeams.length < 4 || Object.keys(region.gymTeams).length < 8) continue;
+    return region;
   }
   // Practically unreachable given typical map sizes -- keep the UI functional
   // even if 500 attempts somehow never satisfy every constraint at once.
@@ -4059,14 +4076,8 @@ function selectCustomRegionE4Tab(idx){
 function renderCustomRegionMapScreen(){
   if(!customRegion) customRegion = generateCustomRegionData();
   const r = customRegion;
-  const warningsHtml = (r.dexWarnings && r.dexWarnings.length)
-    ? '<div style="background:var(--rust); color:var(--paper); padding:8px 12px; border-radius:6px; margin-bottom:8px; font-family:\'IBM Plex Mono\', monospace; font-size:12px;">' +
-        r.dexWarnings.map(w=>'&#9888; '+w).join('<br>') +
-      '</div>'
-    : '';
   return '<div class="card">' +
     '<div class="card-title">Custom Region <span style="font-weight:400; font-size:0.65em; color:var(--redwood);">(Still being built)</span></div>' +
-    warningsHtml +
     '<div class="card-sub">Randomly generated with the region generator -- '+r.totalTowns+' towns, '+r.totalDungeons+' dungeons, '+r.totalRoutes+' routes, '+r.locations.length+' wild encounter tables stocked ('+r.locations.reduce((a,t)=>a+t.table.length,0)+' Pokemon placed, including '+r.locations.reduce((a,t)=>a+(NATIONAL_DEX[t.table[10]]?0:1),0)+' Legendary/Mythical). Still no trainers yet.</div>' +
     '<div class="card-sub" style="margin-top:-4px;">Starter Options</div>' +
     '<div class="starter-grid">' + customRegionStarterCardsHtml(r.starters) + '</div>' +
