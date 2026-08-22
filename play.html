@@ -3550,6 +3550,77 @@ function optimalTypeAssignment(gymTypes, townTypeTables){
 // optimalTypeAssignment), and replacing the boolean flag with the leader's
 // display name so it matches the string convention DATA.gymLeaders uses in
 // real regions.
+// ---- Town/city name generator ----
+// Root words pulled from real mainline Pokemon town/city names (stripped of
+// their own Town/City/Island/etc. suffix), grouped by the type their real
+// gym leader (or overall flavor, for a few coastal/snowy/ancient ones) is
+// associated with. NEUTRAL has no strong type tie -- flavor names that
+// worked for any kind of town in the actual games.
+const TOWN_NAME_ROOTS = {
+  Fire: ['Cinnabar','Lavaridge','Motostoke','Dalizapa'],
+  Water: ['Cerulean','Sootopolis','Pastoria','Hulbury','Cascarrafa','Slateport'],
+  Grass: ['Celadon','Eterna','Turffield','Artazon','Coumarine'],
+  Electric: ['Vermilion','Mauville','Nimbasa','Sunyshore','Levincia'],
+  Ice: ['Mahogany','Snowpoint','Icirrus','Circhester','Snowbelle','Glaseado'],
+  Fighting: ['Cianwood','Dewford','Hearthome','Shalour','Stow-on-Side'],
+  Poison: ['Fuchsia','Po'],
+  Ground: ['Viridian','Driftveil','Zapapico'],
+  Flying: ['Violet','Fortree','Mistralton'],
+  Psychic: ['Saffron','Mossdeep','Anistar','Alfornada'],
+  Bug: ['Azalea','Castelia','Santalune','Cortondo'],
+  Rock: ['Pewter','Rustboro','Oreburgh','Cyllage','Geosenge'],
+  Ghost: ['Ecruteak','Montenevera'],
+  Dragon: ['Blackthorn','Opelucid','Hammerlocke'],
+  Dark: ['Spikemuth'],
+  Steel: ['Olivine','Canalave'],
+  Fairy: ['Laverre','Ballonlea'],
+  Normal: ['Goldenrod','Nacrene','Veilstone','Medali','Striaton'],
+};
+const TOWN_NAME_NEUTRAL = ['Pallet','Lavender','New Bark','Cherrygrove','Littleroot','Oldale',
+  'Petalburg','Verdanturf','Fallarbor','Lilycove','Pacifidlog','Twinleaf','Sandgem','Floaroma',
+  'Solaceon','Celestic','Nuvema','Accumula','Vaniville','Camphrier','Ambrette','Couriway',
+  'Postwick','Wedgehurst','Wyndon','Cabo Poco','Los Platos','Mesagoza','Paniola','Konikoni',
+  'Heahea','Malie','Iki','Tapu','Ever Grande','Jubilife','Indigo'];
+// Picks a real-name root themed to the town's own type table (highest
+// percentage first, falling through lower ones, then the neutral pool, then
+// -- last resort -- any type pool at all) and pairs it with City or Town
+// depending on whether this town has a gym. Tracks used ROOTS (not full
+// strings) in `usedRoots` so e.g. "Cerulean City" and "Cerulean Town" never
+// both show up in the same region.
+function generateTownName(typeTable, hasGym, usedRoots){
+  const suffix = hasGym ? 'City' : 'Town';
+  const sortedTypes = Object.entries(typeTable||{}).sort((a,b)=>b[1]-a[1]).map(([t])=>t);
+  const pools = sortedTypes.map(t=>TOWN_NAME_ROOTS[t]).filter(Boolean);
+  pools.push(TOWN_NAME_NEUTRAL);
+  pools.push(...Object.values(TOWN_NAME_ROOTS));
+
+  for(const pool of pools){
+    const shuffled = pool.slice();
+    for(let i=shuffled.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [shuffled[i],shuffled[j]] = [shuffled[j],shuffled[i]];
+    }
+    for(const root of shuffled){
+      if(!usedRoots.has(root)){
+        usedRoots.add(root);
+        return root + ' ' + suffix;
+      }
+    }
+  }
+  // Practically unreachable -- ~90 real-name roots vs. a region's max of 16
+  // towns -- but keeps names unique even if every root is somehow spent.
+  let n = 2;
+  while(usedRoots.has('Region'+n)) n++;
+  usedRoots.add('Region'+n);
+  return 'Region ' + n + ' ' + suffix;
+}
+function nameAllTowns(region){
+  const usedRoots = new Set();
+  region.mapNodes
+    .filter(n=>n.kind==='town' || n.kind==='combo')
+    .forEach(n=>{ n.name = generateTownName(n.typeTable, !!n.gymLeader, usedRoots); });
+}
+
 function assignGymTowns(region, gyms){
   const gymNodes = region.mapNodes.filter(n=>(n.kind==='town'||n.kind==='combo') && n.gymLeader && !n.eliteFour);
   const n = Math.min(gymNodes.length, gyms.length);
@@ -3586,6 +3657,7 @@ function populateRegionDex(region){
   region.eliteFourTeams = eliteFour.map(e=>({ label: e.type+' E4 Member', members: e.members }));
   region.championTeam = { label: 'Champion', members: champion.members };
   region.gymTeams = assignGymTowns(region, gyms);
+  nameAllTowns(region);
   return region;
 }
 
@@ -4041,7 +4113,7 @@ function customRegionSidebarHtml(region){
   if(!n) return '<div class="map-info-empty">Click a node to see what\'s there.</div>';
 
   if(n.kind === 'combo'){
-    return '<div class="map-info-name">' + n.townId + ' / ' + n.dungeonId + '</div>' +
+    return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + n.townId + ' / ' + n.dungeonId + ')</span></div>' +
       '<div class="map-info-kind">Town + Dungeon (same spot)</div>' +
       '<div class="map-info-desc">' + (n.gymLeader ? ('Home of the ' + n.gymLeader + '.') : 'No gym here.') + ' Dungeon shares this tile.</div>' +
       (n.gymLeader ? customRegionGymTeamHtml(region, n.gymLeader) : '') +
@@ -4049,11 +4121,11 @@ function customRegionSidebarHtml(region){
   }
   if(n.kind === 'town'){
     if(n.eliteFour){
-      return '<div class="map-info-name">' + n.id + '</div>' +
+      return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + n.id + ')</span></div>' +
         '<div class="map-info-kind">Town / City (Elite Four)</div>' +
         customRegionEliteFourHtml(region);
     }
-    return '<div class="map-info-name">' + n.id + '</div>' +
+    return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + n.id + ')</span></div>' +
       '<div class="map-info-kind">Town / City' + (n.central?' (Central City)':'') + '</div>' +
       '<div class="map-info-desc">' + (n.gymLeader ? ('Home of the ' + n.gymLeader + '.') : 'No gym here.') + ' No wild encounters in towns.</div>' +
       (n.gymLeader ? customRegionGymTeamHtml(region, n.gymLeader) : '');
