@@ -3124,7 +3124,7 @@ function buildRegionTables(region){
 // (tiebroken by score) takes as much of the family as fits, Basic form
 // first -- this guarantees every table eventually fills to exactly 11/11
 // even once the remaining families are all "too big" for what's left.
-function populateRegionTables(tables){
+function populateRegionTables(tables, gymDraft){
   const families = EVOLUTION_FAMILIES.slice();
   for(let i=families.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
@@ -3153,6 +3153,51 @@ function populateRegionTables(tables){
       const target = scored[0].t;
       placeFormsInTable(target, family.slice(0, target.capacity-target.members.length), finalEvoTotal);
     }
+
+    if(gymDraft) draftGymCandidate(family, gymDraft);
+  }
+}
+
+/* ============ Gym / Elite Four / Champion drafting ============
+   Runs alongside populateRegionTables() (same loop, same draw order) so it
+   naturally stops once every table is full, same as the wild-encounter side.
+   See conversation: for every family drawn, pick a random final evolution
+   (if the family branches at the top) and a random type that runs through
+   every single form in the line -- or, when no type is common to every form
+   (e.g. Eevee's branches), a random type off the chosen final evolution
+   instead. That {chosenFinal, type} pair is logged in draw order (used later
+   for gym-list backfilling and the Champion's leftover pool) and, if that
+   type's list has fewer than 5 members so far, added to it. */
+function statTotalOf(name){
+  return NATIONAL_DEX[name].slice(2).reduce((a,b)=>a+b, 0);
+}
+function draftGymCandidate(family, gymDraft){
+  const maxStage = Math.max(...family.map(([,s])=>s));
+  const finals = family.filter(([,s])=>s===maxStage).map(([n])=>n);
+  const chosenFinal = finals[Math.floor(Math.random()*finals.length)];
+
+  let common = null;
+  family.forEach(([name])=>{
+    const row = NATIONAL_DEX[name];
+    const types = new Set([row[0], row[1]].filter(Boolean));
+    common = common === null ? types : new Set([...common].filter(t=>types.has(t)));
+  });
+  let type;
+  if(common && common.size){
+    const arr = [...common];
+    type = arr[Math.floor(Math.random()*arr.length)];
+  } else {
+    const frow = NATIONAL_DEX[chosenFinal];
+    const farr = [frow[0], frow[1]].filter(Boolean);
+    type = farr[Math.floor(Math.random()*farr.length)];
+  }
+
+  gymDraft.log.push({ chosenFinal, type });
+  const list = gymDraft.lists[type];
+  if(list.length === 0) gymDraft.firstAdded[type] = gymDraft.log.length - 1;
+  if(list.length < 5){
+    list.push(chosenFinal);
+    if(list.length === 5) gymDraft.completionOrder.push(type);
   }
 }
 
@@ -3233,12 +3278,138 @@ function placeLegendariesInDungeons(tables){
   });
 }
 
+// Ranks `names` by adjusted stat total + rand()*randMax, highest first
+// (index 0 = rank 1). Returns just the reordered names.
+function rankByStatPlusRand(names, randMax){
+  return names
+    .map(n=>({ n, score: statTotalOf(n) + Math.random()*randMax }))
+    .sort((a,b)=>b.score-a.score)
+    .map(r=>r.n);
+}
+// orderMap[finalPosition] = index into the rank-1..N array (0-indexed) that
+// lands at that final position -- e.g. GYM_ORDER[4]===0 means rank 1 (the
+// highest) ends up at final position 5 (index 4), the "ace", last in the team.
+const GYM_ORDER = [2,3,1,4,0];
+const E4_ORDER = [2,4,1,3,0];
+const CHAMP_ORDER = [5,2,4,1,3,0];
+function orderTeam(names, orderMap, randMax){
+  const ranked = rankByStatPlusRand(names, randMax);
+  // Filters out slots the fixed permutation expects but `names` came up short
+  // of (e.g. a very small region's Champion pool running dry before 6 picks)
+  // rather than leaving gaps -- the team's just smaller, still gap-free.
+  return orderMap.map(idx=>ranked[idx]).filter(Boolean);
+}
+
+// Elite Four (top 4 complete gym lists by total team stat, weakest-to-
+// strongest into slots 1-4), the 8 regular gym teams (next complete lists in
+// draw order, backfilled from 4- or 3-member lists if short), and the
+// Champion (leftover lines never used in a gym/E4 team, drawn 3 at a time --
+// highest stat total in each trio, skipping a trio whose pick would be a
+// type's 3rd appearance on the team -- until 6 members are seated). See
+// conversation for the full spec; final in-team ordering for each uses its
+// own fixed rank->position permutation (GYM_ORDER/E4_ORDER/CHAMP_ORDER).
+function buildGymEliteFourChampion(gymDraft){
+  const completeTypes = gymDraft.completionOrder.slice();
+
+  const withSums = completeTypes.map(type=>({
+    type,
+    sum: gymDraft.lists[type].reduce((a,n)=>a+statTotalOf(n), 0),
+  }));
+  withSums.sort((a,b)=>b.sum-a.sum);
+  const e4Types = withSums.slice(0,4).map(w=>w.type).reverse();
+  const e4TypeSet = new Set(e4Types);
+  const eliteFour = e4Types.map(type=>({
+    type,
+    members: orderTeam(gymDraft.lists[type], E4_ORDER, 5),
+  }));
+
+  let gymTypes = completeTypes.filter(t=>!e4TypeSet.has(t)).slice(0,8);
+
+  const usedFinals = new Set();
+  e4Types.forEach(t=>gymDraft.lists[t].forEach(n=>usedFinals.add(n)));
+  gymTypes.forEach(t=>gymDraft.lists[t].forEach(n=>usedFinals.add(n)));
+
+  function backfill(size){
+    const candidates = Object.keys(gymDraft.lists)
+      .filter(t => gymDraft.lists[t].length === size && !completeTypes.includes(t) && !gymTypes.includes(t))
+      .sort((a,b)=> gymDraft.firstAdded[a]-gymDraft.firstAdded[b]);
+    for(const type of candidates){
+      if(gymTypes.length >= 8) break;
+      const list = gymDraft.lists[type];
+      // This list's own pre-existing members were never marked used (they were
+      // never part of a complete list before now) -- mark them first so the
+      // search below can't re-pick one of them as its own "new" 5th member.
+      list.forEach(n=>usedFinals.add(n));
+      let complete = true;
+      while(list.length < 5){
+        const match = gymDraft.log.find(e => e.type===type && !usedFinals.has(e.chosenFinal));
+        if(!match){ complete = false; break; }
+        list.push(match.chosenFinal);
+        usedFinals.add(match.chosenFinal);
+      }
+      if(complete) gymTypes.push(type);
+    }
+  }
+  if(gymTypes.length < 8) backfill(4);
+  if(gymTypes.length < 8) backfill(3);
+
+  const gyms = gymTypes.map(type=>({
+    type,
+    members: orderTeam(gymDraft.lists[type], GYM_ORDER, 5),
+  }));
+
+  const leftover = gymDraft.log.filter(e => !usedFinals.has(e.chosenFinal));
+  const champTypeCounts = {};
+  const championPicks = [];
+  let i = 0;
+  while(championPicks.length < 6 && i + 3 <= leftover.length){
+    const group = leftover.slice(i, i+3);
+    i += 3;
+    group.sort((a,b)=> statTotalOf(b.chosenFinal)-statTotalOf(a.chosenFinal));
+    const best = group[0];
+    if((champTypeCounts[best.type]||0) >= 2) continue;
+    championPicks.push(best.chosenFinal);
+    champTypeCounts[best.type] = (champTypeCounts[best.type]||0) + 1;
+  }
+  const champion = { members: orderTeam(championPicks, CHAMP_ORDER, 5) };
+
+  return { eliteFour, gyms, champion };
+}
+
+// Randomly hands each of the 8 regular gym teams to one of the map
+// generator's own pre-flagged gym towns (gymLeader:true on up to 8 town/
+// combo nodes), replacing that boolean flag with the leader's display name
+// so it matches the string convention DATA.gymLeaders uses in real regions.
+function assignGymTowns(region, gyms){
+  const gymNodes = region.mapNodes.filter(n=>(n.kind==='town'||n.kind==='combo') && n.gymLeader && !n.eliteFour);
+  for(let i=gymNodes.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [gymNodes[i], gymNodes[j]] = [gymNodes[j], gymNodes[i]];
+  }
+  const teams = {};
+  gymNodes.forEach((node, i)=>{
+    const gym = gyms[i];
+    if(!gym){ node.gymLeader = null; return; }
+    const label = gym.type + ' Leader';
+    node.gymLeader = label;
+    teams[label] = gym;
+  });
+  return teams;
+}
+
 function populateRegionDex(region){
   const tables = buildRegionTables(region);
   placeLegendariesInDungeons(tables);
-  populateRegionTables(tables);
+  const gymDraft = { log: [], lists: {}, firstAdded: {}, completionOrder: [] };
+  Object.keys(TYPE_WHEEL).forEach(t=>{ gymDraft.lists[t] = []; });
+  populateRegionTables(tables, gymDraft);
   tables.forEach(sortAndFillTable);
   region.locations = tables.map(t=>({ id:t.id, kind:t.kind, table:t.table }));
+
+  const { eliteFour, gyms, champion } = buildGymEliteFourChampion(gymDraft);
+  region.eliteFourTeams = eliteFour.map(e=>({ label: e.type+' E4 Member', members: e.members }));
+  region.championTeam = { label: 'Champion', members: champion.members };
+  region.gymTeams = assignGymTowns(region, gyms);
   return region;
 }
 
@@ -3655,6 +3826,35 @@ function buildCustomRegionEncounterHtml(region, tableId){
   return '<div class="map-encounter-title">Encounter table (2d6 sum)</div>' +
     '<div class="map-encounter-list">' + rows + '</div>';
 }
+function customRegionMonCardHtml(name){
+  const row = NATIONAL_DEX[name];
+  return '<div class="mon-detail-card">' +
+    '<div class="mon-detail-name">' + name + '</div>' +
+    trainerTypeBlockHtml(row[0], row[1], row[0]) +
+    statRowHtml(row.slice(2)) +
+  '</div>';
+}
+function customRegionGymTeamHtml(region, leaderName){
+  const gym = region.gymTeams[leaderName];
+  if(!gym) return '';
+  return '<div class="map-encounter-title">Gym Team</div>' +
+    gym.members.map(customRegionMonCardHtml).join('');
+}
+// Elite Four + Champion, tabbed exactly like the real regions' ELI preview
+// (eliteFourTeamPreviewHtml) -- one tab per E4 member plus a final Champion tab.
+function customRegionEliteFourHtml(region){
+  const members = region.eliteFourTeams.concat([region.championTeam]);
+  if(customRegionE4TabIdx >= members.length) customRegionE4TabIdx = 0;
+  const tabsHtml = members.map((m, i)=>
+    '<button type="button" class="tab-btn' + (i===customRegionE4TabIdx?' active':'') + '" data-action="selectCustomRegionE4Tab" data-idx="' + i + '">' +
+      m.label +
+    '</button>'
+  ).join('');
+  const team = members[customRegionE4TabIdx];
+  return '<div class="map-encounter-title">Elite Four &amp; Champion Rosters</div>' +
+    '<div class="tab-row-scroll">' + tabsHtml + '</div>' +
+    team.members.map(customRegionMonCardHtml).join('');
+}
 function customRegionSidebarHtml(region){
   const n = customRegionSelectedNodeId ? region.mapNodes.find(x=>x.id===customRegionSelectedNodeId) : null;
   if(!n) return '<div class="map-info-empty">Click a node to see what\'s there.</div>';
@@ -3662,13 +3862,20 @@ function customRegionSidebarHtml(region){
   if(n.kind === 'combo'){
     return '<div class="map-info-name">' + n.townId + ' / ' + n.dungeonId + '</div>' +
       '<div class="map-info-kind">Town + Dungeon (same spot)</div>' +
-      '<div class="map-info-desc">' + (n.gymLeader ? 'Gym town.' : 'No gym here.') + ' Dungeon shares this tile.</div>' +
+      '<div class="map-info-desc">' + (n.gymLeader ? ('Home of the ' + n.gymLeader + '.') : 'No gym here.') + ' Dungeon shares this tile.</div>' +
+      (n.gymLeader ? customRegionGymTeamHtml(region, n.gymLeader) : '') +
       buildCustomRegionEncounterHtml(region, n.dungeonId);
   }
   if(n.kind === 'town'){
+    if(n.eliteFour){
+      return '<div class="map-info-name">' + n.id + '</div>' +
+        '<div class="map-info-kind">Town / City (Elite Four)</div>' +
+        customRegionEliteFourHtml(region);
+    }
     return '<div class="map-info-name">' + n.id + '</div>' +
-      '<div class="map-info-kind">Town / City' + (n.central?' (Central City)':'') + (n.eliteFour?' (Elite Four)':'') + '</div>' +
-      '<div class="map-info-desc">' + (n.gymLeader ? 'Gym town.' : 'No gym here.') + ' No wild encounters in towns.</div>';
+      '<div class="map-info-kind">Town / City' + (n.central?' (Central City)':'') + '</div>' +
+      '<div class="map-info-desc">' + (n.gymLeader ? ('Home of the ' + n.gymLeader + '.') : 'No gym here.') + ' No wild encounters in towns.</div>' +
+      (n.gymLeader ? customRegionGymTeamHtml(region, n.gymLeader) : '');
   }
   const tableId = customRegionTableIdForNode(n);
   return '<div class="map-info-name">' + tableId + '</div>' +
@@ -3678,6 +3885,11 @@ function customRegionSidebarHtml(region){
 }
 function selectCustomRegionNode(nodeId){
   customRegionSelectedNodeId = nodeId;
+  customRegionE4TabIdx = 0;
+  render();
+}
+function selectCustomRegionE4Tab(idx){
+  customRegionE4TabIdx = idx;
   render();
 }
 function renderCustomRegionMapScreen(){
@@ -3707,6 +3919,7 @@ function renderCustomRegionMapScreen(){
 function generateCustomRegion(){
   customRegion = generateCustomRegionData();
   customRegionSelectedNodeId = null;
+  customRegionE4TabIdx = 0;
   view = 'customRegionMap';
   render();
 }
@@ -4011,6 +4224,7 @@ let pendingTmOffer = false; // true when the current message screen is a gym win
 let tmFlow = null; // { monId } while picking a new attack type for a TM
 let customRegion = null; // generated { mapNodes, mapEdges, ... } for the Custom Region map preview
 let customRegionSelectedNodeId = null; // which map node's sidebar detail is showing on that preview
+let customRegionE4TabIdx = 0; // which E4/Champion member's roster is showing in the ELI town's tabbed preview
 let startPick = { region:null, starter:null, town:null };
 let myPokemonSort = 'obtained'; // 'obtained' | 'stat' | 'level' -- sort order of the roster list
 let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
@@ -5194,6 +5408,7 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'generateCustomRegion') generateCustomRegion();
   else if(action === 'backToRegionPick') backToRegionPick();
   else if(action === 'selectCustomRegionNode') selectCustomRegionNode(btn.dataset.node);
+  else if(action === 'selectCustomRegionE4Tab') selectCustomRegionE4Tab(parseInt(btn.dataset.idx, 10));
   else if(action === 'resumeEliteFour') resumeEliteFour();
   else if(action === 'leaveEliteFourTown') leaveEliteFourTown();
   else if(action === 'continueEliteFour') continueEliteFour();
