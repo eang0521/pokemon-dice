@@ -3482,20 +3482,85 @@ function buildGymEliteFourChampion(gymDraft){
   return { eliteFour, gyms, champion };
 }
 
-// Randomly hands each of the 8 regular gym teams to one of the map
-// generator's own pre-flagged gym towns (gymLeader:true on up to 8 town/
-// combo nodes), replacing that boolean flag with the leader's display name
-// so it matches the string convention DATA.gymLeaders uses in real regions.
+// ---- Type tables (dungeons/routes: % breakdown of their own encounter
+// table; towns: % breakdown pooled across every route directly connected to
+// them). Every location/town gets one -- only the 8 gym towns' tables are
+// actually used yet (for the gym assignment below); the rest are stored on
+// region.locations[].typeTable / region.mapNodes[].typeTable for later. ----
+function typesOf(species){
+  const row = NATIONAL_DEX[species] || LEGENDARY_DEX[species];
+  return row ? [row[0], row[1]] : [null, null];
+}
+function typeTableForSpeciesList(names){
+  const counts = {};
+  let total = 0;
+  names.forEach(sp=>{
+    typesOf(sp).forEach(t=>{ if(t){ counts[t] = (counts[t]||0) + 1; total++; } });
+  });
+  if(!total) return {};
+  const pct = {};
+  for(const t in counts) pct[t] = (counts[t] / total) * 100;
+  return pct;
+}
+function computeTownTypeTable(region, nodeId){
+  const routeIds = new Set();
+  region.mapEdges.forEach(([a,b])=>{
+    const otherId = a===nodeId ? b : (b===nodeId ? a : null);
+    if(otherId == null) return;
+    const otherNode = region.mapNodes.find(n=>n.id===otherId);
+    if(otherNode && otherNode.kind==='route') routeIds.add(customRegionTableIdForNode(otherNode));
+  });
+  const species = [];
+  routeIds.forEach(rid=>{
+    const loc = region.locations.find(l=>l.id===rid);
+    if(loc) species.push(...loc.table);
+  });
+  return typeTableForSpeciesList(species);
+}
+// Exhaustive search (n<=8, so at most 8! branches, pruned) for the gym-type
+// -> gym-town assignment that maximizes the total sum of "this gym's type's
+// percentage in that town's own type table" -- a true optimum, not a greedy
+// approximation, since 8! is trivial to fully explore.
+function optimalTypeAssignment(gymTypes, townTypeTables){
+  const n = gymTypes.length;
+  const used = new Array(n).fill(false);
+  const cur = new Array(n);
+  let best = null, bestScore = -Infinity;
+  function dfs(i, score){
+    if(score + (n-i)*100 <= bestScore) return;
+    if(i === n){
+      if(score > bestScore){ bestScore = score; best = cur.slice(); }
+      return;
+    }
+    for(let t=0;t<n;t++){
+      if(used[t]) continue;
+      used[t] = true;
+      cur[i] = t;
+      dfs(i+1, score + ((townTypeTables[t] && townTypeTables[t][gymTypes[i]]) || 0));
+      used[t] = false;
+    }
+  }
+  dfs(0, 0);
+  return best; // best[gymIdx] = town index
+}
+// Hands each of the 8 regular gym teams to one of the map generator's own
+// pre-flagged gym towns (gymLeader:true on up to 8 town/combo nodes),
+// choosing the pairing that maximizes total type match (see
+// optimalTypeAssignment), and replacing the boolean flag with the leader's
+// display name so it matches the string convention DATA.gymLeaders uses in
+// real regions.
 function assignGymTowns(region, gyms){
   const gymNodes = region.mapNodes.filter(n=>(n.kind==='town'||n.kind==='combo') && n.gymLeader && !n.eliteFour);
-  for(let i=gymNodes.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [gymNodes[i], gymNodes[j]] = [gymNodes[j], gymNodes[i]];
-  }
+  const n = Math.min(gymNodes.length, gyms.length);
+  const usableGyms = gyms.slice(0, n);
+  const usableNodes = gymNodes.slice(0, n);
+  const assignment = optimalTypeAssignment(usableGyms.map(g=>g.type), usableNodes.map(node=>node.typeTable));
+
   const teams = {};
-  gymNodes.forEach((node, i)=>{
-    const gym = gyms[i];
-    if(!gym){ node.gymLeader = null; return; }
+  gymNodes.forEach(node=>{ node.gymLeader = null; });
+  assignment.forEach((townIdx, gymIdx)=>{
+    const gym = usableGyms[gymIdx];
+    const node = usableNodes[townIdx];
     const label = gym.type + ' Leader';
     node.gymLeader = label;
     teams[label] = gym;
@@ -3511,6 +3576,10 @@ function populateRegionDex(region){
   populateRegionTables(tables, gymDraft);
   tables.forEach(sortAndFillTable);
   region.locations = tables.map(t=>({ id:t.id, kind:t.kind, table:t.table }));
+  region.locations.forEach(loc=>{ loc.typeTable = typeTableForSpeciesList(loc.table); });
+  region.mapNodes.forEach(n=>{
+    if(n.kind==='town' || n.kind==='combo') n.typeTable = computeTownTypeTable(region, n.id);
+  });
 
   const { eliteFour, gyms, champion } = buildGymEliteFourChampion(gymDraft);
   region.eliteFourTeams = eliteFour.map(e=>({ label: e.type+' E4 Member', members: e.members }));
