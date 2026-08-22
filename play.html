@@ -3551,74 +3551,188 @@ function optimalTypeAssignment(gymTypes, townTypeTables){
 // display name so it matches the string convention DATA.gymLeaders uses in
 // real regions.
 // ---- Town/city name generator ----
-// Root words pulled from real mainline Pokemon town/city names (stripped of
-// their own Town/City/Island/etc. suffix), grouped by the type their real
-// gym leader (or overall flavor, for a few coastal/snowy/ancient ones) is
-// associated with. NEUTRAL has no strong type tie -- flavor names that
-// worked for any kind of town in the actual games.
-const TOWN_NAME_ROOTS = {
-  Fire: ['Cinnabar','Lavaridge','Motostoke','Dalizapa'],
-  Water: ['Cerulean','Sootopolis','Pastoria','Hulbury','Cascarrafa','Slateport'],
-  Grass: ['Celadon','Eterna','Turffield','Artazon','Coumarine'],
-  Electric: ['Vermilion','Mauville','Nimbasa','Sunyshore','Levincia'],
-  Ice: ['Mahogany','Snowpoint','Icirrus','Circhester','Snowbelle','Glaseado'],
-  Fighting: ['Cianwood','Dewford','Hearthome','Shalour','Stow-on-Side'],
+// Two ways a name gets built, chosen randomly each time: a WHOLE real name
+// used as-is (e.g. "Cerulean"), or a COMBINATION assembled from a real
+// name's own two halves (e.g. Littleroot -> "Little" + "root", freely
+// recombined with other names' halves -- "Little"+"gem", "Sand"+"root",
+// etc. -- for far more possibilities than the fixed whole-name list alone).
+// Both are grouped by the type their real gym leader (or overall flavor) is
+// associated with; NEUTRAL has no strong type tie.
+const TOWN_NAME_WHOLE = {
+  Fire: ['Cinnabar','Dalizapa'],
+  Water: ['Cerulean','Sootopolis','Pastoria','Cascarrafa'],
+  Grass: ['Celadon','Eterna','Artazon','Coumarine'],
+  Electric: ['Vermilion','Nimbasa','Levincia'],
+  Ice: ['Mahogany','Icirrus','Circhester','Glaseado'],
+  Fighting: ['Cianwood','Dewford','Shalour','Stow-on-Side'],
   Poison: ['Fuchsia','Po'],
-  Ground: ['Viridian','Driftveil','Zapapico'],
-  Flying: ['Violet','Fortree','Mistralton'],
-  Psychic: ['Saffron','Mossdeep','Anistar','Alfornada'],
+  Ground: ['Viridian','Zapapico'],
+  Flying: ['Violet'],
+  Psychic: ['Saffron','Anistar','Alfornada'],
   Bug: ['Azalea','Castelia','Santalune','Cortondo'],
-  Rock: ['Pewter','Rustboro','Oreburgh','Cyllage','Geosenge'],
+  Rock: ['Pewter','Oreburgh','Cyllage','Geosenge'],
   Ghost: ['Ecruteak','Montenevera'],
-  Dragon: ['Blackthorn','Opelucid','Hammerlocke'],
+  Dragon: ['Opelucid'],
   Dark: ['Spikemuth'],
-  Steel: ['Olivine','Canalave'],
-  Fairy: ['Laverre','Ballonlea'],
-  Normal: ['Goldenrod','Nacrene','Veilstone','Medali','Striaton'],
+  Steel: ['Olivine'],
+  Fairy: ['Laverre'],
+  Normal: ['Nacrene','Medali','Striaton'],
 };
-const TOWN_NAME_NEUTRAL = ['Pallet','Lavender','New Bark','Cherrygrove','Littleroot','Oldale',
-  'Petalburg','Verdanturf','Fallarbor','Lilycove','Pacifidlog','Twinleaf','Sandgem','Floaroma',
-  'Solaceon','Celestic','Nuvema','Accumula','Vaniville','Camphrier','Ambrette','Couriway',
-  'Postwick','Wedgehurst','Wyndon','Cabo Poco','Los Platos','Mesagoza','Paniola','Konikoni',
-  'Heahea','Malie','Iki','Tapu','Ever Grande','Jubilife','Indigo'];
-// Picks a real-name root themed to the town's own type table (highest
-// percentage first, falling through lower ones, then the neutral pool, then
-// -- last resort -- any type pool at all) and pairs it with City or Town
-// depending on whether this town has a gym. Tracks used ROOTS (not full
-// strings) in `usedRoots` so e.g. "Cerulean City" and "Cerulean Town" never
-// both show up in the same region.
-function generateTownName(typeTable, hasGym, usedRoots){
-  const suffix = hasGym ? 'City' : 'Town';
-  const sortedTypes = Object.entries(typeTable||{}).sort((a,b)=>b[1]-a[1]).map(([t])=>t);
-  const pools = sortedTypes.map(t=>TOWN_NAME_ROOTS[t]).filter(Boolean);
-  pools.push(TOWN_NAME_NEUTRAL);
-  pools.push(...Object.values(TOWN_NAME_ROOTS));
-
-  for(const pool of pools){
-    const shuffled = pool.slice();
-    for(let i=shuffled.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [shuffled[i],shuffled[j]] = [shuffled[j],shuffled[i]];
+const TOWN_NAME_WHOLE_NEUTRAL = ['Pallet','Lavender','Celestic','Nuvema','Accumula','Couriway',
+  'Cabo Poco','Los Platos','Mesagoza','Paniola','Konikoni','Heahea','Malie','Iki','Tapu',
+  'Ever Grande','Jubilife','Indigo'];
+const TOWN_NAME_PREFIX = {
+  Rock: ['Rust'],
+  Ground: ['Drift'],
+  Ice: ['Snow'],
+  Electric: ['Suny'],
+  Fighting: ['Hearth'],
+  Normal: ['Veil','Golden'],
+  Dragon: ['Black'],
+  Flying: ['For','Mistral'],
+  Psychic: ['Moss'],
+  Steel: ['Canal'],
+  Fire: ['Moto'],
+  Grass: ['Turf','Verdant'],
+  Water: ['Hul','Aqua','Slate'],
+};
+const TOWN_NAME_PREFIX_NEUTRAL = ['Little','Sand','Twin','Fall','Cherry','Old','Lily','Wedge',
+  'Post','Wyn','Vani','Camph','New','Star','Bright','Silver'];
+const TOWN_NAME_SUFFIX = {
+  Rock: ['boro'],
+  Ground: ['veil'],
+  Ice: ['point','belle'],
+  Electric: ['shore'],
+  Fighting: ['home'],
+  Normal: ['rod','stone'],
+  Dragon: ['thorn'],
+  Flying: ['tree','ton'],
+  Psychic: ['deep'],
+  Steel: ['ave','ine'],
+  Fire: ['stoke'],
+  Grass: ['field','burg'],
+  Water: ['bury','port','cove'],
+};
+const TOWN_NAME_SUFFIX_NEUTRAL = ['root','gem','leaf','arbor','grove','dale','hurst','wick',
+  'don','ville','haven','crest','ridge','glen','ford'];
+// Weighted random type pick from a type table, weight = percentage SQUARED
+// -- disproportionately favors whichever type(s) already dominate the
+// table over a flatter, more-evenly-spread one.
+function pickWeightedType(typeTable){
+  const entries = Object.entries(typeTable||{});
+  if(!entries.length) return null;
+  const weights = entries.map(([t,pct])=>[t, pct*pct]);
+  const total = weights.reduce((a,[,w])=>a+w, 0);
+  if(total <= 0) return null;
+  let r = Math.random()*total;
+  for(const [t,w] of weights){
+    r -= w;
+    if(r <= 0) return t;
+  }
+  return weights[weights.length-1][0];
+}
+function shuffled(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+// Tries every whole name and every prefix*suffix combination for one type
+// (both pools shuffled, whole-vs-combination order itself randomized) and
+// returns the first not already used.
+function tryNameForType(type, usedNames){
+  const wholes = type ? (TOWN_NAME_WHOLE[type]||[]) : TOWN_NAME_WHOLE_NEUTRAL;
+  const prefixes = shuffled((type ? (TOWN_NAME_PREFIX[type]||[]) : []).concat(TOWN_NAME_PREFIX_NEUTRAL));
+  const suffixes = shuffled((type ? (TOWN_NAME_SUFFIX[type]||[]) : []).concat(TOWN_NAME_SUFFIX_NEUTRAL));
+  const tryWhole = () => shuffled(wholes).find(w=>!usedNames.has(w));
+  const tryCombo = () => {
+    for(const p of prefixes) for(const s of suffixes){
+      const combo = p + s;
+      if(!usedNames.has(combo)) return combo;
     }
-    for(const root of shuffled){
-      if(!usedRoots.has(root)){
-        usedRoots.add(root);
-        return root + ' ' + suffix;
-      }
+    return null;
+  };
+  const attempts = Math.random() < 0.5 ? [tryWhole, tryCombo] : [tryCombo, tryWhole];
+  for(const attempt of attempts){
+    const found = attempt();
+    if(found) return found;
+  }
+  return null;
+}
+// Picks a name themed to the town's own type table (weighted by percentage
+// squared, retrying a different type if the first choice's whole+combination
+// pool is already exhausted this region) as either a real whole name or a
+// combination assembled from two real names' own halves, then a probabilistic
+// City/Town suffix -- gym towns lean City, non-gym towns lean Town, but
+// neither is guaranteed. Tracks used base names (pre-suffix) in `usedNames`.
+function generateTownName(typeTable, hasGym, usedNames){
+  const cityChance = hasGym ? 0.75 : 0.25;
+  const suffix = Math.random() < cityChance ? 'City' : 'Town';
+
+  const remainingTypes = new Set(Object.keys(typeTable||{}));
+  let base = null;
+  while(remainingTypes.size && !base){
+    const filtered = {};
+    remainingTypes.forEach(t=>{ filtered[t] = typeTable[t]; });
+    const type = pickWeightedType(filtered);
+    if(!type) break;
+    remainingTypes.delete(type);
+    base = tryNameForType(type, usedNames);
+  }
+  if(!base) base = tryNameForType(null, usedNames); // neutral pool
+  if(!base){
+    // Last resort -- every typed AND neutral pool exhausted (hundreds of
+    // combinations vs. a region's max of 16 towns, so practically
+    // unreachable) -- sweep every type's pool regardless of this town's own.
+    for(const t of Object.keys(TOWN_NAME_WHOLE)){
+      base = tryNameForType(t, usedNames);
+      if(base) break;
     }
   }
-  // Practically unreachable -- ~90 real-name roots vs. a region's max of 16
-  // towns -- but keeps names unique even if every root is somehow spent.
-  let n = 2;
-  while(usedRoots.has('Region'+n)) n++;
-  usedRoots.add('Region'+n);
-  return 'Region ' + n + ' ' + suffix;
+  if(!base){
+    let n = 2;
+    while(usedNames.has('Region'+n)) n++;
+    base = 'Region'+n;
+  }
+  usedNames.add(base);
+  return base + ' ' + suffix;
 }
 function nameAllTowns(region){
-  const usedRoots = new Set();
+  const usedNames = new Set();
   region.mapNodes
     .filter(n=>n.kind==='town' || n.kind==='combo')
-    .forEach(n=>{ n.name = generateTownName(n.typeTable, !!n.gymLeader, usedRoots); });
+    .forEach(n=>{ n.name = generateTownName(n.typeTable, !!n.gymLeader, usedNames); });
+}
+// Map-tile short label: first 3 letters of the generated name. On a
+// collision, first tries other 3-letter windows within the same name, then
+// falls back to a 2-letter-plus-digit variant -- "adjust one or both" per
+// the request, implemented here as adjusting whichever one is processed
+// second (map-node order), which is enough to guarantee uniqueness.
+function assignMapLabels(region){
+  const used = new Set();
+  region.mapNodes
+    .filter(n=>n.kind==='town' || n.kind==='combo')
+    .forEach(n=>{
+      const clean = n.name.replace(/[^A-Za-z]/g, '').toUpperCase();
+      let label = clean.slice(0,3);
+      if(used.has(label)){
+        let alt = null;
+        for(let start=1; start+3<=clean.length && !alt; start++){
+          const cand = clean.slice(start, start+3);
+          if(!used.has(cand)) alt = cand;
+        }
+        if(!alt){
+          let i = 2;
+          while(used.has(clean.slice(0,2)+i)) i++;
+          alt = clean.slice(0,2)+i;
+        }
+        label = alt;
+      }
+      used.add(label);
+      n.mapLabel = label;
+    });
 }
 
 function assignGymTowns(region, gyms){
@@ -3658,6 +3772,7 @@ function populateRegionDex(region){
   region.championTeam = { label: 'Champion', members: champion.members };
   region.gymTeams = assignGymTowns(region, gyms);
   nameAllTowns(region);
+  assignMapLabels(region);
   return region;
 }
 
@@ -4016,7 +4131,7 @@ function customRegionMapSvgHtml(region){
       const s = 11;
       const fill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
       svg += '<rect class="map-node-shape" x="'+(p.x-s)+'" y="'+(p.y-s)+'" width="'+(s*2)+'" height="'+(s*2)+'" fill="'+fill+'"></rect>' +
-        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y+3)+'" text-anchor="middle" font-size="8">'+n.id+'</text>';
+        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y+3)+'" text-anchor="middle" font-size="8">'+(n.mapLabel||n.id)+'</text>';
     } else if(n.kind === 'dungeon'){
       const s = 11;
       const points = [[p.x,p.y-s],[p.x-s,p.y+s*0.8],[p.x+s,p.y+s*0.8]].map(pt=>pt.join(',')).join(' ');
@@ -4030,7 +4145,7 @@ function customRegionMapSvgHtml(region){
       svg += '<polygon class="map-node-shape" points="'+topPts+'" fill="'+topFill+'"></polygon>' +
         '<polygon class="map-node-shape" points="'+bottomPts+'" fill="var(--rust)"></polygon>' +
         '<line class="map-node-divider" x1="'+(p.x-w2)+'" y1="'+p.y+'" x2="'+(p.x+w2)+'" y2="'+p.y+'"></line>' +
-        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y-3)+'" text-anchor="middle" font-size="7">'+n.townId+'</text>' +
+        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y-3)+'" text-anchor="middle" font-size="7">'+(n.mapLabel||n.townId)+'</text>' +
         '<text class="map-node-label map-node-label-light" x="'+p.x+'" y="'+(p.y+9)+'" text-anchor="middle" font-size="6">'+n.dungeonId+'</text>';
     } else {
       const rr = 11;
@@ -4113,7 +4228,7 @@ function customRegionSidebarHtml(region){
   if(!n) return '<div class="map-info-empty">Click a node to see what\'s there.</div>';
 
   if(n.kind === 'combo'){
-    return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + n.townId + ' / ' + n.dungeonId + ')</span></div>' +
+    return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + (n.mapLabel||n.townId) + ' / ' + n.dungeonId + ')</span></div>' +
       '<div class="map-info-kind">Town + Dungeon (same spot)</div>' +
       '<div class="map-info-desc">' + (n.gymLeader ? ('Home of the ' + n.gymLeader + '.') : 'No gym here.') + ' Dungeon shares this tile.</div>' +
       (n.gymLeader ? customRegionGymTeamHtml(region, n.gymLeader) : '') +
@@ -4121,11 +4236,11 @@ function customRegionSidebarHtml(region){
   }
   if(n.kind === 'town'){
     if(n.eliteFour){
-      return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + n.id + ')</span></div>' +
+      return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + (n.mapLabel||n.id) + ')</span></div>' +
         '<div class="map-info-kind">Town / City (Elite Four)</div>' +
         customRegionEliteFourHtml(region);
     }
-    return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + n.id + ')</span></div>' +
+    return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + (n.mapLabel||n.id) + ')</span></div>' +
       '<div class="map-info-kind">Town / City' + (n.central?' (Central City)':'') + '</div>' +
       '<div class="map-info-desc">' + (n.gymLeader ? ('Home of the ' + n.gymLeader + '.') : 'No gym here.') + ' No wild encounters in towns.</div>' +
       (n.gymLeader ? customRegionGymTeamHtml(region, n.gymLeader) : '');
