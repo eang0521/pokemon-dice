@@ -17,6 +17,7 @@
     --gold:#D9A441;
     --sage:#8AA399;
     --nogym-green:#5B8A4E;
+    --elite-purple:#A98FC9;
     --line: rgba(31,46,61,0.16);
   }
   *{box-sizing:border-box;}
@@ -415,6 +416,7 @@
     border-bottom: 10px solid var(--rust);
   }
   .legend-route{ background: var(--sage); border: 1.5px solid var(--ink); border-radius:50%; }
+  .legend-elite{ background: var(--elite-purple); border: 1.5px solid var(--ink); }
   .map-scroll{
     overflow-x:auto;
     overflow-y:hidden;
@@ -607,6 +609,8 @@
   .tm-wheel-current-label{ font-size:8px; letter-spacing:0.05em; margin-top:1px; font-weight:500; }
   .tm-wheel-link{ color:var(--sage); font-size:15px; }
   .tm-truetype-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .dex-type-btn{ opacity:0.55; }
+  .dex-type-btn.active{ opacity:1; outline:2.5px solid var(--ink); outline-offset:-2.5px; }
   .field{ margin-bottom:14px; }
   .dex-search{
     width:100%; font-family:'Work Sans', sans-serif; font-size:15px;
@@ -646,6 +650,7 @@
     <div class="map-legend">
       <span><span class="legend-swatch legend-town"></span>Gym town</span>
       <span><span class="legend-swatch legend-town-nogym"></span>Town, no gym</span>
+      <span><span class="legend-swatch legend-elite"></span>Elite Four</span>
       <span><span class="legend-swatch legend-dungeon"></span>Dungeon</span>
       <span><span class="legend-swatch legend-route"></span>Route</span>
     </div>
@@ -944,6 +949,14 @@ const SAVE_SLOT_COUNT = 5;
 let currentSlot = null;
 function gameKey(slot){ return 'pokemonDiceGameStateV1_slot' + (slot || currentSlot); }
 function gamePokemonKey(slot){ return 'pokemonDiceGamePokemonV1_slot' + (slot || currentSlot); }
+// A Custom Region's generated DATA is unique per playthrough (unlike Calli/
+// Neo Kanto/Hoenn, which share one REGIONS-wide copy for every slot), so it
+// gets its own per-slot key, parallel to the Pokemon-roster one above.
+function customRegionDataKey(slot){ return 'pokemonDiceCustomRegionDataV1_slot' + (slot || currentSlot); }
+function loadCustomRegionData(slot){
+  try { return JSON.parse(localStorage.getItem(customRegionDataKey(slot)) || 'null'); }
+  catch(e){ return null; }
+}
 
 function loadGamePokemon(){
   try {
@@ -1167,7 +1180,7 @@ function dataEntryHtml(species){
     locHtml = 'Starter or special -- not found in the wild';
   }
 
-  return '<div class="mon-detail-card dex-entry" data-name="'+species.toLowerCase()+'">' +
+  return '<div class="mon-detail-card dex-entry" data-name="'+species.toLowerCase()+'" data-types="'+types.map(t=>t.toLowerCase()).join(',')+'">' +
     spriteImgHtml(species, 'sprite-lg') +
     '<div class="mon-detail-name">'+species+'</div>' +
     '<div class="trainer-type-block"><span class="trainer-type-label">Type</span>' +
@@ -1177,20 +1190,85 @@ function dataEntryHtml(species){
     '<div class="dex-loc-line">Found: '+locHtml+'</div>' +
   '</div>';
 }
+const DEX_SORTS = [
+  { mode:'regional', label:'Regional #' },
+  { mode:'alpha', label:'A-Z' },
+];
+// "Regional #" order: each offered starter's full line (base -> final,
+// grouped line by line, in STARTERS_BY_REGION's own order), then every
+// other species in the order it was originally added to this region's own
+// dex (DATA.dice's natural key-insertion order -- true for both a real
+// region's hand-authored data and a generated one, since both build that
+// object by inserting keys in a meaningful order rather than reassigning
+// them), non-Legendary/Mythical/Ultra-Beast/Paradox species before ones
+// LEGENDARY_DEX recognizes (a universal fact about a species, independent
+// of which region it's in).
+function dexRegionalOrder(){
+  const allSpecies = Object.keys(DATA.dice);
+  const allSpeciesSet = new Set(allSpecies);
+  const starterOrder = [];
+  const starterSet = new Set();
+  (STARTERS_BY_REGION[gameState.region] || []).forEach(base=>{
+    let sp = base;
+    while(sp && allSpeciesSet.has(sp) && !starterSet.has(sp)){
+      starterOrder.push(sp);
+      starterSet.add(sp);
+      const branch = (DATA.evoInfo[sp] && DATA.evoInfo[sp].evolvesInto) || [];
+      sp = branch.length ? branch[0].species : null;
+    }
+  });
+  const rest = allSpecies.filter(sp=>!starterSet.has(sp));
+  const normal = rest.filter(sp=>!LEGENDARY_DEX[sp]);
+  const legendary = rest.filter(sp=>LEGENDARY_DEX[sp]);
+  return starterOrder.concat(normal, legendary);
+}
+function dexSortedSpeciesList(){
+  return dexSort === 'alpha'
+    ? Object.keys(DATA.dice).sort((a,b)=>a.localeCompare(b))
+    : dexRegionalOrder();
+}
+function dexTypeFilterButtonHtml(type, label){
+  const active = (dexTypeFilter||'') === type;
+  const bg = type ? TYPE_COLOR[type.toLowerCase()] : '#888';
+  return '<button type="button" class="tm-type-btn dex-type-btn'+(active?' active':'')+'" data-action="setDexTypeFilter" data-type="'+type+'" style="background:'+bg+';">'+label+'</button>';
+}
+function dexControlsHtml(){
+  const sortBtns = DEX_SORTS.map(s =>
+    '<button type="button" class="btn'+(dexSort===s.mode?' btn-primary':'')+'" data-action="setDexSort" data-sort="'+s.mode+'">'+s.label+'</button>'
+  ).join('');
+  const typeBtns = dexTypeFilterButtonHtml('', 'All Types') +
+    Object.keys(TYPE_COLOR).map(t => dexTypeFilterButtonHtml(cap(t), cap(t))).join('');
+  return '<div class="choice-grid" style="margin-bottom:8px;">'+sortBtns+'</div>' +
+    '<div class="tm-truetype-row" style="margin-bottom:10px;">'+typeBtns+'</div>';
+}
+function renderDexList(){
+  const names = dexSortedSpeciesList();
+  document.getElementById('dataList').innerHTML = dexControlsHtml() + names.map(dataEntryHtml).join('');
+  document.getElementById('dataCount').textContent = names.length + ' Pokémon';
+  applyDexFilters(); // re-apply any search text already typed before this rebuild ran
+}
 function buildDataTab(){
   dataBuilt = true;
   dataLocationIndex = buildDataLocationIndex();
-  const names = Object.keys(DATA.dice).sort((a,b)=>a.localeCompare(b));
-  document.getElementById('dataList').innerHTML = names.map(dataEntryHtml).join('');
-  document.getElementById('dataCount').textContent = names.length + ' Pokémon';
-  filterDataTab(); // re-apply any search text already typed before this lazy build ran
+  renderDexList();
 }
-function filterDataTab(){
+function setDexSort(mode){
+  dexSort = mode;
+  renderDexList();
+}
+function setDexTypeFilter(type){
+  dexTypeFilter = type || null;
+  renderDexList();
+}
+function applyDexFilters(){
   const q = document.getElementById('dataSearch').value.trim().toLowerCase();
+  const typeFilter = dexTypeFilter ? dexTypeFilter.toLowerCase() : null;
   const entries = document.querySelectorAll('#dataList .dex-entry');
   let shown = 0;
   entries.forEach(el=>{
-    const match = el.dataset.name.includes(q);
+    const nameMatch = el.dataset.name.includes(q);
+    const typeMatch = !typeFilter || el.dataset.types.split(',').includes(typeFilter);
+    const match = nameMatch && typeMatch;
     el.style.display = match ? '' : 'none';
     if(match) shown++;
   });
@@ -1251,6 +1329,7 @@ function gymTeamPreviewHtml(leaderName){
   const badges = gameState.defeatedGymLeaders.length;
   const cards = team.map(o=>
     '<div class="mon-detail-card">' +
+      spriteImgHtml(o.species, 'sprite-lg') +
       '<div class="mon-detail-name">' + o.species + ' Lv ' + o.level + '</div>' +
       trainerTypeBlockHtml(o.types[0], o.types[1], o.atk) +
       statRowHtml(o.statsArr) +
@@ -1275,6 +1354,7 @@ function eliteFourTeamPreviewHtml(node){
   const team = rollEliteFourMemberTeam(members[eliteFourPreviewTabIdx]);
   const cards = team.map(o=>
     '<div class="mon-detail-card">' +
+      spriteImgHtml(o.species, 'sprite-lg') +
       '<div class="mon-detail-name">' + o.species + ' Lv ' + o.level + '</div>' +
       trainerTypeBlockHtml(o.types[0], o.types[1], o.atk) +
       statRowHtml(o.statsArr) +
@@ -1347,14 +1427,14 @@ function buildGameMap(){
 
     if(n.kind === 'town'){
       const s = 11;
-      const townFill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
+      const townFill = n.id === DATA.eliteFourTownId ? 'var(--elite-purple)' : (n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)');
       g.appendChild(svgEl('rect', { class:'map-node-shape', x:p.x-s, y:p.y-s, width:s*2, height:s*2, fill:townFill }));
-      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+3, 'text-anchor':'middle', 'font-size':8})).textContent = n.id;
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+3, 'text-anchor':'middle', 'font-size':8})).textContent = n.mapLabel || n.id;
     } else if(n.kind === 'dungeon'){
       const s = 11;
       const points = [ [p.x, p.y-s], [p.x-s, p.y+s*0.8], [p.x+s, p.y+s*0.8] ].map(pt=>pt.join(',')).join(' ');
       g.appendChild(svgEl('polygon', { class:'map-node-shape', points, fill:'var(--rust)' }));
-      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+21, 'text-anchor':'middle', 'font-size':6.5})).textContent = n.id;
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y+21, 'text-anchor':'middle', 'font-size':6.5})).textContent = n.mapLabel || n.id;
     } else if(n.kind === 'combo'){
       const w = 12, hTop = 10, hBottom = 12;
       const topFill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
@@ -1363,8 +1443,8 @@ function buildGameMap(){
       g.appendChild(svgEl('polygon', {class:'map-node-shape', points: topPts, fill:topFill}));
       g.appendChild(svgEl('polygon', {class:'map-node-shape', points: bottomPts, fill:'var(--rust)'}));
       g.appendChild(svgEl('line', {class:'map-node-divider', x1:p.x-w, y1:p.y, x2:p.x+w, y2:p.y}));
-      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y-3, 'text-anchor':'middle', 'font-size':7})).textContent = n.townId;
-      g.appendChild(svgEl('text', {class:'map-node-label map-node-label-light', x:p.x, y:p.y+9, 'text-anchor':'middle', 'font-size':6})).textContent = n.dungeonId;
+      g.appendChild(svgEl('text', {class:'map-node-label', x:p.x, y:p.y-3, 'text-anchor':'middle', 'font-size':7})).textContent = n.mapLabel || n.townId;
+      g.appendChild(svgEl('text', {class:'map-node-label map-node-label-light', x:p.x, y:p.y+9, 'text-anchor':'middle', 'font-size':6})).textContent = n.dungeonMapLabel || n.dungeonId;
     } else {
       const r = 11;
       g.appendChild(svgEl('circle', {class:'map-node-shape', cx:p.x, cy:p.y, r, fill:'var(--sage)'}));
@@ -1548,7 +1628,6 @@ const NATIONAL_DEX = {
   "Turtonator":["Fire","Dragon",3,4,8,5,5,2],
   "Toxapex":["Poison","Water",3,4,9,3,8,2],
   "Tandemaus":["Normal",null,3,3,3,2,3,4],
-  "Iron Bundle":["Ice","Water",3,5,7,7,3,8],
   "Tentacruel":["Water","Poison",5,4,4,5,7,6],
   "Heatmor":["Fire",null,5,6,4,6,4,4],
   "Ivysaur":["Grass","Poison",3,4,4,5,5,3],
@@ -1574,7 +1653,6 @@ const NATIONAL_DEX = {
   "Sinistea":["Ghost",null,2,3,3,4,3,3],
   "Probopass":["Rock","Steel",3,3,8,4,9,2],
   "Pelipper":["Water","Flying",3,3,6,5,4,4],
-  "Flutter Mane":["Ghost","Fairy",3,3,3,8,8,8],
   "Drapion":["Poison","Dark",4,5,6,3,4,5],
   "Dreepy":["Dragon","Ghost",2,3,2,2,2,5],
   "Luvdisc":["Water",null,2,2,3,2,4,6],
@@ -1613,7 +1691,6 @@ const NATIONAL_DEX = {
   "Delphox":["Fire","Psychic",4,4,4,7,6,6],
   "Carnivine":["Grass",null,4,6,4,5,4,3],
   "Fuecoco":["Fire",null,4,3,3,4,2,2],
-  "Iron Boulder":["Rock","Psychic",5,7,5,4,6,7],
   "Skwovet":["Normal",null,4,3,3,2,2,1],
   "Alakazam":["Psychic",null,3,3,3,8,5,7],
   "Cutiefly":["Bug","Fairy",2,3,2,3,2,5],
@@ -1633,8 +1710,6 @@ const NATIONAL_DEX = {
   "Noibat":["Flying","Dragon",2,2,2,3,2,3],
   "Monferno":["Fire","Fighting",4,4,3,4,3,5],
   "Barboach":["Water","Ground",3,3,2,3,2,3],
-  "Scream Tail":["Fairy","Psychic",7,4,6,4,7,6],
-  "Iron Leaves":["Grass","Psychic",5,7,5,4,6,6],
   "Dratini":["Dragon",null,2,4,3,3,3,3],
   "Illumise":["Bug",null,4,3,4,4,5,5],
   "Furfrou":["Normal",null,4,5,3,4,5,6],
@@ -1686,14 +1761,12 @@ const NATIONAL_DEX = {
   "Gimmighoul":["Ghost",null,3,2,4,4,4,1],
   "Exeggutor":["Grass","Psychic",5,5,5,7,4,3],
   "Salandit":["Poison","Fire",3,3,2,4,2,4],
-  "Iron Valiant":["Fairy","Fighting",4,7,5,7,3,7],
   "Togekiss":["Fairy","Flying",5,3,5,7,7,5],
   "Durant":["Bug","Steel",3,6,6,3,3,6],
   "Magneton":["Electric","Steel",3,3,5,7,4,4],
   "Mabosstiff":["Dark",null,5,7,5,3,4,5],
   "Vibrava":["Ground","Dragon",3,4,3,3,3,4],
   "Smoliv":["Grass","Normal",2,2,3,3,3,2],
-  "Walking Wake":["Water","Dragon",6,5,5,7,5,6],
   "Porygon":["Normal",null,4,3,4,5,4,2],
   "Dracozolt":["Electric","Dragon",5,6,5,5,4,4],
   "Applin":["Grass","Dragon",2,2,5,2,2,1],
@@ -1714,7 +1787,6 @@ const NATIONAL_DEX = {
   "Annihilape":["Fighting","Ghost",6,7,5,3,5,5],
   "Ampharos":["Electric",null,5,4,5,7,5,3],
   "Teddiursa":["Normal",null,3,5,3,3,3,2],
-  "Iron Hands":["Fighting","Electric",9,8,6,3,4,3],
   "Porygon2":["Normal",null,5,5,5,6,5,3],
   "Arrokuda":["Water",null,2,4,2,2,2,4],
   "Naclstack":["Rock",null,3,3,6,2,4,2],
@@ -1743,7 +1815,6 @@ const NATIONAL_DEX = {
   "Arctovish":["Water","Ice",5,5,6,5,5,3],
   "Bagon":["Dragon",null,3,4,3,2,2,3],
   "Kabuto":["Rock","Water",2,5,5,3,3,3],
-  "Brute Bonnet":["Grass","Dark",6,7,6,5,6,3],
   "Ducklett":["Water","Flying",4,3,3,3,3,3],
   "Garbodor":["Poison",null,5,5,5,3,5,4],
   "Seaking":["Water",null,5,5,4,4,5,4],
@@ -1783,7 +1854,6 @@ const NATIONAL_DEX = {
   "Zoroark":["Dark",null,3,6,3,7,3,6],
   "Electivire":["Electric",null,4,7,4,5,5,5],
   "Torchic":["Fire",null,3,3,2,4,3,3],
-  "Sandy Shocks":["Electric","Ground",5,5,6,7,5,6],
   "Qwilfish":["Water","Poison",4,5,5,3,3,5],
   "Golisopod":["Bug","Water",4,7,8,3,5,2],
   "Tangrowth":["Grass",null,6,6,7,6,3,3],
@@ -1817,7 +1887,6 @@ const NATIONAL_DEX = {
   "Togetic":["Fairy","Flying",3,2,5,5,6,2],
   "Darumaka":["Fire",null,4,5,3,1,3,3],
   "Wurmple":["Bug",null,3,3,2,1,2,1],
-  "Raging Bolt":["Electric","Dragon",7,4,5,8,5,4],
   "Forretress":["Bug","Steel",4,5,8,3,3,2],
   "Audino":["Normal",null,6,3,5,3,5,3],
   "Farfetch'd":["Normal","Flying",3,5,3,3,4,3],
@@ -1872,7 +1941,6 @@ const NATIONAL_DEX = {
   "Cetoddle":["Ice",null,6,4,3,2,2,2],
   "Rampardos":["Rock",null,6,9,3,4,3,3],
   "Wobbuffet":["Psychic",null,11,2,3,2,3,2],
-  "Iron Moth":["Fire","Poison",5,4,3,8,6,6],
   "Politoed":["Water",null,5,4,4,5,6,4],
   "Marill":["Water","Fairy",4,1,3,1,3,2],
   "Gengar":["Ghost","Poison",3,4,3,7,4,6],
@@ -1966,7 +2034,6 @@ const NATIONAL_DEX = {
   "Kommo-o":["Dragon","Fighting",4,6,7,6,6,5],
   "Fennekin":["Fire",null,2,3,2,4,3,3],
   "Boltund":["Electric",null,4,5,3,5,3,7],
-  "Roaring Moon":["Dragon","Dark",6,8,4,3,6,7],
   "Charmander":["Fire",null,2,3,2,3,3,4],
   "Lairon":["Steel","Rock",3,5,8,3,3,2],
   "Mantine":["Water","Flying",5,2,4,5,8,4],
@@ -1979,7 +2046,6 @@ const NATIONAL_DEX = {
   "Dipplin":["Grass","Dragon",5,5,6,5,5,2],
   "Espeon":["Psychic",null,4,4,3,7,5,6],
   "Crawdaunt":["Water","Dark",4,7,5,5,3,3],
-  "Gouging Fire":["Fire","Dragon",6,7,7,4,5,5],
   "Pachirisu":["Electric",null,3,3,4,3,5,5],
   "Slowking":["Water","Psychic",5,4,5,6,6,2],
   "Swablu":["Normal","Flying",3,2,3,2,4,3],
@@ -2002,7 +2068,6 @@ const NATIONAL_DEX = {
   "Honchkrow":["Dark","Flying",6,7,3,6,3,4],
   "Milcery":["Fairy",null,3,2,2,3,3,2],
   "Yamper":["Electric",null,3,3,3,2,3,1],
-  "Iron Crown":["Steel","Psychic",5,4,6,7,6,6],
   "Pikipek":["Normal","Flying",2,4,2,2,2,4],
   "Sawsbuck":["Normal","Grass",5,6,4,3,4,5],
   "Pineco":["Bug",null,3,4,5,2,2,1],
@@ -2019,7 +2084,6 @@ const NATIONAL_DEX = {
   "Scrafty":["Dark","Fighting",4,5,7,3,7,3],
   "Lokix":["Bug","Dark",4,6,4,3,3,5],
   "Spinda":["Normal",null,3,3,3,3,3,3],
-  "Slither Wing":["Bug","Fighting",5,8,5,5,6,5],
   "Rhyhorn":["Ground","Rock",5,5,5,2,2,1],
   "Tepig":["Fire",null,4,4,3,3,3,3],
   "Gothitelle":["Psychic",null,4,3,5,5,6,4],
@@ -2145,7 +2209,6 @@ const NATIONAL_DEX = {
   "Unfezant":["Normal","Flying",5,7,5,4,3,5],
   "Pangoro":["Fighting","Dark",5,7,4,4,4,3],
   "Raboot":["Fire",null,4,5,3,3,3,5],
-  "Great Tusk":["Ground","Fighting",7,7,7,3,3,5],
   "Bellossom":["Grass",null,4,5,5,5,6,3],
   "Slowbro":["Water","Psychic",5,4,6,6,5,2],
   "Grimmsnarl":["Dark","Fairy",5,7,4,5,4,3],
@@ -2231,7 +2294,6 @@ const NATIONAL_DEX = {
   "Leavanny":["Bug","Grass",4,6,5,4,5,5],
   "Nidoran♀":["Poison",null,3,3,3,2,2,2],
   "Liepard":["Dark",null,4,5,3,5,3,6],
-  "Iron Treads":["Ground","Steel",5,6,7,4,4,6],
   "Ariados":["Bug","Poison",4,5,4,3,4,2],
   "Marshtomp":["Water","Ground",4,5,4,3,4,3],
   "Gigalith":["Rock",null,5,8,7,3,5,1],
@@ -2239,7 +2301,6 @@ const NATIONAL_DEX = {
   "Meowstic":["Psychic",null,4,3,4,5,5,6],
   "Deino":["Dark","Dragon",3,4,3,3,3,2],
   "Snorunt":["Ice",null,3,3,3,3,3,3],
-  "Iron Jugulis":["Dark","Flying",5,5,5,7,5,6],
   "Maushold":["Normal",null,4,4,4,4,4,6],
   "Croconaw":["Water",null,4,5,5,3,4,3],
   "Mienshao":["Fighting",null,4,7,3,5,3,6],
@@ -2262,7 +2323,6 @@ const NATIONAL_DEX = {
   "Gourgeist":["Ghost","Grass",4,5,7,3,4,5],
   "Chandelure":["Ghost","Fire",3,3,5,8,5,5],
   "Tinkatuff":["Fairy","Steel",4,3,3,3,5,4],
-  "Iron Thorns":["Rock","Electric",6,8,6,4,5,4],
   "Espurr":["Psychic",null,4,3,3,4,3,4],
   "Wooloo":["Normal",null,2,2,3,2,3,3],
   "Sigilyph":["Psychic","Flying",4,3,5,6,5,6],
@@ -2804,29 +2864,9 @@ const EVOLUTION_FAMILIES = [
   [["Veluza",0]],
   [["Dondozo",0]],
   [["Tatsugiri",0]],
-  [["Great Tusk",0]],
-  [["Scream Tail",0]],
-  [["Brute Bonnet",0]],
-  [["Flutter Mane",0]],
-  [["Slither Wing",0]],
-  [["Sandy Shocks",0]],
-  [["Iron Treads",0]],
-  [["Iron Bundle",0]],
-  [["Iron Hands",0]],
-  [["Iron Jugulis",0]],
-  [["Iron Moth",0]],
-  [["Iron Thorns",0]],
   [["Frigibax",0],["Arctibax",1],["Baxcalibur",2]],
   [["Gimmighoul",0],["Gholdengo",1]],
-  [["Roaring Moon",0]],
-  [["Iron Valiant",0]],
-  [["Walking Wake",0]],
-  [["Iron Leaves",0]],
   [["Poltchageist",0],["Sinistcha",1]],
-  [["Gouging Fire",0]],
-  [["Raging Bolt",0]],
-  [["Iron Boulder",0]],
-  [["Iron Crown",0]],
   [["Phione",0]]
 ];
 // Legendary/Mythical species excluded from NATIONAL_DEX/EVOLUTION_FAMILIES --
@@ -2939,7 +2979,27 @@ const LEGENDARY_DEX = {
   "Fezandipiti":["Poison","Fairy",5,5,5,4,7,6],
   "Ogerpon":["Grass",null,5,7,5,3,5,6],
   "Terapagos":["Normal",null,5,4,5,4,5,3],
-  "Pecharunt":["Poison","Ghost",5,5,9,5,5,5]
+  "Pecharunt":["Poison","Ghost",5,5,9,5,5,5],
+  "Great Tusk":["Ground","Fighting",7,7,7,3,3,5],
+  "Scream Tail":["Fairy","Psychic",7,4,6,4,7,6],
+  "Brute Bonnet":["Grass","Dark",6,7,6,5,6,3],
+  "Flutter Mane":["Ghost","Fairy",3,3,3,8,8,8],
+  "Slither Wing":["Bug","Fighting",5,8,5,5,6,5],
+  "Sandy Shocks":["Electric","Ground",5,5,6,7,5,6],
+  "Roaring Moon":["Dragon","Dark",6,8,4,3,6,7],
+  "Walking Wake":["Water","Dragon",6,5,5,7,5,6],
+  "Gouging Fire":["Fire","Dragon",6,7,7,4,5,5],
+  "Raging Bolt":["Electric","Dragon",7,4,5,8,5,4],
+  "Iron Treads":["Ground","Steel",5,6,7,4,4,6],
+  "Iron Bundle":["Ice","Water",3,5,7,7,3,8],
+  "Iron Hands":["Fighting","Electric",9,8,6,3,4,3],
+  "Iron Jugulis":["Dark","Flying",5,5,5,7,5,6],
+  "Iron Moth":["Fire","Poison",5,4,3,8,6,6],
+  "Iron Thorns":["Rock","Electric",6,8,6,4,5,4],
+  "Iron Valiant":["Fairy","Fighting",4,7,5,7,3,7],
+  "Iron Leaves":["Grass","Psychic",5,7,5,4,6,6],
+  "Iron Boulder":["Rock","Psychic",5,7,5,4,6,7],
+  "Iron Crown":["Steel","Psychic",5,4,6,7,6,6]
 };
 
 // Every Legendary/Mythical "unit" that must be placed together or not at all --
@@ -3010,7 +3070,27 @@ const LEGENDARY_GROUPS = [
   ["Calyrex"],
   ["Ogerpon"],
   ["Terapagos"],
-  ["Pecharunt"]
+  ["Pecharunt"],
+  ["Great Tusk"],
+  ["Scream Tail"],
+  ["Brute Bonnet"],
+  ["Flutter Mane"],
+  ["Slither Wing"],
+  ["Sandy Shocks"],
+  ["Roaring Moon"],
+  ["Walking Wake"],
+  ["Gouging Fire"],
+  ["Raging Bolt"],
+  ["Iron Treads"],
+  ["Iron Bundle"],
+  ["Iron Hands"],
+  ["Iron Jugulis"],
+  ["Iron Moth"],
+  ["Iron Thorns"],
+  ["Iron Valiant"],
+  ["Iron Leaves"],
+  ["Iron Boulder"],
+  ["Iron Crown"]
 ];
 // ---- Type wheel: each type's (east,north) unit direction on the compass --
 // sin = East-West component (positive = East), cos = South-North component
@@ -3419,6 +3499,76 @@ function growTypeListsUntil(gymDraft, usedFinals, skipTypes, neededCount){
   return newlyCompleted;
 }
 
+// ---- Gym Leader / Elite Four / Champion name generator ----
+// About 2/3 of the time draws from that team's primary-type name pool (26
+// names per type, mixing masculine, feminine, and unisex names); otherwise
+// falls back to a shared neutral pool (200 names, also mixed). Unique
+// within a region, with graceful fallbacks if a pool runs dry.
+const LEADER_NAME_POOL = {
+  Fire: ['Ignacio','Ember','Blaze','Sienna','Roman','Aurelio','Scarlett','Kai','Phoenix','Carmen','Rusty','Solene','Magnus','Amara','Flint','Garnet','Cassia','Draven','Carmine','Ronan','Calida','Ignatius','Ashby','Cayenne','Brand','Ferris'],
+  Water: ['Marina','Coral','Dylan','Nerida','Delphine','Rio','Bay','Mira','Marlin','Tide','Isolde','Ren','Naia','Douglas','Pearl','Kailani','Mariska','Marisol','Lorelei','Brooks','Reyna','Ondine','Cove','Sedna','Rain','Beckett'],
+  Grass: ['Fern','Ivy','Basil','Laurel','Sage','Willow','Clover','Rosalind','Forrest','Olive','Hazel','Cedric','Briar','Meadow','Linden','Juniper','Flora','Gilbert','Rowan','Thistle','Marigold','Fennel','Sylvie','Bryony','Elm','Auburn'],
+  Electric: ['Raiden','Storm','Karsten','Nova','Corwin','Ozzy','Electra','Jolene','Blitz','Indigo','Zena','Dashiell','Ray','Sparky','Fenn','Cyra','Radley','Volt','Amp','Flash','Surge','Ionia','Voltana','Bex','Jett','Dynamo'],
+  Ice: ['Frost','Winter','Crystal','Glacia','Blanche','Yuki','Snow','Boris','Neve','Iolanthe','Casimir','Elsbeth','Cato','Alpina','Rime','Sasha','Nieve','Boreal','Chilton','Icelyn','Frigg','Vail','Aspen','Glace','Yulia','Powder'],
+  Fighting: ['Maximus','Duke','Ander','Brigid','Ajax','Magda','Talia','Marcus','Gideon','Knox','Ronin','Xiomara','Bellona','Titus','Reyes','Andraste','Grit','Kade','Solveig','Warrick','Boadicea','Hilde','Rocco','Fiora','Barrett','Cortez'],
+  Poison: ['Acacia','Belladonna','Cyanne','Viper','Ophelia','Selwyn','Oleander','Cressida','Malvina','Marlow','Renata','Damara','Absinthe','Salem','Nyx','Medusa','Rue','Wisteria','Fennimore','Circe','Locusta','Hemlock','Adder','Toxie','Perdita','Cassandra'],
+  Ground: ['Terra','Dustin','Clay','Sandor','Bourke','Marl','Delta','Canyon','Mesa','Dune','Bedford','Gaia','Basin','Rooke','Cobb','Hurst','Landon','Ridge','Fielding','Marlowe','Fallow','Loam','Drummond','Yara','Barrow','Odessa'],
+  Flying: ['Skylar','Zephyr','Aria','Wren','Kestrel','Falcon','Icarus','Breeze','Raine','Talon','Jetta','Peregrine','Halcyon','Sora','Aeriel','Windham','Larkin','Osprey','Skye','Roc','Aquila','Nimbus','Icara','Corvina','Fleet','Zephyrine'],
+  Psychic: ['Sibyl','Zenith','Luna','Solomon','Nadia','Vesna','Indira','Selene','Orin','Rhea','Zara','Osiris','Thessaly','Nyssa','Idris','Elowen','Cyprienne','Delphi','Ilona','Soraya','Kavi','Mireille','Prosper','Yolanda','Emrys','Wisdom'],
+  Bug: ['Beatrix','Cricket','Nettle','Skeeter','Bramwell','Antonia','Milo','Buzz','Hattie','Pip','Nym','Antoinette','Silk','Bramble','Zumi','Kip','Speck','Wick','Verona','Cosmo','Dot','Fenwick','Fritillary','Io','Rilla','Tansy'],
+  Rock: ['Petra','Slate','Boulder','Cragan','Quartz','Basalt','Obsidian','Flynn','Cairn','Marbury','Ridley','Stone','Talus','Onyx','Cordell','Rockwell','Shale','Crag','Pebble','Adamant','Cliff','Rocca','Ansel','Bexley','Ferro','Cobble'],
+  Ghost: ['Wraith','Raven','Mortimer','Lenore','Ombra','Persephone','Damaris','Griselda','Ashen','Winifred','Thorne','Haze','Lazarus','Morrigan','Elvira','Grimm','Nocturne','Ottilie','Duskin','Ambrose','Seraphina','Ferelith','Corbin','Vane','Endora','Malachi'],
+  Dragon: ['Draco','Sigurd','Tiamat','Fafnir','Kaida','Ryu','Drake','Vasilisa','Cadmus','Draca','Thoric','Draegan','Ladon','Perrin','Torvald','Ryder','Wyland','Kessandra','Azura','Fenrir','Corvin','Astrid','Njall','Skoll','Aurelian','Orwyn'],
+  Dark: ['Umbra','Shade','Dante','Lilith','Vesper','Erebus','Nyxandra','Corvus','Sable','Rooke','Ravenna','Malachai','Grimshaw','Ebon','Nero','Malkin','Vex','Nightshade','Severin','Morwenna','Kael','Zerlina','Blackwood','Ravencroft','Ilse','Corbeau'],
+  Steel: ['Sterling','Cobalt','Irwin','Chrome','Adamanta','Bolt','Wrenfield','Forge','Anvil','Cassius','Duran','Ferran','Steele','Thane','Girard','Corten','Reeve','Halsey','Halston','Ferronia','Girvan','Ironside','Castellan','Braxton','Vance','Emeric'],
+  Fairy: ['Rosalie','Sprig','Pixie','Belle','Oberon','Titania','Marielle','Fleur','Peri','Thistledown','Lyric','Petal','Cosette','Primrose','Aurelia','Briallen','Tamsin','Fable','Wrenna','Glimmer','Dandelion','Aveline','Lark','Sorrel','Puck','Ariel'],
+  Normal: ['Sam','Jordan','Alex','Casey','Taylor','Morgan','Riley','Jamie','Drew','Charlie','Robin','Frankie','Dana','Lee','Pat','Chris','Sydney','Reese','Jessie','Toby','Emery','Quinn','Avery','Blair','Shawn','Kerry'],
+};
+const LEADER_NAME_NEUTRAL = [
+  'James','Michael','David','Daniel','Matthew','Andrew','Joseph','Ryan','Nathan','Benjamin',
+  'Emily','Sarah','Jessica','Ashley','Amanda','Melissa','Rachel','Laura','Stephanie','Rebecca',
+  'Christopher','Anthony','Kevin','Jason','Justin','Brian','Eric','Adam','Timothy','Jeffrey',
+  'Elizabeth','Jennifer','Nicole','Amy','Angela','Heather','Michelle','Kimberly','Lisa','Karen',
+  'Brandon','Jacob','Tyler','Zachary','Aaron','Jose','Henry','Douglas','Peter','Patrick',
+  'Victoria','Samantha','Katherine','Christina','Maria','Diana','Julia','Natalie','Alexis','Brittany',
+  'Marcus','Vincent','Oliver','Elijah','Sebastian','Julian','Wesley','Xavier','Dominic','Miles',
+  'Isabella','Sophia','Charlotte','Amelia','Evelyn','Harper','Camila','Gabriella','Aurora','Violet',
+  'Nathaniel','Gregory','Raymond','Dennis','Jerry','Roger','Carl','Arthur','Lawrence','Harold',
+  'Deborah','Cynthia','Kathleen','Sharon','Janet','Catherine','Frances','Christine','Marilyn','Diane',
+  'Aiden','Ethan','Noah','Liam','Mason','Logan','Lucas','Caleb','Isaac','Owen',
+  'Olivia','Ava','Mia','Ella','Scarlett','Grace','Chloe','Zoey','Layla','Nora',
+  'Felix','Simon','Leon','Victor','Hugo','Emilio','Mateo','Diego','Andres','Rafael',
+  'Valentina','Isadora','Beatriz','Camille','Adele','Josephine','Margot','Simone','Colette','Odette',
+  'Desmond','Leland','Grover','Norman','Wallace','Sherman','Clifford','Melvin','Stanley','Herbert',
+  'Wilma','Gladys','Mabel','Doris','Irene','Beatrice','Edith','Agnes','Florence','Ruthanne',
+  'Dean','Glenn','Curtis','Wayne','Bruce','Craig','Neil','Barry','Alan','Gordon',
+  'Paula','Donna','Carol','Joyce','Sandra','Brenda','Bonnie','Wanda','Phyllis','Rosemary',
+  'Devon','Sawyer','Peyton','Emerson','Hayden','Cameron','Dakota','Finley','Harley','Marley',
+  'Remy','Shiloh','Blake','River','Ellis','Micah','August','Story','Justice','Rory',
+];
+// Prefers a name from the given type's pool 2/3 of the time (falling back
+// to the neutral pool the other 1/3, and whenever `type` is null e.g. no
+// clean primary type to key off of), then falls back across pools/to a
+// numbered placeholder only once every real option is already taken.
+function pickLeaderName(type, usedNames){
+  const useType = !!type && Math.random() < (2/3);
+  const primary = useType ? (LEADER_NAME_POOL[type]||[]) : LEADER_NAME_NEUTRAL;
+  const fallback = useType ? LEADER_NAME_NEUTRAL : (LEADER_NAME_POOL[type]||[]);
+  let name = shuffled(primary).find(nm=>!usedNames.has(nm));
+  if(!name) name = shuffled(fallback).find(nm=>!usedNames.has(nm));
+  if(!name){
+    const all = LEADER_NAME_NEUTRAL.concat(...Object.values(LEADER_NAME_POOL));
+    name = shuffled(all).find(nm=>!usedNames.has(nm));
+  }
+  if(!name){
+    let i = 2;
+    while(usedNames.has('Trainer'+i)) i++;
+    name = 'Trainer'+i;
+  }
+  usedNames.add(name);
+  return name;
+}
+
 // Elite Four is decided FIRST, from naturally-complete (pure single-type)
 // lists only, top 4 by total team stat -- the type-growth/rescue chain only
 // runs for Elite Four if there aren't even 4 naturally-complete lists to
@@ -3468,6 +3618,7 @@ function buildGymEliteFourChampion(gymDraft){
   const leftover = gymDraft.log.filter(e => !usedFinals.has(e.chosenFinal));
   const champTypeCounts = {};
   const championPicks = [];
+  const usedChampionFinals = new Set();
   let i = 0;
   while(championPicks.length < 6 && i + 3 <= leftover.length){
     const group = leftover.slice(i, i+3);
@@ -3476,9 +3627,56 @@ function buildGymEliteFourChampion(gymDraft){
     const best = group[0];
     if((champTypeCounts[best.type]||0) >= 2) continue;
     championPicks.push(best.chosenFinal);
+    usedChampionFinals.add(best.chosenFinal);
     champTypeCounts[best.type] = (champTypeCounts[best.type]||0) + 1;
   }
+  // Rescue: drawing 3-at-a-time can run out of leftover candidates before
+  // reaching 6 (most of the region's drafted lines already went to a gym or
+  // E4 team). Finish the roster one pick at a time instead -- still best-
+  // stat-first, still respecting the 2-per-type cap where possible -- then
+  // relax the type cap, then finally allow reusing a species already on a
+  // gym/E4 team (never a species already on the Champion's own roster) as
+  // an absolute last resort. The Champion's team must always reach 6, the
+  // same "always guarantee the count" rule already applied to the 8 gyms.
+  if(championPicks.length < 6){
+    leftover.filter(e => !usedChampionFinals.has(e.chosenFinal))
+      .sort((a,b)=> statTotalOf(b.chosenFinal)-statTotalOf(a.chosenFinal))
+      .forEach(e => {
+        if(championPicks.length >= 6 || (champTypeCounts[e.type]||0) >= 2) return;
+        championPicks.push(e.chosenFinal);
+        usedChampionFinals.add(e.chosenFinal);
+        champTypeCounts[e.type] = (champTypeCounts[e.type]||0) + 1;
+      });
+  }
+  if(championPicks.length < 6){
+    leftover.filter(e => !usedChampionFinals.has(e.chosenFinal))
+      .sort((a,b)=> statTotalOf(b.chosenFinal)-statTotalOf(a.chosenFinal))
+      .forEach(e => {
+        if(championPicks.length >= 6) return;
+        championPicks.push(e.chosenFinal);
+        usedChampionFinals.add(e.chosenFinal);
+      });
+  }
+  if(championPicks.length < 6){
+    gymDraft.log.map(e=>e.chosenFinal).filter(n => !usedChampionFinals.has(n))
+      .sort((a,b)=> statTotalOf(b)-statTotalOf(a))
+      .forEach(n => {
+        if(championPicks.length >= 6) return;
+        championPicks.push(n);
+        usedChampionFinals.add(n);
+      });
+  }
   const champion = { members: buildEscalatingTeamMembers(championPicks, CHAMP_ORDER, SLOT_SEQUENCE_6, CHAMPION_SLOT_LEVELS) };
+
+  // Names: gyms and E4 key off their team's single type; the Champion has
+  // no single type of its own, so its name is weighted off its ace's type
+  // instead (the last-sent, top-billed member of the roster).
+  const usedLeaderNames = new Set();
+  eliteFour.forEach(e => { e.leaderName = pickLeaderName(e.type, usedLeaderNames); });
+  gyms.forEach(g => { g.leaderName = pickLeaderName(g.type, usedLeaderNames); });
+  const champAce = champion.members.find(m => m.slotKey === 'ace');
+  const champAceRow = champAce && NATIONAL_DEX[champAce.species];
+  champion.leaderName = pickLeaderName(champAceRow ? champAceRow[0] : null, usedLeaderNames);
 
   return { eliteFour, gyms, champion };
 }
@@ -3712,32 +3910,172 @@ function nameAllTowns(region){
     .forEach(n=>{ n.name = generateTownName(n.typeTable, !!n.gymLeader, usedNames); });
 }
 // Map-tile short label: first 3 letters of the generated name. On a
-// collision, first tries other 3-letter windows within the same name, then
-// falls back to a 2-letter-plus-digit variant -- "adjust one or both" per
-// the request, implemented here as adjusting whichever one is processed
-// second (map-node order), which is enough to guarantee uniqueness.
+// collision, the first 2 letters stay fixed and the 3rd slides further
+// into the name (a "later letter") until a free code turns up -- e.g.
+// Sandgem and Sandburst collide on SAN, so Sandburst becomes SAD (the next
+// letter after the shared "San" that isn't already spoken for). Falls back
+// to a 2-letter-plus-digit variant only if the whole name is exhausted.
 function assignMapLabels(region){
   const used = new Set();
   region.mapNodes
     .filter(n=>n.kind==='town' || n.kind==='combo')
     .forEach(n=>{
       const clean = n.name.replace(/[^A-Za-z]/g, '').toUpperCase();
+      const head = clean.slice(0,2);
       let label = clean.slice(0,3);
       if(used.has(label)){
         let alt = null;
-        for(let start=1; start+3<=clean.length && !alt; start++){
-          const cand = clean.slice(start, start+3);
+        for(let i=3; i<clean.length && !alt; i++){
+          const cand = head + clean[i];
           if(!used.has(cand)) alt = cand;
         }
         if(!alt){
           let i = 2;
-          while(used.has(clean.slice(0,2)+i)) i++;
-          alt = clean.slice(0,2)+i;
+          while(used.has(head+i)) i++;
+          alt = head+i;
         }
         label = alt;
       }
       used.add(label);
       n.mapLabel = label;
+    });
+}
+
+// Dungeon name generator: same weighted-by-type-squared approach as town
+// naming (reuses pickWeightedType/TOWN_NAME_WHOLE for the descriptor word,
+// so the invented vocabulary stays consistent region-wide), but pairs the
+// descriptor with a terrain "kind" word instead of a City/Town suffix --
+// caves, caverns, forests, ruins, mountains, and more, themed per type.
+const DUNGEON_KIND = {
+  Fire: ['Crater','Furnace','Forge','Cinderpit','Ashfield'],
+  Water: ['Grotto','Cove','Falls','Lagoon','Shoal','Marsh'],
+  Grass: ['Forest','Woods','Jungle','Thicket','Grove','Glade'],
+  Electric: ['Cavern','Conduit','Substation','Gridworks'],
+  Ice: ['Glacier','Icecap','Snowfield','Icefall','Tundra'],
+  Fighting: ['Arena','Dojo','Bastion','Gauntlet'],
+  Poison: ['Marsh','Swamp','Bog','Mire','Fen'],
+  Ground: ['Canyon','Quarry','Mine','Chasm','Basin','Badlands'],
+  Flying: ['Peak','Cliffs','Aerie','Pillar','Spire','Bluff'],
+  Psychic: ['Sanctuary','Ruins','Temple','Shrine','Labyrinth'],
+  Bug: ['Hive','Thicket','Hollow','Nest','Burrow','Tangle'],
+  Rock: ['Cave','Cavern','Tunnel','Quarry','Crag'],
+  Ghost: ['Crypt','Chateau','Tomb','Manor','Catacombs'],
+  Dragon: ['Lair','Den','Spire','Roost'],
+  Dark: ['Den','Hollow','Abyss','Warren'],
+  Steel: ['Mine','Foundry','Works','Vault'],
+  Fairy: ['Glen','Grove','Garden','Ring'],
+  Normal: ['Path','Trail','Woods','Crossing'],
+};
+const DUNGEON_KIND_NEUTRAL = ['Cave','Cavern','Tunnel','Grotto','Ruins','Path','Hollow','Den','Grove','Trail','Pass','Hills'];
+function pickDungeonKind(type){
+  const pool = (type ? (DUNGEON_KIND[type]||[]) : []).concat(DUNGEON_KIND_NEUTRAL);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+// Descriptor picks from the same whole-word pools towns use (weighted by
+// type percentage squared, retrying a different type if that type's pool is
+// already spent this region), tracked separately from town names so the two
+// namespaces don't compete with each other.
+function generateDungeonName(typeTable, usedDescriptors){
+  const remainingTypes = new Set(Object.keys(typeTable||{}));
+  let descriptor = null;
+  while(remainingTypes.size && !descriptor){
+    const filtered = {};
+    remainingTypes.forEach(t=>{ filtered[t] = typeTable[t]; });
+    const type = pickWeightedType(filtered);
+    if(!type) break;
+    remainingTypes.delete(type);
+    descriptor = tryWholeForType(type, usedDescriptors);
+  }
+  if(!descriptor) descriptor = tryWholeForType(null, usedDescriptors);
+  if(!descriptor){
+    for(const t of Object.keys(TOWN_NAME_WHOLE)){
+      descriptor = tryWholeForType(t, usedDescriptors);
+      if(descriptor) break;
+    }
+  }
+  if(!descriptor){
+    let n = 2;
+    while(usedDescriptors.has('Depths'+n)) n++;
+    descriptor = 'Depths'+n;
+  }
+  usedDescriptors.add(descriptor);
+  const kind = pickDungeonKind(pickWeightedType(typeTable));
+  return descriptor + ' ' + kind;
+}
+function nameAllDungeons(region){
+  const usedDescriptors = new Set();
+  region.locations
+    .filter(l=>l.kind==='dungeon')
+    .forEach(l=>{ l.name = generateDungeonName(l.typeTable, usedDescriptors); });
+}
+// Region name: NOT a type-themed English word like the town/dungeon
+// generators (Kanto/Johto/Hoenn/Sinnoh/Unova/Kalos/Alola/Galar/Paldea don't
+// mean anything -- they just need to sound like a place). Built the way a
+// conlang/fantasy name generator would: onset+vowel(+coda) syllables strung
+// together, with a phoneme set chosen to land in that same foreign-but-
+// pronounceable register, 2-3 syllables long (matching every real example).
+const REGION_NAME_ONSETS = ['K','T','H','S','N','G','P','D','M','L','R','V','B','F','Z','J','W','Y','C','Th','Ch','Sh'];
+const REGION_NAME_VOWELS = ['a','a','a','a','e','e','e','i','i','i','o','o','o','u','u','ai','eo','oa'];
+const REGION_NAME_CODAS = ['n','r','l','s','m'];
+function generateRegionName(){
+  const realNames = new Set(['kanto','johto','hoenn','sinnoh','unova','kalos','alola','galar','paldea']);
+  let name;
+  do {
+    const syllableCount = Math.random() < 0.55 ? 2 : 3;
+    const syllables = [];
+    for(let i=0; i<syllableCount; i++){
+      // Every syllable but the first can occasionally lead with just a
+      // vowel (Unova, Alola both open on a bare vowel) -- the first always
+      // gets an onset so the name doesn't start mid-syllable.
+      const onset = (i===0 || Math.random() < 0.85)
+        ? REGION_NAME_ONSETS[Math.floor(Math.random()*REGION_NAME_ONSETS.length)] : '';
+      syllables.push(onset + REGION_NAME_VOWELS[Math.floor(Math.random()*REGION_NAME_VOWELS.length)]);
+    }
+    // At most ONE syllable (never the last) picks up a trailing consonant
+    // bridging into the next syllable's onset -- real region names carry at
+    // most one such cluster (Kan-to, Sin-noh, Ga-lar), never several, so
+    // stacking more than one here is what made early drafts unpronounceable.
+    if(syllableCount > 1 && Math.random() < 0.55){
+      const idx = Math.floor(Math.random() * (syllableCount - 1));
+      syllables[idx] += REGION_NAME_CODAS[Math.floor(Math.random()*REGION_NAME_CODAS.length)];
+    }
+    const raw = syllables.join('');
+    name = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  } while(realNames.has(name.toLowerCase()) || name.length < 4 || name.length > 9);
+  return name;
+}
+// Dungeon short code: the starting letters of the name's first two words
+// (e.g. "Tide Crag" -> TC). On a collision, the first word's initial stays
+// fixed and the second letter slides further into the second word -- e.g.
+// Tide Crag and Tide Cliffs both start TC, so Cliffs' code becomes TL (the
+// next letter of "Cliffs" that isn't already taken) -- mirroring the same
+// later-letter resolution used for town labels. Falls back to a digit only
+// if the second word itself is exhausted.
+function assignDungeonMapLabels(region){
+  const used = new Set();
+  region.locations
+    .filter(l=>l.kind==='dungeon')
+    .forEach(l=>{
+      const words = (l.name||'').split(' ').filter(Boolean);
+      const w1 = (words[0]||'').replace(/[^A-Za-z]/g, '').toUpperCase();
+      const w2 = (words[1]||'').replace(/[^A-Za-z]/g, '').toUpperCase();
+      const first = w1.slice(0,1);
+      let label = first + w2.slice(0,1);
+      if(used.has(label)){
+        let alt = null;
+        for(let i=1; i<w2.length && !alt; i++){
+          const cand = first + w2[i];
+          if(!used.has(cand)) alt = cand;
+        }
+        if(!alt){
+          let i = 2;
+          while(used.has(first+i)) i++;
+          alt = first+i;
+        }
+        label = alt;
+      }
+      used.add(label);
+      l.mapLabel = label;
     });
 }
 
@@ -3753,11 +4091,535 @@ function assignGymTowns(region, gyms){
   assignment.forEach((townIdx, gymIdx)=>{
     const gym = usableGyms[gymIdx];
     const node = usableNodes[townIdx];
-    const label = gym.type + ' Leader';
+    const label = gym.leaderName;
     node.gymLeader = label;
     teams[label] = gym;
   });
   return teams;
+}
+
+// ---- National evolution data (docs/Pokemon_Evolution_Data.md) ----
+// Every evolution edge for every species in NATIONAL_DEX, transcribed
+// verbatim from that doc: species -> its evolution branch(es), each
+// {into, method}. Level-up methods carry the doc's own exact level (already
+// on the game's 1-20 compressed scale) -- never synthesized. Non-level
+// methods (item/friendship/trade/attack-type/battles-won/steps/etc.) are
+// shown with their real method text; a "required level" for these (needed
+// so trainer/gym/wild resolution knows when the evolved form becomes
+// eligible) is computed at region-generation time via the doc's own buffer
+// rule -- see synthesizeEvolutionData() below.
+const NATIONAL_EVOLUTION_DATA = {
+  "Bulbasaur": [{into:"Ivysaur", method:"Level 5"}],
+  "Ivysaur": [{into:"Venusaur", method:"Level 9"}],
+  "Charmander": [{into:"Charmeleon", method:"Level 5"}],
+  "Charmeleon": [{into:"Charizard", method:"Level 10"}],
+  "Squirtle": [{into:"Wartortle", method:"Level 5"}],
+  "Wartortle": [{into:"Blastoise", method:"Level 10"}],
+  "Caterpie": [{into:"Metapod", method:"Level 3"}],
+  "Metapod": [{into:"Butterfree", method:"Level 4"}],
+  "Weedle": [{into:"Kakuna", method:"Level 3"}],
+  "Kakuna": [{into:"Beedrill", method:"Level 4"}],
+  "Pidgey": [{into:"Pidgeotto", method:"Level 6"}],
+  "Pidgeotto": [{into:"Pidgeot", method:"Level 10"}],
+  "Rattata": [{into:"Raticate", method:"Level 6"}],
+  "Spearow": [{into:"Fearow", method:"Level 6"}],
+  "Ekans": [{into:"Arbok", method:"Level 7"}],
+  "Pikachu": [{into:"Raichu", method:"Thunder Stone"}],
+  "Sandshrew": [{into:"Sandslash", method:"Level 7"}],
+  "Nidoran♀": [{into:"Nidorina", method:"Level 5"}],
+  "Nidorina": [{into:"Nidoqueen", method:"Moon Stone"}],
+  "Nidoran♂": [{into:"Nidorino", method:"Level 5"}],
+  "Nidorino": [{into:"Nidoking", method:"Moon Stone"}],
+  "Clefairy": [{into:"Clefable", method:"Moon Stone"}],
+  "Vulpix": [{into:"Ninetales", method:"Fire Stone"}],
+  "Jigglypuff": [{into:"Wigglytuff", method:"Moon Stone"}],
+  "Zubat": [{into:"Golbat", method:"Level 7"}],
+  "Golbat": [{into:"Crobat", method:"Friendship"}],
+  "Oddish": [{into:"Gloom", method:"Level 6"}],
+  "Gloom": [{into:"Vileplume", method:"Leaf Stone"}, {into:"Bellossom", method:"Sun Stone"}],
+  "Paras": [{into:"Parasect", method:"Level 7"}],
+  "Venonat": [{into:"Venomoth", method:"Level 9"}],
+  "Diglett": [{into:"Dugtrio", method:"Level 8"}],
+  "Meowth": [{into:"Persian", method:"Level 8"}],
+  "Psyduck": [{into:"Golduck", method:"Level 9"}],
+  "Mankey": [{into:"Primeape", method:"Level 8"}],
+  "Primeape": [{into:"Annihilape", method:"10 Battles Won"}],
+  "Growlithe": [{into:"Arcanine", method:"Fire Stone"}],
+  "Poliwag": [{into:"Poliwhirl", method:"Level 7"}],
+  "Poliwhirl": [{into:"Poliwrath", method:"Water Stone"}, {into:"Politoed", method:"King's Rock"}],
+  "Abra": [{into:"Kadabra", method:"Level 5"}],
+  "Kadabra": [{into:"Alakazam", method:"Linking Cord"}],
+  "Machop": [{into:"Machoke", method:"Level 8"}],
+  "Machoke": [{into:"Machamp", method:"Linking Cord"}],
+  "Bellsprout": [{into:"Weepinbell", method:"Level 6"}],
+  "Weepinbell": [{into:"Victreebel", method:"Leaf Stone"}],
+  "Tentacool": [{into:"Tentacruel", method:"Level 8"}],
+  "Geodude": [{into:"Graveler", method:"Level 7"}],
+  "Graveler": [{into:"Golem", method:"Linking Cord"}],
+  "Ponyta": [{into:"Rapidash", method:"Level 10"}],
+  "Slowpoke": [{into:"Slowbro", method:"Level 10"}, {into:"Slowking", method:"King's Rock"}],
+  "Magnemite": [{into:"Magneton", method:"Level 8"}],
+  "Magneton": [{into:"Magnezone", method:"Thunder Stone"}],
+  "Doduo": [{into:"Dodrio", method:"Level 9"}],
+  "Seel": [{into:"Dewgong", method:"Level 9"}],
+  "Grimer": [{into:"Muk", method:"Level 10"}],
+  "Shellder": [{into:"Cloyster", method:"Water Stone"}],
+  "Gastly": [{into:"Haunter", method:"Level 7"}],
+  "Haunter": [{into:"Gengar", method:"Linking Cord"}],
+  "Onix": [{into:"Steelix", method:"Metal Coat"}],
+  "Drowzee": [{into:"Hypno", method:"Level 8"}],
+  "Krabby": [{into:"Kingler", method:"Level 8"}],
+  "Voltorb": [{into:"Electrode", method:"Level 8"}],
+  "Exeggcute": [{into:"Exeggutor", method:"Leaf Stone"}],
+  "Cubone": [{into:"Marowak", method:"Level 8"}],
+  "Lickitung": [{into:"Lickilicky", method:"Rock attack type"}],
+  "Koffing": [{into:"Weezing", method:"Level 9"}],
+  "Rhyhorn": [{into:"Rhydon", method:"Level 11"}],
+  "Rhydon": [{into:"Rhyperior", method:"Protector"}],
+  "Chansey": [{into:"Blissey", method:"Friendship"}],
+  "Tangela": [{into:"Tangrowth", method:"Rock attack type"}],
+  "Horsea": [{into:"Seadra", method:"Level 9"}],
+  "Seadra": [{into:"Kingdra", method:"Dragon Scale"}],
+  "Goldeen": [{into:"Seaking", method:"Level 9"}],
+  "Staryu": [{into:"Starmie", method:"Water Stone"}],
+  "Scyther": [{into:"Scizor", method:"Metal Coat"}],
+  "Electabuzz": [{into:"Electivire", method:"Electirizer"}],
+  "Magmar": [{into:"Magmortar", method:"Magmarizer"}],
+  "Magikarp": [{into:"Gyarados", method:"Level 6"}],
+  "Eevee": [{into:"Vaporeon", method:"Water Stone"}, {into:"Jolteon", method:"Thunder Stone"}, {into:"Flareon", method:"Fire Stone"}, {into:"Espeon", method:"Friendship (random)"}, {into:"Umbreon", method:"Friendship (random)"}, {into:"Leafeon", method:"Leaf Stone"}, {into:"Glaceon", method:"Ice Stone"}, {into:"Sylveon", method:"Friendship (and know a Fairy-type move)"}],
+  "Porygon": [{into:"Porygon2", method:"Upgrade"}],
+  "Porygon2": [{into:"Porygon-Z", method:"Dubious Disc"}],
+  "Omanyte": [{into:"Omastar", method:"Level 10"}],
+  "Kabuto": [{into:"Kabutops", method:"Level 10"}],
+  "Dratini": [{into:"Dragonair", method:"Level 8"}],
+  "Dragonair": [{into:"Dragonite", method:"Level 13"}],
+  "Chikorita": [{into:"Bayleef", method:"Level 5"}],
+  "Bayleef": [{into:"Meganium", method:"Level 9"}],
+  "Cyndaquil": [{into:"Quilava", method:"Level 5"}],
+  "Quilava": [{into:"Typhlosion", method:"Level 10"}],
+  "Totodile": [{into:"Croconaw", method:"Level 6"}],
+  "Croconaw": [{into:"Feraligatr", method:"Level 8"}],
+  "Sentret": [{into:"Furret", method:"Level 5"}],
+  "Hoothoot": [{into:"Noctowl", method:"Level 6"}],
+  "Ledyba": [{into:"Ledian", method:"Level 6"}],
+  "Spinarak": [{into:"Ariados", method:"Level 7"}],
+  "Chinchou": [{into:"Lanturn", method:"Level 8"}],
+  "Togepi": [{into:"Togetic", method:"Friendship"}],
+  "Togetic": [{into:"Togekiss", method:"Shiny Stone"}],
+  "Natu": [{into:"Xatu", method:"Level 7"}],
+  "Mareep": [{into:"Flaaffy", method:"Level 5"}],
+  "Flaaffy": [{into:"Ampharos", method:"Level 8"}],
+  "Marill": [{into:"Azumarill", method:"Level 6"}],
+  "Hoppip": [{into:"Skiploom", method:"Level 6"}],
+  "Skiploom": [{into:"Jumpluff", method:"Level 8"}],
+  "Aipom": [{into:"Ambipom", method:"Normal attack type"}],
+  "Sunkern": [{into:"Sunflora", method:"Sun Stone"}],
+  "Yanma": [{into:"Yanmega", method:"Rock attack type"}],
+  "Wooper": [{into:"Quagsire", method:"Level 6"}],
+  "Murkrow": [{into:"Honchkrow", method:"Dusk Stone"}],
+  "Misdreavus": [{into:"Mismagius", method:"Dusk Stone"}],
+  "Girafarig": [{into:"Farigiraf", method:"Psychic attack type"}],
+  "Pineco": [{into:"Forretress", method:"Level 9"}],
+  "Dunsparce": [{into:"Dudunsparce", method:"Normal attack type"}],
+  "Gligar": [{into:"Gliscor", method:"Razor Fang"}],
+  "Snubbull": [{into:"Granbull", method:"Level 7"}],
+  "Sneasel": [{into:"Weavile", method:"Razor Claw"}],
+  "Teddiursa": [{into:"Ursaring", method:"Level 8"}],
+  "Slugma": [{into:"Magcargo", method:"Level 10"}],
+  "Swinub": [{into:"Piloswine", method:"Level 9"}],
+  "Piloswine": [{into:"Mamoswine", method:"Rock attack type"}],
+  "Remoraid": [{into:"Octillery", method:"Level 7"}],
+  "Houndour": [{into:"Houndoom", method:"Level 7"}],
+  "Phanpy": [{into:"Donphan", method:"Level 7"}],
+  "Larvitar": [{into:"Pupitar", method:"Level 8"}],
+  "Pupitar": [{into:"Tyranitar", method:"Level 13"}],
+  "Treecko": [{into:"Grovyle", method:"Level 5"}],
+  "Grovyle": [{into:"Sceptile", method:"Level 10"}],
+  "Torchic": [{into:"Combusken", method:"Level 5"}],
+  "Combusken": [{into:"Blaziken", method:"Level 10"}],
+  "Mudkip": [{into:"Marshtomp", method:"Level 5"}],
+  "Marshtomp": [{into:"Swampert", method:"Level 10"}],
+  "Poochyena": [{into:"Mightyena", method:"Level 6"}],
+  "Zigzagoon": [{into:"Linoone", method:"Level 6"}],
+  "Wurmple": [{into:"Silcoon", method:"Level 3 (random)"}, {into:"Cascoon", method:"Level 3 (random)"}],
+  "Silcoon": [{into:"Beautifly", method:"Level 4"}],
+  "Cascoon": [{into:"Dustox", method:"Level 4"}],
+  "Lotad": [{into:"Lombre", method:"Level 5"}],
+  "Lombre": [{into:"Ludicolo", method:"Water Stone"}],
+  "Seedot": [{into:"Nuzleaf", method:"Level 5"}],
+  "Nuzleaf": [{into:"Shiftry", method:"Leaf Stone"}],
+  "Taillow": [{into:"Swellow", method:"Level 7"}],
+  "Wingull": [{into:"Pelipper", method:"Level 7"}],
+  "Ralts": [{into:"Kirlia", method:"Level 6"}],
+  "Kirlia": [{into:"Gardevoir", method:"Level 8"}, {into:"Gallade", method:"Dawn Stone"}],
+  "Surskit": [{into:"Masquerain", method:"Level 7"}],
+  "Shroomish": [{into:"Breloom", method:"Level 7"}],
+  "Slakoth": [{into:"Vigoroth", method:"Level 6"}],
+  "Vigoroth": [{into:"Slaking", method:"Level 10"}],
+  "Nincada": [{into:"Ninjask", method:"Level 6"}, {into:"Shedinja", method:"Automatic (appears alongside Ninjask, same Level/EVs)"}],
+  "Whismur": [{into:"Loudred", method:"Level 6"}],
+  "Loudred": [{into:"Exploud", method:"Level 10"}],
+  "Makuhita": [{into:"Hariyama", method:"Level 7"}],
+  "Nosepass": [{into:"Probopass", method:"Thunder Stone"}],
+  "Skitty": [{into:"Delcatty", method:"Moon Stone"}],
+  "Aron": [{into:"Lairon", method:"Level 9"}],
+  "Lairon": [{into:"Aggron", method:"Level 11"}],
+  "Meditite": [{into:"Medicham", method:"Level 10"}],
+  "Electrike": [{into:"Manectric", method:"Level 8"}],
+  "Roselia": [{into:"Roserade", method:"Shiny Stone"}],
+  "Gulpin": [{into:"Swalot", method:"Level 8"}],
+  "Carvanha": [{into:"Sharpedo", method:"Level 8"}],
+  "Wailmer": [{into:"Wailord", method:"Level 10"}],
+  "Numel": [{into:"Camerupt", method:"Level 9"}],
+  "Spoink": [{into:"Grumpig", method:"Level 9"}],
+  "Trapinch": [{into:"Vibrava", method:"Level 9"}],
+  "Vibrava": [{into:"Flygon", method:"Level 11"}],
+  "Cacnea": [{into:"Cacturne", method:"Level 9"}],
+  "Swablu": [{into:"Altaria", method:"Level 9"}],
+  "Barboach": [{into:"Whiscash", method:"Level 8"}],
+  "Corphish": [{into:"Crawdaunt", method:"Level 8"}],
+  "Baltoy": [{into:"Claydol", method:"Level 10"}],
+  "Lileep": [{into:"Cradily", method:"Level 10"}],
+  "Anorith": [{into:"Armaldo", method:"Level 10"}],
+  "Feebas": [{into:"Milotic", method:"Prism Scale"}],
+  "Shuppet": [{into:"Banette", method:"Level 10"}],
+  "Duskull": [{into:"Dusclops", method:"Level 10"}],
+  "Dusclops": [{into:"Dusknoir", method:"Reaper Cloth"}],
+  "Snorunt": [{into:"Glalie", method:"Level 11"}, {into:"Froslass", method:"Dawn Stone"}],
+  "Spheal": [{into:"Sealeo", method:"Level 9"}],
+  "Sealeo": [{into:"Walrein", method:"Level 11"}],
+  "Clamperl": [{into:"Huntail", method:"Deep Sea Tooth"}, {into:"Gorebyss", method:"Deep Sea Scale"}],
+  "Bagon": [{into:"Shelgon", method:"Level 8"}],
+  "Shelgon": [{into:"Salamence", method:"Level 12"}],
+  "Beldum": [{into:"Metang", method:"Level 6"}],
+  "Metang": [{into:"Metagross", method:"Level 11"}],
+  "Turtwig": [{into:"Grotle", method:"Level 6"}],
+  "Grotle": [{into:"Torterra", method:"Level 9"}],
+  "Chimchar": [{into:"Monferno", method:"Level 5"}],
+  "Monferno": [{into:"Infernape", method:"Level 10"}],
+  "Piplup": [{into:"Prinplup", method:"Level 5"}],
+  "Prinplup": [{into:"Empoleon", method:"Level 10"}],
+  "Starly": [{into:"Staravia", method:"Level 5"}],
+  "Staravia": [{into:"Staraptor", method:"Level 9"}],
+  "Bidoof": [{into:"Bibarel", method:"Level 5"}],
+  "Kricketot": [{into:"Kricketune", method:"Level 4"}],
+  "Shinx": [{into:"Luxio", method:"Level 5"}],
+  "Luxio": [{into:"Luxray", method:"Level 8"}],
+  "Cranidos": [{into:"Rampardos", method:"Level 8"}],
+  "Shieldon": [{into:"Bastiodon", method:"Level 8"}],
+  "Burmy": [{into:"Wormadam", method:"Level 6 (random)"}, {into:"Mothim", method:"Level 6 (random)"}],
+  "Combee": [{into:"Vespiquen", method:"Level 6"}],
+  "Buizel": [{into:"Floatzel", method:"Level 8"}],
+  "Cherubi": [{into:"Cherrim", method:"Level 7"}],
+  "Shellos": [{into:"Gastrodon", method:"Level 8"}],
+  "Drifloon": [{into:"Drifblim", method:"Level 8"}],
+  "Buneary": [{into:"Lopunny", method:"Friendship"}],
+  "Glameow": [{into:"Purugly", method:"Level 10"}],
+  "Stunky": [{into:"Skuntank", method:"Level 9"}],
+  "Bronzor": [{into:"Bronzong", method:"Level 9"}],
+  "Gible": [{into:"Gabite", method:"Level 7"}],
+  "Gabite": [{into:"Garchomp", method:"Level 12"}],
+  "Riolu": [{into:"Lucario", method:"Friendship"}],
+  "Hippopotas": [{into:"Hippowdon", method:"Level 9"}],
+  "Skorupi": [{into:"Drapion", method:"Level 10"}],
+  "Croagunk": [{into:"Toxicroak", method:"Level 10"}],
+  "Finneon": [{into:"Lumineon", method:"Level 9"}],
+  "Snover": [{into:"Abomasnow", method:"Level 10"}],
+  "Snivy": [{into:"Servine", method:"Level 5"}],
+  "Servine": [{into:"Serperior", method:"Level 10"}],
+  "Tepig": [{into:"Pignite", method:"Level 5"}],
+  "Pignite": [{into:"Emboar", method:"Level 10"}],
+  "Oshawott": [{into:"Dewott", method:"Level 5"}],
+  "Dewott": [{into:"Samurott", method:"Level 10"}],
+  "Patrat": [{into:"Watchog", method:"Level 6"}],
+  "Lillipup": [{into:"Herdier", method:"Level 5"}],
+  "Herdier": [{into:"Stoutland", method:"Level 9"}],
+  "Purrloin": [{into:"Liepard", method:"Level 6"}],
+  "Pansage": [{into:"Simisage", method:"Leaf Stone"}],
+  "Pansear": [{into:"Simisear", method:"Fire Stone"}],
+  "Panpour": [{into:"Simipour", method:"Water Stone"}],
+  "Munna": [{into:"Musharna", method:"Moon Stone"}],
+  "Pidove": [{into:"Tranquill", method:"Level 6"}],
+  "Tranquill": [{into:"Unfezant", method:"Level 9"}],
+  "Blitzle": [{into:"Zebstrika", method:"Level 8"}],
+  "Roggenrola": [{into:"Boldore", method:"Level 7"}],
+  "Boldore": [{into:"Gigalith", method:"Linking Cord"}],
+  "Woobat": [{into:"Swoobat", method:"Friendship"}],
+  "Drilbur": [{into:"Excadrill", method:"Level 9"}],
+  "Timburr": [{into:"Gurdurr", method:"Level 7"}],
+  "Gurdurr": [{into:"Conkeldurr", method:"Linking Cord"}],
+  "Tympole": [{into:"Palpitoad", method:"Level 7"}],
+  "Palpitoad": [{into:"Seismitoad", method:"Level 10"}],
+  "Sewaddle": [{into:"Swadloon", method:"Level 6"}],
+  "Swadloon": [{into:"Leavanny", method:"Friendship"}],
+  "Venipede": [{into:"Whirlipede", method:"Level 7"}],
+  "Whirlipede": [{into:"Scolipede", method:"Level 8"}],
+  "Cottonee": [{into:"Whimsicott", method:"Sun Stone"}],
+  "Petilil": [{into:"Lilligant", method:"Sun Stone"}],
+  "Sandile": [{into:"Krokorok", method:"Level 8"}],
+  "Krokorok": [{into:"Krookodile", method:"Level 10"}],
+  "Darumaka": [{into:"Darmanitan", method:"Level 9"}],
+  "Dwebble": [{into:"Crustle", method:"Level 9"}],
+  "Scraggy": [{into:"Scrafty", method:"Level 10"}],
+  "Yamask": [{into:"Cofagrigus", method:"Level 9"}],
+  "Tirtouga": [{into:"Carracosta", method:"Level 10"}],
+  "Archen": [{into:"Archeops", method:"Level 10"}],
+  "Trubbish": [{into:"Garbodor", method:"Level 10"}],
+  "Zorua": [{into:"Zoroark", method:"Level 8"}],
+  "Minccino": [{into:"Cinccino", method:"Shiny Stone"}],
+  "Gothita": [{into:"Gothorita", method:"Level 9"}],
+  "Gothorita": [{into:"Gothitelle", method:"Level 11"}],
+  "Solosis": [{into:"Duosion", method:"Level 9"}],
+  "Duosion": [{into:"Reuniclus", method:"Level 11"}],
+  "Ducklett": [{into:"Swanna", method:"Level 9"}],
+  "Vanillite": [{into:"Vanillish", method:"Level 9"}],
+  "Vanillish": [{into:"Vanilluxe", method:"Level 12"}],
+  "Deerling": [{into:"Sawsbuck", method:"Level 9"}],
+  "Karrablast": [{into:"Escavalier", method:"Linking Cord"}],
+  "Foongus": [{into:"Amoonguss", method:"Level 10"}],
+  "Frillish": [{into:"Jellicent", method:"Level 10"}],
+  "Joltik": [{into:"Galvantula", method:"Level 10"}],
+  "Ferroseed": [{into:"Ferrothorn", method:"Level 10"}],
+  "Klink": [{into:"Klang", method:"Level 10"}],
+  "Klang": [{into:"Klinklang", method:"Level 12"}],
+  "Tynamo": [{into:"Eelektrik", method:"Level 10"}],
+  "Eelektrik": [{into:"Eelektross", method:"Thunder Stone"}],
+  "Elgyem": [{into:"Beheeyem", method:"Level 11"}],
+  "Litwick": [{into:"Lampent", method:"Level 11"}],
+  "Lampent": [{into:"Chandelure", method:"Dusk Stone"}],
+  "Axew": [{into:"Fraxure", method:"Level 10"}],
+  "Fraxure": [{into:"Haxorus", method:"Level 12"}],
+  "Cubchoo": [{into:"Beartic", method:"Level 10"}],
+  "Shelmet": [{into:"Accelgor", method:"Linking Cord"}],
+  "Mienfoo": [{into:"Mienshao", method:"Level 12"}],
+  "Golett": [{into:"Golurk", method:"Level 11"}],
+  "Pawniard": [{into:"Bisharp", method:"Level 13"}],
+  "Bisharp": [{into:"Kingambit", method:"10 Battles Won"}],
+  "Rufflet": [{into:"Braviary", method:"Level 13"}],
+  "Vullaby": [{into:"Mandibuzz", method:"Level 13"}],
+  "Deino": [{into:"Zweilous", method:"Level 12"}],
+  "Zweilous": [{into:"Hydreigon", method:"Level 15"}],
+  "Larvesta": [{into:"Volcarona", method:"Level 14"}],
+  "Chespin": [{into:"Quilladin", method:"Level 5"}],
+  "Quilladin": [{into:"Chesnaught", method:"Level 10"}],
+  "Fennekin": [{into:"Braixen", method:"Level 5"}],
+  "Braixen": [{into:"Delphox", method:"Level 10"}],
+  "Froakie": [{into:"Frogadier", method:"Level 5"}],
+  "Frogadier": [{into:"Greninja", method:"Level 10"}],
+  "Bunnelby": [{into:"Diggersby", method:"Level 6"}],
+  "Fletchling": [{into:"Fletchinder", method:"Level 5"}],
+  "Fletchinder": [{into:"Talonflame", method:"Level 9"}],
+  "Scatterbug": [{into:"Spewpa", method:"Level 3"}],
+  "Spewpa": [{into:"Vivillon", method:"Level 4"}],
+  "Litleo": [{into:"Pyroar", method:"Level 9"}],
+  "Flabébé": [{into:"Floette", method:"Level 6"}],
+  "Floette": [{into:"Florges", method:"Shiny Stone"}],
+  "Skiddo": [{into:"Gogoat", method:"Level 9"}],
+  "Pancham": [{into:"Pangoro", method:"Level 9 (own a Dark-type Pokémon)"}],
+  "Espurr": [{into:"Meowstic", method:"Level 7"}],
+  "Honedge": [{into:"Doublade", method:"Level 9"}],
+  "Doublade": [{into:"Aegislash", method:"Dusk Stone"}],
+  "Spritzee": [{into:"Aromatisse", method:"Sachet"}],
+  "Swirlix": [{into:"Slurpuff", method:"Whipped Dream"}],
+  "Inkay": [{into:"Malamar", method:"Level 8"}],
+  "Binacle": [{into:"Barbaracle", method:"Level 10"}],
+  "Skrelp": [{into:"Dragalge", method:"Level 12"}],
+  "Clauncher": [{into:"Clawitzer", method:"Level 10"}],
+  "Helioptile": [{into:"Heliolisk", method:"Sun Stone"}],
+  "Tyrunt": [{into:"Tyrantrum", method:"Level 10"}],
+  "Amaura": [{into:"Aurorus", method:"Level 10"}],
+  "Goomy": [{into:"Sliggoo", method:"Level 10"}],
+  "Sliggoo": [{into:"Goodra", method:"Level 12"}],
+  "Phantump": [{into:"Trevenant", method:"Linking Cord"}],
+  "Pumpkaboo": [{into:"Gourgeist", method:"Linking Cord"}],
+  "Bergmite": [{into:"Avalugg", method:"Level 10"}],
+  "Noibat": [{into:"Noivern", method:"Level 12"}],
+  "Rowlet": [{into:"Dartrix", method:"Level 5"}],
+  "Dartrix": [{into:"Decidueye", method:"Level 9"}],
+  "Litten": [{into:"Torracat", method:"Level 5"}],
+  "Torracat": [{into:"Incineroar", method:"Level 9"}],
+  "Popplio": [{into:"Brionne", method:"Level 5"}],
+  "Brionne": [{into:"Primarina", method:"Level 9"}],
+  "Pikipek": [{into:"Trumbeak", method:"Level 5"}],
+  "Trumbeak": [{into:"Toucannon", method:"Level 8"}],
+  "Yungoos": [{into:"Gumshoos", method:"Level 6"}],
+  "Grubbin": [{into:"Charjabug", method:"Level 6"}],
+  "Charjabug": [{into:"Vikavolt", method:"Thunder Stone"}],
+  "Crabrawler": [{into:"Crabominable", method:"Ice Stone"}],
+  "Cutiefly": [{into:"Ribombee", method:"Level 7"}],
+  "Rockruff": [{into:"Lycanroc", method:"Level 7"}],
+  "Mareanie": [{into:"Toxapex", method:"Level 10"}],
+  "Mudbray": [{into:"Mudsdale", method:"Level 8"}],
+  "Dewpider": [{into:"Araquanid", method:"Level 7"}],
+  "Fomantis": [{into:"Lurantis", method:"Level 9"}],
+  "Morelull": [{into:"Shiinotic", method:"Level 7"}],
+  "Salandit": [{into:"Salazzle", method:"Level 9"}],
+  "Stufful": [{into:"Bewear", method:"Level 8"}],
+  "Bounsweet": [{into:"Steenee", method:"Level 6"}],
+  "Steenee": [{into:"Tsareena", method:"Normal attack type"}],
+  "Wimpod": [{into:"Golisopod", method:"Level 8"}],
+  "Sandygast": [{into:"Palossand", method:"Level 11"}],
+  "Type: Null": [{into:"Silvally", method:"Friendship"}],
+  "Jangmo-o": [{into:"Hakamo-o", method:"Level 9"}],
+  "Hakamo-o": [{into:"Kommo-o", method:"Level 11"}],
+  "Cosmog": [{into:"Cosmoem", method:"Level 11"}],
+  "Cosmoem": [{into:"Solgaleo", method:"Level 13 (random)"}, {into:"Lunala", method:"Level 13 (random)"}],
+  "Poipole": [{into:"Naganadel", method:"Dragon attack type"}],
+  "Meltan": [{into:"Melmetal", method:"Friendship"}],
+  "Grookey": [{into:"Thwackey", method:"Level 5"}],
+  "Thwackey": [{into:"Rillaboom", method:"Level 9"}],
+  "Scorbunny": [{into:"Raboot", method:"Level 5"}],
+  "Raboot": [{into:"Cinderace", method:"Level 9"}],
+  "Sobble": [{into:"Drizzile", method:"Level 5"}],
+  "Drizzile": [{into:"Inteleon", method:"Level 9"}],
+  "Skwovet": [{into:"Greedent", method:"Level 7"}],
+  "Rookidee": [{into:"Corvisquire", method:"Level 6"}],
+  "Corvisquire": [{into:"Corviknight", method:"Level 10"}],
+  "Blipbug": [{into:"Dottler", method:"Level 4"}],
+  "Dottler": [{into:"Orbeetle", method:"Level 8"}],
+  "Nickit": [{into:"Thievul", method:"Level 6"}],
+  "Gossifleur": [{into:"Eldegoss", method:"Level 6"}],
+  "Wooloo": [{into:"Dubwool", method:"Level 7"}],
+  "Chewtle": [{into:"Drednaw", method:"Level 7"}],
+  "Yamper": [{into:"Boltund", method:"Level 7"}],
+  "Rolycoly": [{into:"Carkol", method:"Level 6"}],
+  "Carkol": [{into:"Coalossal", method:"Level 9"}],
+  "Applin": [{into:"Flapple", method:"Tart Apple"}, {into:"Appletun", method:"Sweet Apple"}, {into:"Dipplin", method:"Syrupy Apple"}],
+  "Dipplin": [{into:"Hydrapple", method:"Dragon attack type"}],
+  "Silicobra": [{into:"Sandaconda", method:"Level 10"}],
+  "Arrokuda": [{into:"Barraskewda", method:"Level 8"}],
+  "Toxel": [{into:"Toxtricity", method:"Level 8"}],
+  "Sizzlipede": [{into:"Centiskorch", method:"Level 8"}],
+  "Clobbopus": [{into:"Grapploct", method:"Dark attack type"}],
+  "Sinistea": [{into:"Polteageist", method:"Cracked Pot"}],
+  "Hatenna": [{into:"Hattrem", method:"Level 9"}],
+  "Hattrem": [{into:"Hatterene", method:"Level 11"}],
+  "Impidimp": [{into:"Morgrem", method:"Level 9"}],
+  "Morgrem": [{into:"Grimmsnarl", method:"Level 11"}],
+  "Milcery": [{into:"Alcremie", method:"Sweet"}],
+  "Snom": [{into:"Frosmoth", method:"Friendship"}],
+  "Cufant": [{into:"Copperajah", method:"Level 9"}],
+  "Duraludon": [{into:"Archaludon", method:"Metal Alloy"}],
+  "Dreepy": [{into:"Drakloak", method:"Level 12"}],
+  "Drakloak": [{into:"Dragapult", method:"Level 14"}],
+  "Kubfu": [{into:"Urshifu", method:"Scroll of Darkness"}],
+  "Sprigatito": [{into:"Floragato", method:"Level 5"}],
+  "Floragato": [{into:"Meowscarada", method:"Level 10"}],
+  "Fuecoco": [{into:"Crocalor", method:"Level 5"}],
+  "Crocalor": [{into:"Skeledirge", method:"Level 10"}],
+  "Quaxly": [{into:"Quaxwell", method:"Level 5"}],
+  "Quaxwell": [{into:"Quaquaval", method:"Level 10"}],
+  "Lechonk": [{into:"Oinkologne", method:"Level 6"}],
+  "Tarountula": [{into:"Spidops", method:"Level 5"}],
+  "Nymble": [{into:"Lokix", method:"Level 7"}],
+  "Pawmi": [{into:"Pawmo", method:"Level 6"}],
+  "Pawmo": [{into:"Pawmot", method:"25 Steps"}],
+  "Tandemaus": [{into:"Maushold", method:"Level 7"}],
+  "Fidough": [{into:"Dachsbun", method:"Level 8"}],
+  "Smoliv": [{into:"Dolliv", method:"Level 7"}],
+  "Dolliv": [{into:"Arboliva", method:"Level 9"}],
+  "Nacli": [{into:"Naclstack", method:"Level 7"}],
+  "Naclstack": [{into:"Garganacl", method:"Level 10"}],
+  "Charcadet": [{into:"Armarouge", method:"Auspicious Armor"}, {into:"Ceruledge", method:"Malicious Armor"}],
+  "Tadbulb": [{into:"Bellibolt", method:"Thunder Stone"}],
+  "Wattrel": [{into:"Kilowattrel", method:"Level 7"}],
+  "Maschiff": [{into:"Mabosstiff", method:"Level 8"}],
+  "Shroodle": [{into:"Grafaiai", method:"Level 8"}],
+  "Bramblin": [{into:"Brambleghast", method:"25 Steps"}],
+  "Toedscool": [{into:"Toedscruel", method:"Level 8"}],
+  "Capsakid": [{into:"Scovillain", method:"Fire Stone"}],
+  "Rellor": [{into:"Rabsca", method:"25 Steps"}],
+  "Flittle": [{into:"Espathra", method:"Level 9"}],
+  "Tinkatink": [{into:"Tinkatuff", method:"Level 7"}],
+  "Tinkatuff": [{into:"Tinkaton", method:"Level 10"}],
+  "Wiglett": [{into:"Wugtrio", method:"Level 8"}],
+  "Finizen": [{into:"Palafin", method:"Level 10"}],
+  "Varoom": [{into:"Revavroom", method:"Level 10"}],
+  "Glimmet": [{into:"Glimmora", method:"Level 9"}],
+  "Greavard": [{into:"Houndstone", method:"Level 8"}],
+  "Cetoddle": [{into:"Cetitan", method:"Ice Stone"}],
+  "Frigibax": [{into:"Arctibax", method:"Level 9"}],
+  "Arctibax": [{into:"Baxcalibur", method:"Level 13"}],
+  "Gimmighoul": [{into:"Gholdengo", method:"25 Steps"}],
+  "Poltchageist": [{into:"Sinistcha", method:"Unremarkable Teacup"}],
+};
+
+// ---- Evolution items ----
+// An evolution branch's method (from NATIONAL_EVOLUTION_DATA) counts as a
+// placeable item unless it's one of the other trigger shapes that doc uses:
+// a plain level, Friendship (with or without its parenthetical conditions),
+// an "[Type] attack type" move-trigger, the two flat counters (Battles Won/
+// Steps), or Nincada's one-off "Automatic" Shedinja bonus. Everything else
+// -- stones, held items, "Linking Cord" (this game's trade stand-in), and
+// newer-gen items like the Tart/Sweet/Syrupy Apple trio -- is real and
+// needs somewhere to be found. Verified against every method string in
+// NATIONAL_EVOLUTION_DATA: 37 items, 28 non-items, no misclassifications.
+function isEvoMethodAnItem(method){
+  if(/^Level \d+/.test(method)) return false;
+  if(/Friendship/.test(method)) return false;
+  if(/attack type/.test(method)) return false;
+  if(/Battles Won/.test(method)) return false;
+  if(/Steps$/.test(method)) return false;
+  if(/^Automatic/.test(method)) return false;
+  return true;
+}
+// Scans every species that actually appears in this region (wild tables +
+// gym/E4/Champion rosters) for an item-based evolution, in a stable scan
+// order so "the first item" is well defined for the placement pass below.
+// One entry per distinct ITEM, not per species -- a stone that several of
+// this region's own species could use is still only logged once, matching
+// how the hand-authored regions place it.
+function collectRegionEvoItems(region){
+  const seenSpecies = new Set();
+  const speciesInOrder = [];
+  const addSpecies = sp => { if(!seenSpecies.has(sp)){ seenSpecies.add(sp); speciesInOrder.push(sp); } };
+  region.locations.forEach(loc => loc.table.forEach(addSpecies));
+  Object.values(region.gymTeams).forEach(g => g.members.forEach(m => addSpecies(m.species)));
+  region.eliteFourTeams.forEach(e => e.members.forEach(m => addSpecies(m.species)));
+  region.championTeam.members.forEach(m => addSpecies(m.species));
+
+  const typesByItem = {};
+  const itemOrder = [];
+  speciesInOrder.forEach(sp => {
+    const evos = NATIONAL_EVOLUTION_DATA[sp];
+    if(!evos) return;
+    evos.forEach(({method}) => {
+      if(!isEvoMethodAnItem(method)) return;
+      if(!typesByItem[method]){ typesByItem[method] = new Set(); itemOrder.push(method); }
+      typesOf(sp).forEach(t => { if(t) typesByItem[method].add(t); });
+    });
+  });
+  return itemOrder.map(item => ({ item, types: [...typesByItem[item]] }));
+}
+function townTypeMatchScore(typeTable, types){
+  return types.reduce((sum,t) => sum + ((typeTable && typeTable[t]) || 0), 0);
+}
+// Places each required item in a town/city (never the Elite Four town,
+// which stays item-free and is colored separately) -- towns with fewer
+// items so far are always preferred over ones with more (every eligible
+// town gets one before any gets a second, a second before any gets a
+// third, and so on), and within that tier, whichever town's own type
+// distribution best matches the evolving Pokemon's type(s).
+function placeEvoItems(region){
+  const required = collectRegionEvoItems(region);
+  const towns = region.mapNodes.filter(n => (n.kind==='town' || n.kind==='combo') && !n.eliteFour);
+  towns.forEach(n => { n.evoItems = []; });
+  if(!towns.length) return;
+
+  required.forEach(({item, types}) => {
+    let capacity = 1;
+    let candidates = towns.filter(n => n.evoItems.length < capacity);
+    while(!candidates.length){
+      capacity++;
+      candidates = towns.filter(n => n.evoItems.length < capacity);
+    }
+    let best = candidates[0], bestScore = -Infinity;
+    candidates.forEach(n => {
+      const score = townTypeMatchScore(n.typeTable, types) + Math.random()*0.001;
+      if(score > bestScore){ bestScore = score; best = n; }
+    });
+    best.evoItems.push(item);
+  });
 }
 
 function populateRegionDex(region){
@@ -3766,6 +4628,10 @@ function populateRegionDex(region){
   const gymDraft = { log: [], lists: {}, firstAdded: {}, completionOrder: [] };
   Object.keys(TYPE_WHEEL).forEach(t=>{ gymDraft.lists[t] = []; });
   populateRegionTables(tables, gymDraft);
+  // The exact draw order every wild-encounter family was added to the
+  // region in -- reused later (see buildTrainerRoleTables) so trainer
+  // tables draw from only this region's own dex, in that same order.
+  region.gymDraftLog = gymDraft.log.slice();
   tables.forEach(sortAndFillTable);
   region.locations = tables.map(t=>({ id:t.id, kind:t.kind, table:t.table }));
   region.locations.forEach(loc=>{ loc.typeTable = typeTableForSpeciesList(loc.table); });
@@ -3774,12 +4640,481 @@ function populateRegionDex(region){
   });
 
   const { eliteFour, gyms, champion } = buildGymEliteFourChampion(gymDraft);
-  region.eliteFourTeams = eliteFour.map(e=>({ label: e.type+' E4 Member', members: e.members }));
-  region.championTeam = { label: 'Champion', members: champion.members };
+  region.eliteFourTeams = eliteFour.map(e=>({
+    label: e.leaderName + ' (' + e.type + ' E4)', leaderName: e.leaderName, type: e.type, members: e.members,
+  }));
+  region.championTeam = { label: champion.leaderName + ' (Champion)', leaderName: champion.leaderName, members: champion.members };
   region.gymTeams = assignGymTowns(region, gyms);
   nameAllTowns(region);
   assignMapLabels(region);
+  nameAllDungeons(region);
+  assignDungeonMapLabels(region);
+  placeEvoItems(region);
+  region.label = generateRegionName();
   return region;
+}
+
+// ==== Making the generated region playable ====
+// Everything below converts a fully-generated preview `region` object into
+// the exact shape the live game engine's global `DATA` expects (see
+// rollWildEncounter/rollTrainerTeam/rollGymTeam/rollEliteFourMemberTeam/
+// pickStageForLevel/checkAndApplyLevelEvolution) so the SAME engine code
+// that drives Calli/Neo Kanto/Hoenn can drive a freshly generated region
+// too, with no changes to any of those functions.
+
+// species -> its EVOLUTION_FAMILIES family, cached (447 families never
+// change at runtime).
+let _familyByNameCache = null;
+function familyForSpecies(name){
+  if(!_familyByNameCache){
+    _familyByNameCache = {};
+    EVOLUTION_FAMILIES.forEach(fam => fam.forEach(([n])=>{ _familyByNameCache[n] = fam; }));
+  }
+  return _familyByNameCache[name] || null;
+}
+// Groups a family's flat [name,stage] pairs into DATA.trainerChain's own
+// shape: [stage0Name, stage1NameOrBranchArray, stage2NameOrBranchArray, ...]
+// -- verified 1:1 against Calli's own real data, e.g. Oddish's family here
+// produces exactly ["Oddish","Gloom",["Vileplume","Bellossom"]].
+function buildChainForFamily(family){
+  const byStage = {};
+  family.forEach(([name,stage])=>{ (byStage[stage] = byStage[stage]||[]).push(name); });
+  const maxStage = Math.max(...family.map(([,s])=>s));
+  const chain = [];
+  for(let s=0; s<=maxStage; s++){
+    const names = byStage[s];
+    if(!names || !names.length) continue;
+    chain.push(names.length === 1 ? names[0] : names.slice());
+  }
+  return chain;
+}
+function speciesRow(name){ return NATIONAL_DEX[name] || LEGENDARY_DEX[name] || null; }
+// Converts an already-resolved final species back into the root(+forced
+// branch) form DATA.gymLeaders/eliteFour/champion slots expect, so the
+// engine's own pickStageForLevel resolves it dynamically by badge count
+// instead of it being a single static pick. Forcing is only meaningful at
+// whichever stage `sp` itself branches at -- pickStageForLevel silently
+// ignores a forced branch name at any OTHER branch point in the same
+// chain, same as it would for a hand-authored region with a
+// double-branching family.
+function speciesToRootSlot(sp){
+  const fam = familyForSpecies(sp);
+  if(!fam) return sp;
+  const chain = buildChainForFamily(fam);
+  const root = Array.isArray(chain[0]) ? chain[0][0] : chain[0];
+  const branches = chain.some(Array.isArray);
+  return branches ? [root, sp] : root;
+}
+
+// Every species referenced anywhere in the region (wild tables, gym/E4/
+// champion final picks, the 3 starter lines), expanded to each one's FULL
+// evolution family so mid-chain species not directly drafted still get
+// dice/types/predecessor/minLevel/evoInfo entries. Legendary-dex species
+// have no family and are tracked separately.
+function collectPlayableSpeciesUniverse(region){
+  const national = new Set();
+  const legendary = new Set();
+  const addOne = sp => {
+    if(NATIONAL_DEX[sp]){
+      const fam = familyForSpecies(sp);
+      if(fam) fam.forEach(([n])=>national.add(n));
+      else national.add(sp);
+    } else if(LEGENDARY_DEX[sp]){
+      legendary.add(sp);
+    }
+  };
+  region.locations.forEach(loc => loc.table.forEach(addOne));
+  Object.values(region.gymTeams).forEach(g => g.members.forEach(m => addOne(m.species)));
+  region.eliteFourTeams.forEach(e => e.members.forEach(m => addOne(m.species)));
+  region.championTeam.members.forEach(m => addOne(m.species));
+  region.starters.forEach(line => { addOne(line.basic); addOne(line.stage1); addOne(line.stage2); });
+  return { national, legendary };
+}
+
+// A "required level" is what trainer/gym/wild resolution checks a rolled
+// level against before it's allowed to use this evolved form at all (see
+// pickStageForLevel). Level-up evolutions use the exact level printed in
+// Pokemon_Evolution_Data.md -- never synthesized. Non-level evolutions
+// (item/friendship/trade/attack-type/battles-won/steps/etc, which have no
+// inherent level of their own) still need one, so trainer resolution knows
+// when they're eligible: 3 more than the predecessor's own required level,
+// or 6 more if the predecessor is a basic (required level 1) -- the doc's
+// own buffer rule.
+function requiredLevelForBranch(predRequiredLevel, method){
+  const lvl = evoRequiredLevel(method);
+  if(lvl !== null) return lvl;
+  return predRequiredLevel === 1 ? predRequiredLevel + 6 : predRequiredLevel + 3;
+}
+function ensureEvoInfoEntry(evoInfo, sp){
+  if(!evoInfo[sp]) evoInfo[sp] = { evolvesFrom: null, evolvesInto: [] };
+  return evoInfo[sp];
+}
+// Builds predecessor/minLevel/evoInfo for every national-dex family touched
+// by this region, walking NATIONAL_EVOLUTION_DATA forward from each
+// family's base species (found via EVOLUTION_FAMILIES) so every step
+// already knows its true predecessor's required level -- and, since
+// NATIONAL_EVOLUTION_DATA gives real from->into edges directly, branching
+// families (Wurmple, Eevee, Gloom, ...) resolve unambiguously instead of
+// needing the positional-pairing guess an earlier version of this relied
+// on. The 3 starter lines use their own real lvl1/lvl2 (from
+// region.starters) in place of the doc, matching their hand-authored
+// STARTER_LINE_POOL values.
+function synthesizeEvolutionData(nationalSpecies, region){
+  const predecessor = {};
+  const minLevel = {};
+  const evoInfo = {};
+  const starterLevels = {};
+  region.starters.forEach(line => {
+    starterLevels[line.stage1] = line.lvl1;
+    starterLevels[line.stage2] = line.lvl2;
+  });
+
+  const visited = new Set();
+  function visit(sp, reqLevel){
+    if(visited.has(sp)) return;
+    visited.add(sp);
+    minLevel[sp] = reqLevel;
+    ensureEvoInfoEntry(evoInfo, sp);
+    (NATIONAL_EVOLUTION_DATA[sp] || []).forEach(({into, method}) => {
+      predecessor[into] = sp;
+      ensureEvoInfoEntry(evoInfo, sp).evolvesInto.push({ species: into, method });
+      ensureEvoInfoEntry(evoInfo, into).evolvesFrom = sp;
+      const custom = starterLevels[into];
+      const level = custom !== undefined ? custom : requiredLevelForBranch(reqLevel, method);
+      visit(into, level);
+    });
+  }
+
+  nationalSpecies.forEach(sp => {
+    if(visited.has(sp)) return;
+    const fam = familyForSpecies(sp);
+    const baseEntry = fam ? fam.find(([,s])=>s===0) : null;
+    visit(baseEntry ? baseEntry[0] : sp, 1);
+  });
+  return { predecessor, minLevel, evoInfo };
+}
+
+function buildDiceAndTypes(national, legendary){
+  const dice = {}, types = {};
+  new Set([...national, ...legendary]).forEach(sp => {
+    const row = speciesRow(sp);
+    if(!row) return;
+    dice[sp] = row.slice(2);
+    types[sp] = [row[0], row[1] || null];
+  });
+  return { dice, types };
+}
+
+// ---- Roaming-trainer tables ----
+// Populated with the SAME logic as the wild encounter tables
+// (populateRegionTables/scoreTableForFamily above), drawing from ONLY the
+// lines already in this region's own dex -- region.gymDraftLog is the
+// exact family draw order populateRegionTables used to fill the wild
+// tables, so reusing it (via familyForSpecies on each entry's chosen
+// final) keeps trainer tables scoped to "Pokemon in the region," not the
+// national dex at large. Each line goes into its top 2 scoring open
+// tables first (same rule wild tables use), then -- if the 11 tables
+// still aren't full once every line has had its 2 uses -- the SAME list
+// is cycled again, in the same order, for a 3rd (and, rarely, further)
+// use per line until every table fills. The one structural difference
+// from wild tables: no compass-direction term (a trainer class has no map
+// position to be biased toward), and each line contributes just its ROOT
+// species, one slot per use, since a trainer's own evolution stage is
+// resolved dynamically at battle time (pickStageForLevel), not baked in.
+function buildTrainerRoleTables(region){
+  const tables = Array.from({length:11}, () => ({ members:[], typeCounts:{}, typeTotal:0, capacity:11 }));
+  const orderedLines = (region.gymDraftLog || [])
+    .map(e => ({ family: familyForSpecies(e.chosenFinal), chosenFinal: e.chosenFinal }))
+    .filter(x => x.family);
+  if(!orderedLines.length) return { tables, lineScores:{} };
+
+  // One score per distinct line, computed once and reused everywhere that
+  // line's root gets placed (a root can land in up to 3 tables) -- see
+  // computeTrainerLineScore.
+  const lineScores = {};
+  orderedLines.forEach(({family, chosenFinal}) => {
+    const root = (family.find(([,s])=>s===0) || family[0])[0];
+    if(!(root in lineScores)) lineScores[root] = computeTrainerLineScore(family, chosenFinal);
+  });
+
+  function placeOnePass(usesThisPass){
+    for(const {family} of orderedLines){
+      const openTables = tables.filter(t => t.members.length < t.capacity);
+      if(!openTables.length) return;
+      const lineScore = familyTypeScore(family);
+      const scored = openTables.map(t => ({ t, score: trainerRoleTableScore(t, lineScore) }))
+        .sort((a,b)=>b.score-a.score);
+      const root = (family.find(([,s])=>s===0) || family[0])[0];
+      const uses = Math.min(usesThisPass, scored.length);
+      for(let i=0;i<uses;i++) placeRootInTrainerRoleTable(scored[i].t, root);
+    }
+  }
+  placeOnePass(2); // every line's top-2 tables
+  let guard = 0;
+  while(tables.some(t => t.members.length < t.capacity) && guard < 30){
+    placeOnePass(1); // 3rd+ use: cycle the same list again, one more table per line
+    guard++;
+  }
+  // A very sparse region could still fall short after many cycles -- pad
+  // any leftover slots by repeating members that table already has, so
+  // every table always reaches exactly 11 (rollTrainerTeam indexes
+  // table[sum-2] directly and expects every slot filled).
+  tables.forEach(t=>{
+    while(t.members.length < t.capacity && t.members.length){
+      t.members.push(t.members[Math.floor(Math.random()*t.members.length)]);
+    }
+  });
+  return { tables, lineScores };
+}
+// A line's "power" for trainer-table slotting: the average, across every
+// stage on its own specific path from root to the final form actually
+// drafted for this region (chosenFinal -- for a family that splits, only
+// the chosen branch's stages count), of that stage's own sum of adjusted
+// base stats (statTotalOf). Plus rand()*5 jitter so exact stat-total ties
+// don't produce a fixed order.
+function stagesForChosenFinal(family, chosenFinal){
+  const byStage = {};
+  family.forEach(([n,s])=>{ (byStage[s]=byStage[s]||[]).push(n); });
+  const maxStage = Math.max(...family.map(([,s])=>s));
+  const stages = [];
+  for(let s=0; s<=maxStage; s++){
+    const names = byStage[s];
+    if(!names) continue;
+    stages.push(names.includes(chosenFinal) ? chosenFinal : names[0]);
+  }
+  return stages;
+}
+function computeTrainerLineScore(family, chosenFinal){
+  const stages = stagesForChosenFinal(family, chosenFinal);
+  const avg = stages.reduce((a,n)=>a+statTotalOf(n), 0) / stages.length;
+  return avg + Math.random()*5;
+}
+function trainerRoleTableScore(table, lineScore){
+  const tScore = tableTypeScore(table);
+  let dotType = 0;
+  for(const t in lineScore){ if(tScore[t]) dotType += tScore[t]*lineScore[t]; }
+  return dotType*5 + Math.random();
+}
+function placeRootInTrainerRoleTable(table, root){
+  table.members.push(root);
+  const row = NATIONAL_DEX[root];
+  table.typeCounts[row[0]] = (table.typeCounts[row[0]]||0) + 1; table.typeTotal++;
+  if(row[1]){ table.typeCounts[row[1]] = (table.typeCounts[row[1]]||0) + 1; table.typeTotal++; }
+}
+// One flavor name per type (roughly matching the archetype real trainer
+// classes lean on for that type -- Bug Catcher, Bird Keeper, Black Belt,
+// Swimmer, etc.), plus a handful of type-neutral names for whichever
+// table(s) lose a naming collision (see nameAndFinalizeTrainerTables).
+const TRAINER_TYPE_CLASS_NAMES = {
+  Normal:'Youngster', Fire:'Fire Breather', Water:'Swimmer', Grass:'Gardener',
+  Electric:'Engineer', Ice:'Skier', Fighting:'Black Belt', Poison:'Biker',
+  Ground:'Digger', Flying:'Bird Keeper', Bug:'Bug Catcher', Rock:'Climber',
+  Ghost:'Medium', Dragon:'Dragon Tamer', Dark:'Punk', Steel:'Mechanic',
+  Psychic:'Psychic', Fairy:'Beauty',
+};
+const TRAINER_GENERAL_CLASS_NAMES = ['Ace Trainer','Veteran','Backpacker','Camper','Cyclist','Ranger','Rival','Tourist'];
+// ---- Roaming trainer names (e.g. "Bug Catcher Jonathan") -- all regions ----
+// Only the classes with a real single-gender identity (matching mainline
+// convention, and this game's own Youngster/Lass pairing) are pinned;
+// everything else -- including every class name a real region's own
+// hand-authored trainerClassBySum can produce (Ace Trainer, Veteran,
+// Silph Researcher, Team Aqua/Magma Grunt, Camper, Backpacker, Cyclist,
+// Ranger, ...) -- draws from either pool at random.
+const TRAINER_CLASS_GENDER = {
+  Youngster:'M', 'Bug Catcher':'M', Hiker:'M', 'Bird Keeper':'M', 'Black Belt':'M',
+  'Fire Breather':'M', Biker:'M', 'Dragon Tamer':'M', Psychic:'M',
+  Lass:'F', Beauty:'F', Medium:'F', Skier:'F',
+};
+const TRAINER_FIRST_NAMES_MALE = ['Jonathan','Michael','Ethan','Andrew','Ryan','Kevin','Brandon','Justin','Tyler','Jacob',
+  'Nathan','Aaron','Dylan','Cody','Austin','Brian','Sean','Adam','Marcus','Derek',
+  'Jordan','Wesley','Trevor','Grant','Colin','Miles','Owen','Elliot','Felix','Gavin'];
+const TRAINER_FIRST_NAMES_FEMALE = ['Emily','Sarah','Jessica','Ashley','Rachel','Megan','Amanda','Lauren','Hannah','Chloe',
+  'Grace','Olivia','Natalie','Julia','Vanessa','Erin','Kayla','Brooke','Paige','Mia',
+  'Sophie','Claire','Abigail','Danielle','Renee','Kelsey','Rebecca','Alyssa','Morgan','Jenna'];
+function randomTrainerName(className){
+  const gender = TRAINER_CLASS_GENDER[className] || (Math.random() < 0.5 ? 'M' : 'F');
+  const pool = gender === 'M' ? TRAINER_FIRST_NAMES_MALE : TRAINER_FIRST_NAMES_FEMALE;
+  return className + ' ' + pool[Math.floor(Math.random()*pool.length)];
+}
+// Slot-rank order used for both placing a class's own lines into its 11
+// slots and placing the 11 classes across the 11 encounter sums: highest
+// rank goes to sum 2, then 4,6,8,10,12 (the low-probability extremes get
+// the strongest picks), then 3,5,7,9,11 for the rest in descending order,
+// with the single lowest-ranked entry landing on sum 11.
+const TRAINER_SLOT_ORDER = ['2','4','6','8','10','12','3','5','7','9','11'];
+// Names each of the 11 populated tables after its own most common type; if
+// two or more tables share the same most-common type, whichever one has
+// the highest share of it keeps that name and the rest fall back to a
+// general (non-type) class name instead. Then places each table's lines
+// into its 11 slots by descending lineScores (TRAINER_SLOT_ORDER), and
+// places the 11 finished classes across the 11 encounter sums by their own
+// descending average line score (same order).
+function nameAndFinalizeTrainerTables(tables, lineScores){
+  const info = tables.map(t => {
+    if(!t.typeTotal) return { topType:null, topShare:0 };
+    const sorted = Object.entries(t.typeCounts).sort((a,b)=>b[1]-a[1]);
+    return { topType: sorted[0][0], topShare: sorted[0][1] / t.typeTotal };
+  });
+  const byType = {};
+  info.forEach((inf, i) => { if(inf.topType){ (byType[inf.topType] = byType[inf.topType] || []).push(i); } });
+  const winnerForType = {};
+  Object.keys(byType).forEach(type => {
+    const idxs = byType[type].slice().sort((a,b) => info[b].topShare - info[a].topShare);
+    winnerForType[type] = idxs[0];
+  });
+
+  const usedNames = new Set();
+  const generalPool = shuffled(TRAINER_GENERAL_CLASS_NAMES);
+  let generalIdx = 0;
+  const classNames = tables.map((t, i) => {
+    const inf = info[i];
+    if(inf.topType && winnerForType[inf.topType] === i && TRAINER_TYPE_CLASS_NAMES[inf.topType]){
+      const name = TRAINER_TYPE_CLASS_NAMES[inf.topType];
+      usedNames.add(name);
+      return name;
+    }
+    while(generalIdx < generalPool.length && usedNames.has(generalPool[generalIdx])) generalIdx++;
+    const name = generalIdx < generalPool.length ? generalPool[generalIdx] : ('Trainer '+(i+1));
+    usedNames.add(name);
+    generalIdx++;
+    return name;
+  });
+
+  const trainerClassBySum = {};
+  const trainerTables = {};
+  const classAvgScores = tables.map((t, i) => {
+    const ranked = t.members.slice().sort((a,b) => (lineScores[b]||0) - (lineScores[a]||0));
+    const bySum = {};
+    ranked.forEach((root, rank) => { bySum[TRAINER_SLOT_ORDER[rank]] = root; });
+    const arr = new Array(11);
+    for(let sum=2; sum<=12; sum++) arr[sum-2] = bySum[String(sum)];
+    trainerTables[classNames[i]] = arr;
+    return t.members.reduce((a,root)=>a+(lineScores[root]||0), 0) / (t.members.length || 1);
+  });
+  const rankedClassIdx = tables.map((_,i)=>i).sort((a,b) => classAvgScores[b]-classAvgScores[a]);
+  rankedClassIdx.forEach((i, rank) => { trainerClassBySum[TRAINER_SLOT_ORDER[rank]] = classNames[i]; });
+  return { trainerClassBySum, trainerTables };
+}
+// trainerChain needs a chain entry for every root that anything (roaming
+// trainers, gyms, E4, Champion) might ask pickStageForLevel to resolve --
+// simplest robust way to guarantee that is to build one for every family
+// touched anywhere in the final species universe, not just the trainer
+// tables' own roots.
+function buildTrainerChainForUniverse(national){
+  const trainerChain = {};
+  const seenRoots = new Set();
+  national.forEach(sp => {
+    const fam = familyForSpecies(sp);
+    const root = fam ? (fam.find(([,s])=>s===0) || fam[0])[0] : sp;
+    if(seenRoots.has(root)) return;
+    seenRoots.add(root);
+    trainerChain[root] = fam ? buildChainForFamily(fam) : [root];
+  });
+  return trainerChain;
+}
+
+// Converts the generator's already-resolved final-species gym/E4/Champion
+// picks back into root(+forced-branch) form so the same engine machinery
+// that drives Calli (pickStageForLevel/rollGymTeam/rollEliteFourMemberTeam)
+// resolves them dynamically as the player earns badges, instead of a
+// single static team baked in at generation time.
+function convertGymLeaders(region){
+  const gymLeaders = {};
+  Object.keys(region.gymTeams).forEach(leaderName => {
+    const gym = region.gymTeams[leaderName];
+    const townNode = region.mapNodes.find(n => n.gymLeader === leaderName);
+    const slots = {};
+    gym.members.forEach(m => { slots[m.slotKey] = speciesToRootSlot(m.species); });
+    gymLeaders[leaderName] = { town: townNode ? townNode.name : '', type: gym.type, slots };
+  });
+  return gymLeaders;
+}
+function convertEliteFourAndChampion(region){
+  const eliteFour = region.eliteFourTeams.map((e,i) => {
+    const slots = {}, levels = {};
+    e.members.forEach(m => { slots[m.slotKey] = speciesToRootSlot(m.species); levels[m.slotKey] = m.level; });
+    return { id:'E4_'+(i+1), name:e.leaderName, type:e.type, slots, levels };
+  });
+  const c = region.championTeam;
+  const slots = {}, levels = {};
+  c.members.forEach(m => { slots[m.slotKey] = speciesToRootSlot(m.species); levels[m.slotKey] = m.level; });
+  const champion = { id:'CHAMPION', name:c.leaderName, type:'Mixed', slots, levels };
+  return { eliteFour, champion };
+}
+
+// Adds the .name/.locationId fields the live engine expects on every
+// route/dungeon-kind map node (the preview never needed them -- it reads
+// region.locations directly). Also refreshes combo nodes' .townName/
+// .dungeonName (set to raw ids at creation time, before naming ran) since
+// the live engine's nodeDisplayName() reads those two fields specifically
+// for a combo tile, not .name.
+function fixMapNodesForPlay(region){
+  region.locations.forEach(loc => {
+    if(loc.kind === 'route' && !loc.name) loc.name = loc.id;
+  });
+  const locByTableId = {};
+  region.locations.forEach(loc => { locByTableId[loc.id] = loc; });
+  region.mapNodes.forEach(n => {
+    if(n.kind === 'route' || n.kind === 'dungeon'){
+      const tableId = customRegionTableIdForNode(n);
+      const loc = locByTableId[tableId];
+      n.name = loc ? loc.name : tableId;
+      n.locationId = tableId;
+      if(n.kind === 'dungeon' && loc && loc.mapLabel) n.mapLabel = loc.mapLabel;
+    } else if(n.kind === 'combo'){
+      n.townName = n.name;
+      n.dungeonName = (locByTableId[n.dungeonId] && locByTableId[n.dungeonId].name) || n.dungeonId;
+      n.dungeonLocationId = n.dungeonId;
+      n.dungeonMapLabel = (locByTableId[n.dungeonId] && locByTableId[n.dungeonId].mapLabel) || null;
+    }
+  });
+}
+function buildEvoItemsDict(region){
+  const evoItems = {};
+  region.mapNodes.forEach(n => {
+    if((n.kind==='town'||n.kind==='combo') && n.evoItems && n.evoItems.length){
+      const key = n.kind==='combo' ? n.townId : n.id;
+      evoItems[key] = n.evoItems.slice();
+    }
+  });
+  return evoItems;
+}
+
+// Top-level entry point: turns a fully-generated preview `region` into
+// { data, label } -- `data` is ready to be assigned straight to the
+// engine's global DATA, `label` is the generated region's own name.
+function buildPlayableCustomRegionData(region){
+  fixMapNodesForPlay(region);
+  // Trainer tables draw only from families already in region.gymDraftLog
+  // (the same ones the wild tables were built from), so every root they
+  // could use is already guaranteed to be part of the species universe
+  // collected just below -- no separate folding-in needed.
+  const { tables: roleTables, lineScores } = buildTrainerRoleTables(region);
+
+  const { national, legendary } = collectPlayableSpeciesUniverse(region);
+  const { predecessor, minLevel, evoInfo } = synthesizeEvolutionData(national, region);
+  const { dice, types } = buildDiceAndTypes(national, legendary);
+  const { trainerClassBySum, trainerTables } = nameAndFinalizeTrainerTables(roleTables, lineScores);
+  const trainerChain = buildTrainerChainForUniverse(national);
+  const gymLeaders = convertGymLeaders(region);
+  const { eliteFour, champion } = convertEliteFourAndChampion(region);
+  const evoItems = buildEvoItemsDict(region);
+  const eliteNode = region.mapNodes.find(n=>n.eliteFour);
+  const label = region.label || generateRegionName();
+
+  const data = {
+    locations: region.locations,
+    dice, types, predecessor, minLevel,
+    trainerClassBySum, trainerTables, trainerChain,
+    trainerMinLevel: minLevel,
+    gymLeaders, eliteFour, champion,
+    mapNodes: region.mapNodes, mapEdges: region.mapEdges,
+    evoInfo, evoItems,
+    eliteFourTownId: eliteNode ? eliteNode.id : null,
+    regionLabel: label,
+    starterSpecies: region.starters.map(l=>l.basic),
+  };
+  return { data, label };
 }
 
 const REGION_GEN_DIRS = { N:{dx:0,dy:-1}, S:{dx:0,dy:1}, E:{dx:1,dy:0}, W:{dx:-1,dy:0} };
@@ -4120,6 +5455,8 @@ function generateCustomRegionData(){
 function customRegionMapSvgHtml(region){
   const byId = {};
   region.mapNodes.forEach(n => byId[n.id] = n);
+  const locById = {};
+  region.locations.forEach(l => locById[l.id] = l);
   const w = region.maxCol * CELL, h = region.maxRow * CELL;
   let svg = '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'">';
   region.mapEdges.forEach(([a,b])=>{
@@ -4135,14 +5472,15 @@ function customRegionMapSvgHtml(region){
       '" data-action="selectCustomRegionNode" data-node="'+n.id+'">';
     if(n.kind === 'town'){
       const s = 11;
-      const fill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
+      const fill = n.eliteFour ? 'var(--elite-purple)' : (n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)');
       svg += '<rect class="map-node-shape" x="'+(p.x-s)+'" y="'+(p.y-s)+'" width="'+(s*2)+'" height="'+(s*2)+'" fill="'+fill+'"></rect>' +
         '<text class="map-node-label" x="'+p.x+'" y="'+(p.y+3)+'" text-anchor="middle" font-size="8">'+(n.mapLabel||n.id)+'</text>';
     } else if(n.kind === 'dungeon'){
       const s = 11;
       const points = [[p.x,p.y-s],[p.x-s,p.y+s*0.8],[p.x+s,p.y+s*0.8]].map(pt=>pt.join(',')).join(' ');
+      const dLoc = locById[n.id];
       svg += '<polygon class="map-node-shape" points="'+points+'" fill="var(--rust)"></polygon>' +
-        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y+21)+'" text-anchor="middle" font-size="6.5">'+n.id+'</text>';
+        '<text class="map-node-label" x="'+p.x+'" y="'+(p.y+21)+'" text-anchor="middle" font-size="6.5">'+((dLoc&&dLoc.mapLabel)||n.id)+'</text>';
     } else if(n.kind === 'combo'){
       const w2 = 12, hTop = 10, hBottom = 12;
       const topFill = n.gymLeader ? 'var(--gold)' : 'var(--nogym-green)';
@@ -4152,7 +5490,7 @@ function customRegionMapSvgHtml(region){
         '<polygon class="map-node-shape" points="'+bottomPts+'" fill="var(--rust)"></polygon>' +
         '<line class="map-node-divider" x1="'+(p.x-w2)+'" y1="'+p.y+'" x2="'+(p.x+w2)+'" y2="'+p.y+'"></line>' +
         '<text class="map-node-label" x="'+p.x+'" y="'+(p.y-3)+'" text-anchor="middle" font-size="7">'+(n.mapLabel||n.townId)+'</text>' +
-        '<text class="map-node-label map-node-label-light" x="'+p.x+'" y="'+(p.y+9)+'" text-anchor="middle" font-size="6">'+n.dungeonId+'</text>';
+        '<text class="map-node-label map-node-label-light" x="'+p.x+'" y="'+(p.y+9)+'" text-anchor="middle" font-size="6">'+((locById[n.dungeonId]&&locById[n.dungeonId].mapLabel)||n.dungeonId)+'</text>';
     } else {
       const rr = 11;
       const fontSize = n.id.length >= 3 ? 6.5 : 7.5;
@@ -4203,15 +5541,16 @@ function buildCustomRegionEncounterHtml(region, tableId){
 function customRegionMonCardHtml(member){
   const row = NATIONAL_DEX[member.species];
   return '<div class="mon-detail-card">' +
+    spriteImgHtml(member.species, 'sprite-lg') +
     '<div class="mon-detail-name">' + member.species + ' Lv ' + member.level + '</div>' +
     trainerTypeBlockHtml(row[0], row[1], member.atk) +
     statRowHtml(row.slice(2)) +
   '</div>';
 }
-function customRegionGymTeamHtml(region, leaderName){
-  const gym = region.gymTeams[leaderName];
+function customRegionGymTeamHtml(region, leaderKey){
+  const gym = region.gymTeams[leaderKey];
   if(!gym) return '';
-  return '<div class="map-encounter-title">Gym Team</div>' +
+  return '<div class="map-encounter-title">' + gym.leaderName + '\'s Gym Team (' + gym.type + ')</div>' +
     gym.members.map(customRegionMonCardHtml).join('');
 }
 // Elite Four + Champion, tabbed exactly like the real regions' ELI preview
@@ -4229,15 +5568,23 @@ function customRegionEliteFourHtml(region){
     '<div class="tab-row-scroll">' + tabsHtml + '</div>' +
     team.members.map(customRegionMonCardHtml).join('');
 }
+function customRegionEvoItemsHtml(n){
+  const items = n.evoItems || [];
+  if(!items.length) return '';
+  return '<div class="map-info-evo">Evolution item' + (items.length>1?'s':'') + ' here: <b>' + items.join(', ') + '</b></div>';
+}
 function customRegionSidebarHtml(region){
   const n = customRegionSelectedNodeId ? region.mapNodes.find(x=>x.id===customRegionSelectedNodeId) : null;
   if(!n) return '<div class="map-info-empty">Click a node to see what\'s there.</div>';
 
   if(n.kind === 'combo'){
-    return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + (n.mapLabel||n.townId) + ' / ' + n.dungeonId + ')</span></div>' +
+    const dungeonLoc = region.locations.find(l=>l.id===n.dungeonId);
+    const gym = n.gymLeader ? region.gymTeams[n.gymLeader] : null;
+    return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + (n.mapLabel||n.townId) + ' / ' + ((dungeonLoc&&dungeonLoc.mapLabel)||n.dungeonId) + ')</span></div>' +
       '<div class="map-info-kind">Town + Dungeon (same spot)</div>' +
-      '<div class="map-info-desc">' + (n.gymLeader ? ('Home of the ' + n.gymLeader + '.') : 'No gym here.') + ' Dungeon shares this tile.</div>' +
-      (n.gymLeader ? customRegionGymTeamHtml(region, n.gymLeader) : '') +
+      '<div class="map-info-desc">' + (gym ? ('Home of Gym Leader ' + gym.leaderName + ' (' + gym.type + ').') : 'No gym here.') + ' The ' + (dungeonLoc && dungeonLoc.name ? dungeonLoc.name : 'dungeon') + ' shares this tile.</div>' +
+      customRegionEvoItemsHtml(n) +
+      (gym ? customRegionGymTeamHtml(region, n.gymLeader) : '') +
       buildCustomRegionEncounterHtml(region, n.dungeonId);
   }
   if(n.kind === 'town'){
@@ -4246,13 +5593,19 @@ function customRegionSidebarHtml(region){
         '<div class="map-info-kind">Town / City (Elite Four)</div>' +
         customRegionEliteFourHtml(region);
     }
+    const gym = n.gymLeader ? region.gymTeams[n.gymLeader] : null;
     return '<div class="map-info-name">' + n.name + ' <span style="font-weight:400; opacity:0.6;">(' + (n.mapLabel||n.id) + ')</span></div>' +
       '<div class="map-info-kind">Town / City' + (n.central?' (Central City)':'') + '</div>' +
-      '<div class="map-info-desc">' + (n.gymLeader ? ('Home of the ' + n.gymLeader + '.') : 'No gym here.') + ' No wild encounters in towns.</div>' +
-      (n.gymLeader ? customRegionGymTeamHtml(region, n.gymLeader) : '');
+      '<div class="map-info-desc">' + (gym ? ('Home of Gym Leader ' + gym.leaderName + ' (' + gym.type + ').') : 'No gym here.') + ' No wild encounters in towns.</div>' +
+      customRegionEvoItemsHtml(n) +
+      (gym ? customRegionGymTeamHtml(region, n.gymLeader) : '');
   }
   const tableId = customRegionTableIdForNode(n);
-  return '<div class="map-info-name">' + tableId + '</div>' +
+  const loc = region.locations.find(l=>l.id===tableId);
+  const title = (n.kind === 'dungeon' && loc && loc.name)
+    ? loc.name + ' <span style="font-weight:400; opacity:0.6;">(' + (loc.mapLabel||tableId) + ')</span>'
+    : tableId;
+  return '<div class="map-info-name">' + title + '</div>' +
     '<div class="map-info-kind">' + (n.kind === 'dungeon' ? 'Dungeon' : 'Route') + '</div>' +
     '<div class="map-info-desc">Wild encounter location.</div>' +
     buildCustomRegionEncounterHtml(region, tableId);
@@ -4270,13 +5623,14 @@ function renderCustomRegionMapScreen(){
   if(!customRegion) customRegion = generateCustomRegionData();
   const r = customRegion;
   return '<div class="card">' +
-    '<div class="card-title">Custom Region <span style="font-weight:400; font-size:0.65em; color:var(--redwood);">(Still being built)</span></div>' +
-    '<div class="card-sub">Randomly generated with the region generator -- '+r.totalTowns+' towns, '+r.totalDungeons+' dungeons, '+r.totalRoutes+' routes, '+r.locations.length+' wild encounter tables stocked ('+r.locations.reduce((a,t)=>a+t.table.length,0)+' Pokemon placed, including '+r.locations.reduce((a,t)=>a+(NATIONAL_DEX[t.table[10]]?0:1),0)+' Legendary/Mythical). Still no trainers yet.</div>' +
+    '<div class="card-title">'+(r.label||'Custom Region')+'</div>' +
+    '<div class="card-sub">Randomly generated with the region generator -- '+r.totalTowns+' towns, '+r.totalDungeons+' dungeons, '+r.totalRoutes+' routes, '+r.locations.length+' wild encounter tables stocked ('+r.locations.reduce((a,t)=>a+t.table.length,0)+' Pokemon placed, including '+r.locations.reduce((a,t)=>a+(NATIONAL_DEX[t.table[10]]?0:1),0)+' Legendary/Mythical).</div>' +
     '<div class="card-sub" style="margin-top:-4px;">Starter Options</div>' +
     '<div class="starter-grid">' + customRegionStarterCardsHtml(r.starters) + '</div>' +
     '<div class="map-legend">' +
       '<span><span class="legend-swatch legend-town"></span>Gym town</span>' +
       '<span><span class="legend-swatch legend-town-nogym"></span>Town, no gym</span>' +
+      '<span><span class="legend-swatch legend-elite"></span>Elite Four</span>' +
       '<span><span class="legend-swatch legend-dungeon"></span>Dungeon</span>' +
       '<span><span class="legend-swatch legend-route"></span>Route</span>' +
       '<span>&#9634;&#8209;&#8209; dashed = Central City</span>' +
@@ -4285,6 +5639,7 @@ function renderCustomRegionMapScreen(){
     '<div class="map-hint">Click any route/dungeon (or town) to see what\'s there.</div>' +
     '<div class="map-info">' + customRegionSidebarHtml(r) + '</div>' +
     '<div class="choice-grid" style="margin-top:10px;">' +
+      '<button type="button" class="btn btn-wild" data-action="playCustomRegion">Play This Region!</button>' +
       '<button type="button" class="btn btn-primary" data-action="generateCustomRegion">Generate Another</button>' +
       '<button type="button" class="btn" data-action="backToRegionPick">Back</button>' +
     '</div>' +
@@ -4542,7 +5897,7 @@ function rollTrainerTeam(){
     opp.atk = rollTrueTypeAttack(opp.types);
     team.push(opp);
   }
-  return { className, team };
+  return { className, trainerName: randomTrainerName(className), team };
 }
 function rollGymTeam(leaderName){
   const badges = gameState.defeatedGymLeaders.length;
@@ -4606,6 +5961,8 @@ let rollingBattle = null; // { nA, nB } dice counts while the "Fight!" roll anim
 let activeGameTab = 'map'; // 'map' | 'mypokemon' | 'data' -- which of the three secondary panels is showing
 let dataBuilt = false; // whether #dataList has been populated for the current DATA/region
 let dataLocationIndex = null; // species -> [{id, name, sum}] wild-encounter reverse index, built once per region
+let dexSort = 'regional'; // 'regional' | 'alpha' -- sort order of the Pokedex tab
+let dexTypeFilter = null; // null (all types) or a Capitalized type name -- Pokedex tab filter
 
 /* ============ Rendering ============ */
 const STARTERS_BY_REGION = {
@@ -4662,7 +6019,7 @@ function renderBadgePanel(){
   if(!badgePanelOpen) return;
   const boxes = Object.keys(DATA.gymLeaders).map(name=>{
     const node = DATA.mapNodes.find(n => n.gymLeader === name);
-    const abbrev = node ? node.id : '???';
+    const abbrev = node ? (node.mapLabel || node.id) : '???';
     const info = DATA.gymLeaders[name];
     const beaten = gameState.defeatedGymLeaders.includes(name);
     const bg = beaten ? (TYPE_COLOR[(info.type||'').toLowerCase()] || '#888') : '#ccc';
@@ -4736,11 +6093,17 @@ function render(){
 // Looks up a node's display name within a SPECIFIC region's own data, without
 // touching the global DATA/nodesById -- lets the home screen summarize slots
 // that are playing different regions side by side.
-function nodeDisplayNameInRegion(regionKey, nodeId){
-  const regionData = REGIONS[regionKey] && REGIONS[regionKey].data;
+function nodeDisplayNameInRegion(regionKey, nodeId, slot){
+  const regionData = regionKey === 'custom' ? loadCustomRegionData(slot) : (REGIONS[regionKey] && REGIONS[regionKey].data);
   if(!regionData) return 'Unknown';
   const node = (regionData.mapNodes || []).find(n=>n.id===nodeId);
   return node ? nodeDisplayName(node) : 'Unknown';
+}
+// A save slot's region label -- the shared REGIONS[...].label for the 3
+// real regions, or the generated name stashed on gameState for a Custom
+// Region (whose data lives in its own per-slot key, not REGIONS).
+function regionLabelFor(gs){
+  return gs.region === 'custom' ? gs.customRegionLabel : ((REGIONS[gs.region] && REGIONS[gs.region].label) || gs.region);
 }
 
 function renderHomeScreen(){
@@ -4748,8 +6111,8 @@ function renderHomeScreen(){
   for(let slot=1; slot<=SAVE_SLOT_COUNT; slot++){
     const gs = loadGameStateFromSlot(slot);
     if(gs && gs.started){
-      const regionLabel = (REGIONS[gs.region] && REGIONS[gs.region].label) || gs.region;
-      const locName = nodeDisplayNameInRegion(gs.region, gs.currentNodeId);
+      const regionLabel = regionLabelFor(gs);
+      const locName = nodeDisplayNameInRegion(gs.region, gs.currentNodeId, slot);
       const badges = (gs.defeatedGymLeaders||[]).length;
       cards +=
         '<div class="save-slot-card">' +
@@ -4789,8 +6152,8 @@ function renderRegionPickScreen(){
     '</div>';
   }).join('') +
     '<div class="save-slot-card" data-action="generateCustomRegion" style="cursor:pointer; border-style:dashed;">' +
-      '<div class="save-slot-title">Custom Region <span style="font-weight:400; font-size:0.7em; color:var(--redwood);">(Still being built)</span></div>' +
-      '<div class="save-slot-meta">A freshly randomized region layout from the region generator. Map preview only for now -- picking this shows the map, not a playable adventure.</div>' +
+      '<div class="save-slot-title">Custom Region</div>' +
+      '<div class="save-slot-meta">A freshly randomized region layout from the region generator -- its own map, dex, gyms, and Elite Four. Preview it, reroll as many times as you like, then play it.</div>' +
     '</div>';
   return '<div class="card">' +
     '<div class="card-title">Choose Your Region</div>' +
@@ -4801,8 +6164,8 @@ function renderRegionPickScreen(){
 
 // Page <title> + masthead brand -- region-neutral on the home/region-pick
 // screens, "{Region} Adventure" once a specific region is actually active.
-function updateRegionBranding(regionKey){
-  const label = regionKey && REGIONS[regionKey] ? REGIONS[regionKey].label : null;
+function updateRegionBranding(regionKey, explicitLabel){
+  const label = explicitLabel || (regionKey && REGIONS[regionKey] ? REGIONS[regionKey].label : null);
   document.title = (label ? label + ' Adventure' : 'Pokémon Adventure') + ' -- Play';
   const brandEl = document.getElementById('brandLabel');
   if(brandEl) brandEl.textContent = label ? label + ' Adventure' : 'Pokémon Adventure';
@@ -4827,9 +6190,15 @@ function goHome(){
 function continueSlot(slot){
   currentSlot = slot;
   gameState = loadGameState();
-  DATA = REGIONS[gameState.region].data;
+  DATA = gameState.region === 'custom' ? loadCustomRegionData(slot) : REGIONS[gameState.region].data;
   rebuildNodesById();
-  updateRegionBranding(gameState.region);
+  // A custom region's starter species aren't baked into STARTERS_BY_REGION
+  // like the 3 real regions are -- restore them from the reloaded DATA so
+  // anything that reads STARTERS_BY_REGION.custom (the start screen, the
+  // Pokedex tab's "starters first" sort) stays correct after a reload,
+  // not just right after generation.
+  if(gameState.region === 'custom' && DATA) STARTERS_BY_REGION.custom = DATA.starterSpecies || [];
+  updateRegionBranding(gameState.region, regionLabelFor(gameState));
   startPick = { region:null, starter:null, town:null };
   view = gameState.started ? 'board' : 'start';
   encounter = null;
@@ -4862,6 +6231,28 @@ function pickRegion(key){
   rebuildNodesById();
   updateRegionBranding(key);
   startPick.region = key;
+  view = 'start';
+  activeGameTab = 'map';
+  dataBuilt = false;
+  tmFlow = null;
+  pendingTmOffer = false;
+  render();
+}
+// Commits the currently-previewed Custom Region (browsed/rerolled via
+// "Generate Another") to this save slot and starts the same familiar
+// starter+town flow as pickRegion() -- just sourced from a freshly built
+// DATA object instead of one of the 3 shared REGIONS entries, and persisted
+// to its own per-slot key since it's unique to this playthrough.
+function playCustomRegion(){
+  if(!customRegion) customRegion = generateCustomRegionData();
+  const { data, label } = buildPlayableCustomRegionData(customRegion);
+  try { localStorage.setItem(customRegionDataKey(), JSON.stringify(data)); }
+  catch(e){ console.error('Could not save custom region data', e); }
+  DATA = data;
+  rebuildNodesById();
+  STARTERS_BY_REGION.custom = data.starterSpecies;
+  updateRegionBranding('custom', label);
+  startPick.region = 'custom';
   view = 'start';
   activeGameTab = 'map';
   dataBuilt = false;
@@ -5176,7 +6567,7 @@ function renderEncounterScreen(){
   const cardSub = isWild ? 'Wild Encounter'
     : e.type === 'gym' ? 'Gym Battle -- '+e.gymLeaderName
     : e.type === 'elite4' ? 'Elite Four -- '+currentEliteFourMemberLabel(e)
-    : 'Trainer Battle -- '+e.className;
+    : 'Trainer Battle -- '+(e.trainerName || e.className);
 
   return '<div class="card">' +
     '<div class="card-sub">'+cardSub+'</div>' +
@@ -5348,7 +6739,11 @@ function beginAdventure(){
     catchLevel: ev.reduce((a,b)=>a+b,0),
     note: 'Starter',
   });
-  gameState = { started:true, region: startPick.region, starterSpecies: sp, currentNodeId: startPick.town, defeatedGymLeaders: [], turnCount: 0, eliteFourProgress: null, eliteFourTeamIds: [] };
+  gameState = {
+    started:true, region: startPick.region, starterSpecies: sp, currentNodeId: startPick.town,
+    defeatedGymLeaders: [], turnCount: 0, eliteFourProgress: null, eliteFourTeamIds: [],
+    customRegionLabel: startPick.region === 'custom' ? DATA.regionLabel : undefined,
+  };
   saveGameState();
   view = 'board';
   render();
@@ -5441,6 +6836,7 @@ function beginEncounter(type, ctx){
     const r = rollTrainerTeam();
     opponents = r.team;
     extra.className = r.className;
+    extra.trainerName = r.trainerName;
   } else {
     const r = rollGymTeam(ctx.leaderName);
     opponents = r.team;
@@ -5603,7 +6999,7 @@ async function fight(){
         const team = (gameState.eliteFourTeamIds || [])
           .map(id => loadGamePokemon().find(m=>m.id===id))
           .filter(Boolean);
-        pendingMessage = 'You have become the '+REGIONS[gameState.region].label+' champion! Congratulations!' +
+        pendingMessage = 'You have become the '+regionLabelFor(gameState)+' champion! Congratulations!' +
           '<div class="field-label" style="margin-top:14px;">Your Championship Team</div>' +
           team.map(m=>monStatCardHtml(m)).join('');
         gameState.eliteFourProgress = null;
@@ -5780,6 +7176,7 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'backToTmPickMon') backToTmPickMon();
   else if(action === 'chooseTmType') chooseTmType(btn.dataset.type);
   else if(action === 'generateCustomRegion') generateCustomRegion();
+  else if(action === 'playCustomRegion') playCustomRegion();
   else if(action === 'backToRegionPick') backToRegionPick();
   else if(action === 'selectCustomRegionNode') selectCustomRegionNode(btn.dataset.node);
   else if(action === 'selectCustomRegionE4Tab') selectCustomRegionE4Tab(parseInt(btn.dataset.idx, 10));
@@ -5813,12 +7210,14 @@ document.getElementById('myPokemonList').addEventListener('click', (e)=>{
 document.getElementById('tabMapBtn').addEventListener('click', ()=> showGameTab('map'));
 document.getElementById('tabMyPokemonBtn').addEventListener('click', ()=> showGameTab('mypokemon'));
 document.getElementById('tabDataBtn').addEventListener('click', ()=> showGameTab('data'));
-document.getElementById('dataSearch').addEventListener('input', filterDataTab);
+document.getElementById('dataSearch').addEventListener('input', applyDexFilters);
 document.getElementById('dataList').addEventListener('click', (e)=>{
-  const btn = e.target.closest('[data-action="jumpToMapLocation"]');
-  if(!btn) return;
-  showGameTab('map');
-  selectMapNode(btn.dataset.node);
+  const jumpBtn = e.target.closest('[data-action="jumpToMapLocation"]');
+  if(jumpBtn){ showGameTab('map'); selectMapNode(jumpBtn.dataset.node); return; }
+  const sortBtn = e.target.closest('[data-action="setDexSort"]');
+  if(sortBtn){ setDexSort(sortBtn.dataset.sort); return; }
+  const typeBtn = e.target.closest('[data-action="setDexTypeFilter"]');
+  if(typeBtn){ setDexTypeFilter(typeBtn.dataset.type); return; }
 });
 
 render();
