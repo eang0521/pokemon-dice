@@ -134,6 +134,7 @@
     letter-spacing:0.04em;
   }
   .save-slot-card{
+    position:relative;
     background: var(--paper);
     border: 1.5px solid var(--line);
     border-radius: 6px;
@@ -141,6 +142,8 @@
     margin-top: 10px;
   }
   .save-slot-card.save-slot-empty{ border-style:dashed; opacity:0.75; }
+  .save-slot-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .save-slot-main{ flex:1; min-width:0; }
   .save-slot-title{
     font-family:'Fraunces', serif;
     font-weight:700;
@@ -153,6 +156,33 @@
     color: var(--sage);
     margin-bottom: 8px;
   }
+  .save-slot-team{
+    flex-shrink:0;
+    margin-top: -8px;
+    margin-right: 30px;
+    display:grid;
+    grid-template-columns: repeat(3, 65px);
+    grid-template-rows: repeat(2, 50px); /* shorter than the sprites -- rows
+      overlap vertically since the art itself doesn't fill its box height */
+    gap:0;
+  }
+  .save-slot-team img{ width:65px; height:65px; object-fit:contain; image-rendering:auto; transform: translateY(-20%); }
+  .save-slot-delete-btn{
+    position:absolute; top:8px; right:8px;
+    width:22px; height:22px;
+    border-radius:50%;
+    border:1.5px solid var(--rust);
+    background:var(--paper);
+    color:var(--rust);
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:13px;
+    line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    padding:0;
+  }
+  .save-slot-delete-btn:hover{ background:var(--rust); color:var(--paper); }
   .reset-btn:hover{ background:#e8bdb0; }
   .card{
     background: var(--paper-deep);
@@ -943,9 +973,12 @@ function winOdds(statsA, typesA, atkA, statsB, typesB, atkB){
    Guide's "My Pokemon" (pokemonDiceMyPokemonV1). Catching/leveling a Pokemon in
    the game does not touch the Field Guide's collection, and vice versa. ============ */
 /* ============ Save slots ============ */
-// Up to SAVE_SLOT_COUNT independent adventures, each with its own game state and
-// Pokemon collection, keyed off `currentSlot` -- null while on the home screen.
-const SAVE_SLOT_COUNT = 5;
+// An unbounded number of independent adventures, each with its own game
+// state and Pokemon collection, keyed off `currentSlot` -- null while on the
+// home screen. Slot numbers are just internal ids (ever-increasing, never
+// reused once a slot has actually been saved) -- the home screen lists
+// whichever slots have a real saved adventure rather than showing a fixed
+// bank of numbered slots.
 let currentSlot = null;
 function gameKey(slot){ return 'pokemonDiceGameStateV1_slot' + (slot || currentSlot); }
 function gamePokemonKey(slot){ return 'pokemonDiceGamePokemonV1_slot' + (slot || currentSlot); }
@@ -957,10 +990,40 @@ function loadCustomRegionData(slot){
   try { return JSON.parse(localStorage.getItem(customRegionDataKey(slot)) || 'null'); }
   catch(e){ return null; }
 }
+const GAME_STATE_KEY_PREFIX = 'pokemonDiceGameStateV1_slot';
+// Every slot number that currently has a real, started adventure saved,
+// discovered by scanning localStorage directly (no fixed slot count to
+// iterate) -- ascending by slot number.
+function listSaveSlots(){
+  const slots = [];
+  for(let i=0; i<localStorage.length; i++){
+    const key = localStorage.key(i);
+    if(!key || key.indexOf(GAME_STATE_KEY_PREFIX) !== 0) continue;
+    const slot = parseInt(key.slice(GAME_STATE_KEY_PREFIX.length), 10);
+    if(!Number.isFinite(slot)) continue;
+    const gs = loadGameStateFromSlot(slot);
+    if(gs && gs.started) slots.push(slot);
+  }
+  return slots.sort((a,b)=>a-b);
+}
+// One past the highest slot number ever actually saved -- an abandoned
+// in-progress creation (region picked but never began) never wrote a game
+// state, so it doesn't reserve a number and this same id gets reused next
+// time, instead of counting up forever.
+function nextFreeSlotId(){
+  let max = 0;
+  for(let i=0; i<localStorage.length; i++){
+    const key = localStorage.key(i);
+    if(!key || key.indexOf(GAME_STATE_KEY_PREFIX) !== 0) continue;
+    const slot = parseInt(key.slice(GAME_STATE_KEY_PREFIX.length), 10);
+    if(Number.isFinite(slot) && slot > max) max = slot;
+  }
+  return max + 1;
+}
 
-function loadGamePokemon(){
+function loadGamePokemon(slot){
   try {
-    const list = JSON.parse(localStorage.getItem(gamePokemonKey()) || '[]');
+    const list = JSON.parse(localStorage.getItem(gamePokemonKey(slot)) || '[]');
     return Array.isArray(list) ? list : [];
   } catch(e){ return []; }
 }
@@ -6106,35 +6169,50 @@ function regionLabelFor(gs){
   return gs.region === 'custom' ? gs.customRegionLabel : ((REGIONS[gs.region] && REGIONS[gs.region].label) || gs.region);
 }
 
+// The slot's 6 strongest Pokemon (current base+EV stat total, ties broken by
+// level, ties broken by catch order -- earlier catches win), for the home
+// screen's team-preview grid.
+function topSixGamePokemon(slot){
+  return loadGamePokemon(slot)
+    .map((m,i)=>({ m, i }))
+    .sort((a,b) => (gameMonStatTotal(b.m)-gameMonStatTotal(a.m)) || (gameMonLevel(b.m)-gameMonLevel(a.m)) || (a.i-b.i))
+    .slice(0,6)
+    .map(x=>x.m);
+}
+function saveSlotTeamHtml(slot){
+  const top = topSixGamePokemon(slot);
+  if(!top.length) return '';
+  return '<div class="save-slot-team">' + top.map(m=>spriteImgHtml(m.name, '')).join('') + '</div>';
+}
 function renderHomeScreen(){
-  let cards = '';
-  for(let slot=1; slot<=SAVE_SLOT_COUNT; slot++){
+  const slots = listSaveSlots();
+  let cards = slots.map(slot=>{
     const gs = loadGameStateFromSlot(slot);
-    if(gs && gs.started){
-      const regionLabel = regionLabelFor(gs);
-      const locName = nodeDisplayNameInRegion(gs.region, gs.currentNodeId, slot);
-      const badges = (gs.defeatedGymLeaders||[]).length;
-      cards +=
-        '<div class="save-slot-card">' +
-          '<div class="save-slot-title">Slot '+slot+' -- '+gs.starterSpecies+' ('+regionLabel+')</div>' +
-          '<div class="save-slot-meta">At '+locName+' &middot; '+badges+' badge'+(badges===1?'':'s')+' &middot; Turn '+(gs.turnCount||0)+'</div>' +
-          '<div class="choice-grid">' +
-            '<button type="button" class="btn btn-primary" data-action="continueSlot" data-slot="'+slot+'">Continue</button>' +
-            '<button type="button" class="btn btn-wild" data-action="newAdventureSlot" data-slot="'+slot+'">New Adventure (Overwrites)</button>' +
+    const regionLabel = regionLabelFor(gs);
+    const locName = nodeDisplayNameInRegion(gs.region, gs.currentNodeId, slot);
+    const badges = (gs.defeatedGymLeaders||[]).length;
+    return '<div class="save-slot-card">' +
+        '<button type="button" class="save-slot-delete-btn" data-action="deleteSlot" data-slot="'+slot+'" title="Delete this save" aria-label="Delete this save">&times;</button>' +
+        '<div class="save-slot-row">' +
+          '<div class="save-slot-main">' +
+            '<div class="save-slot-title">'+regionLabel+'</div>' +
+            '<div class="save-slot-meta">At '+locName+' &middot; '+badges+' badge'+(badges===1?'':'s')+' &middot; Turn '+(gs.turnCount||0)+'</div>' +
+            '<div class="choice-grid">' +
+              '<button type="button" class="btn btn-primary" data-action="continueSlot" data-slot="'+slot+'">Continue</button>' +
+            '</div>' +
           '</div>' +
-        '</div>';
-    } else {
-      cards +=
-        '<div class="save-slot-card save-slot-empty">' +
-          '<div class="save-slot-title">Slot '+slot+' -- Empty</div>' +
-          '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="newAdventureSlot" data-slot="'+slot+'">Start New Adventure</button></div>' +
-        '</div>';
-    }
+          saveSlotTeamHtml(slot) +
+        '</div>' +
+      '</div>';
+  }).join('');
+  if(!cards){
+    cards = '<div class="save-slot-card save-slot-empty"><div class="save-slot-meta">No adventures yet -- start one below.</div></div>';
   }
   return '<div class="card">' +
     '<div class="card-title">Pok&eacute;mon Adventure</div>' +
-    '<div class="card-sub">Choose a save slot ('+SAVE_SLOT_COUNT+' max -- start a new adventure in an occupied slot to overwrite it)</div>' +
+    '<div class="card-sub">Your saved adventures</div>' +
     cards +
+    '<div class="choice-grid" style="margin-top:10px;"><button type="button" class="btn btn-primary" data-action="createNewAdventure">Start New Adventure</button></div>' +
   '</div>';
 }
 
@@ -6209,19 +6287,24 @@ function continueSlot(slot){
   pendingTmOffer = false;
   render();
 }
-function newAdventureSlot(slot){
-  const existing = loadGameStateFromSlot(slot);
-  if(existing && existing.started){
-    if(!confirm('Slot '+slot+' already has a saved adventure (starter: '+existing.starterSpecies+', '+(existing.defeatedGymLeaders||[]).length+' badges). Starting a new adventure here will permanently overwrite it. Continue?')) return;
-  }
-  currentSlot = slot;
-  localStorage.removeItem(gameKey());
-  saveGamePokemonList([]);
+// Always a fresh slot (never overwrites an existing adventure) -- the
+// player deletes old ones explicitly via deleteSlot instead.
+function createNewAdventure(){
+  currentSlot = nextFreeSlotId();
   gameState = loadGameState();
   startPick = { region:null, starter:null, town:null };
   view = 'regionPick';
   encounter = null;
   movement = null;
+  render();
+}
+function deleteSlot(slot){
+  const gs = loadGameStateFromSlot(slot);
+  const desc = gs ? (gs.starterSpecies+' -- '+(gs.defeatedGymLeaders||[]).length+' badges, Turn '+(gs.turnCount||0)) : ('Slot '+slot);
+  if(!confirm('Delete this save (' + desc + ')? This cannot be undone.')) return;
+  localStorage.removeItem(gameKey(slot));
+  localStorage.removeItem(gamePokemonKey(slot));
+  localStorage.removeItem(customRegionDataKey(slot));
   render();
 }
 // Called from the region-pick screen -- points DATA at the chosen region and
@@ -7184,7 +7267,8 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'leaveEliteFourTown') leaveEliteFourTown();
   else if(action === 'continueEliteFour') continueEliteFour();
   else if(action === 'continueSlot') continueSlot(parseInt(btn.dataset.slot, 10));
-  else if(action === 'newAdventureSlot') newAdventureSlot(parseInt(btn.dataset.slot, 10));
+  else if(action === 'createNewAdventure') createNewAdventure();
+  else if(action === 'deleteSlot') deleteSlot(parseInt(btn.dataset.slot, 10));
   else if(action === 'pickRegion') pickRegion(btn.dataset.region);
   else if(action === 'moveToNode') moveToNode(btn.dataset.node);
 });
