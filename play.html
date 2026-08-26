@@ -1168,6 +1168,7 @@ function loadGameStateFromSlot(slot){
       if(s.eliteFourProgress === undefined) s.eliteFourProgress = null; // older saves predate the Elite Four
       if(!Array.isArray(s.eliteFourTeamIds)) s.eliteFourTeamIds = [];
       if(!s.region) s.region = 'calli'; // older saves predate multi-region support
+      if(!s.challengeModes || typeof s.challengeModes !== 'object') s.challengeModes = { levelCap:false }; // older saves predate Challenge Modes
       return s;
     }
   } catch(e){}
@@ -6040,8 +6041,16 @@ function splitXP(total, participantIds){
 }
 const MAX_LEVEL = 20;
 function isMaxLevel(entry){ return entry.ev.reduce((a,b)=>a+b,0) >= MAX_LEVEL; }
+// Under the Level Cap challenge mode, no Pokemon can level past 5 + however many
+// badges have been earned so far -- otherwise just the usual global MAX_LEVEL.
+function currentLevelCap(){
+  if(!(gameState && gameState.challengeModes && gameState.challengeModes.levelCap)) return MAX_LEVEL;
+  return Math.min(MAX_LEVEL, 5 + (gameState.defeatedGymLeaders||[]).length);
+}
 // XP always keeps accumulating (even past the cap -- it's just no longer "toward"
-// anything); the level-up loop itself stops once level 20 is reached. Returns
+// anything); the level-up loop itself stops once the cap is reached. Under Level
+// Cap this means XP banks past the current cap and unlocks on its own -- possibly
+// several levels at once -- the moment a new badge raises the cap. Returns
 // whether at least one level was actually gained -- callers only run the
 // evolution check when this is true. A level-up evolution's trigger is "you
 // just leveled up," not "your current level happens to already qualify": a
@@ -6052,8 +6061,9 @@ function isMaxLevel(entry){ return entry.ev.reduce((a,b)=>a+b,0) >= MAX_LEVEL; }
 function grantXP(entry, xpGain, highIdx){
   let level = entry.ev.reduce((a,b)=>a+b,0);
   const startLevel = level;
+  const cap = currentLevelCap();
   entry.xp = (entry.xp || 0) + xpGain;
-  while(level < MAX_LEVEL && entry.xp >= level*10 && level>0){
+  while(level < cap && entry.xp >= level*10 && level>0){
     entry.xp -= level*10;
     entry.ev[highIdx] = (entry.ev[highIdx]||0) + 1;
     level += 1;
@@ -6277,6 +6287,10 @@ let customRegion = null; // generated { mapNodes, mapEdges, ... } for the Custom
 let customRegionSelectedNodeId = null; // which map node's sidebar detail is showing on that preview
 let customRegionE4TabIdx = 0; // which E4/Champion member's roster is showing in the ELI town's tabbed preview
 let startPick = { region:null, starter:null, town:null };
+// Optional per-adventure toggles, set on the Challenge Modes screen (shown right
+// after picking a region, skipped for the Tutorial) and copied onto gameState
+// once the adventure actually begins -- see beginAdventure().
+let challengeModes = { levelCap:false };
 let myPokemonSort = 'obtained'; // 'obtained' | 'stat' | 'level' -- sort order of the roster list
 let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
 let rollingBattle = null; // { nA, nB } dice counts while the "Fight!" roll animation is playing
@@ -6326,9 +6340,12 @@ function renderStatus(){
   const panel = document.getElementById('badgePanel');
   if(!gameState || !gameState.started){ el.innerHTML=''; panel.style.display='none'; return; }
   const badges = gameState.defeatedGymLeaders.length;
+  const levelCapChip = (gameState.challengeModes && gameState.challengeModes.levelCap)
+    ? '<span class="status-turns">Level Cap: '+currentLevelCap()+'</span>' : '';
   el.innerHTML =
     '<span class="status-badges" data-action="toggleBadgePanel">Badges: '+badges+' / '+gymCount()+'</span>' +
     '<span class="status-turns">Turn '+(gameState.turnCount||0)+'</span>' +
+    levelCapChip +
     '<span class="status-slot">Slot '+currentSlot+'</span>' +
     '<button type="button" class="reset-btn" data-action="goHome">Home</button>';
   renderBadgePanel();
@@ -6434,6 +6451,7 @@ function render(){
   const app = document.getElementById('app');
   if(view === 'home') app.innerHTML = renderHomeScreen();
   else if(view === 'regionPick') app.innerHTML = renderRegionPickScreen();
+  else if(view === 'challengeModes') app.innerHTML = renderChallengeModesScreen();
   else if(view === 'start') app.innerHTML = renderStartScreen();
   else if(view === 'board') app.innerHTML = renderBoardScreen();
   else if(view === 'moving') app.innerHTML = renderMovingScreen();
@@ -6703,6 +6721,7 @@ function createNewAdventure(){
   currentSlot = nextFreeSlotId();
   gameState = loadGameState();
   startPick = { region:null, starter:null, town:null };
+  challengeModes = { levelCap:false };
   view = 'regionPick';
   encounter = null;
   movement = null;
@@ -6725,7 +6744,9 @@ function pickRegion(key){
   rebuildNodesById();
   updateRegionBranding(key);
   startPick.region = key;
-  view = 'start';
+  // The Tutorial stays a short, guided path straight to starter+town --
+  // every other region offers the optional Challenge Modes screen first.
+  view = key === 'tutorial' ? 'start' : 'challengeModes';
   activeGameTab = 'map';
   dataBuilt = false;
   tmFlow = null;
@@ -6752,12 +6773,34 @@ function playCustomRegion(){
   STARTERS_BY_REGION.custom = data.starterSpecies;
   updateRegionBranding('custom', label);
   startPick.region = 'custom';
-  view = 'start';
+  view = 'challengeModes';
   activeGameTab = 'map';
   dataBuilt = false;
   tmFlow = null;
   pendingTmOffer = false;
   render();
+}
+
+// Extensible list of optional per-adventure toggles -- see challengeModes/
+// renderChallengeModesScreen/toggleChallengeMode.
+const CHALLENGE_MODE_DEFS = [
+  { key:'levelCap', title:'Level Cap',
+    desc:'No Pokemon can level up past 5 + the number of Gym Badges you\'ve earned. XP still banks past the cap and unlocks automatically (possibly several levels at once) the moment your next badge raises it.' },
+];
+function renderChallengeModesScreen(){
+  const rows = CHALLENGE_MODE_DEFS.map(def=>{
+    const on = !!challengeModes[def.key];
+    return '<div class="save-slot-card" data-action="toggleChallengeMode" data-mode="'+def.key+'" style="cursor:pointer; border-color:'+(on?'var(--gold)':'var(--line)')+'; border-width:'+(on?'2px':'1px')+';">' +
+      '<div class="save-slot-title">'+def.title+' <span style="float:right;">'+(on?'ON':'OFF')+'</span></div>' +
+      '<div class="save-slot-meta">'+def.desc+'</div>' +
+    '</div>';
+  }).join('');
+  return '<div class="card">' +
+    '<div class="card-title">Challenge Modes</div>' +
+    '<div class="card-sub">Optional -- tap any to toggle it for this adventure. All off by default.</div>' +
+    rows +
+    '<div class="choice-grid" style="margin-top:16px;"><button type="button" class="btn btn-primary" data-action="confirmChallengeModes">Continue</button></div>' +
+  '</div>';
 }
 
 function renderStartScreen(){
@@ -7239,6 +7282,8 @@ function renderElite4AckScreen(){
 /* ============ Actions ============ */
 function pickStarter(species){ startPick.starter = species; render(); }
 function pickTown(nodeId){ startPick.town = nodeId; render(); }
+function toggleChallengeMode(key){ challengeModes[key] = !challengeModes[key]; render(); }
+function confirmChallengeModes(){ view = 'start'; render(); }
 
 function beginAdventure(){
   if(!startPick.starter || !startPick.town) return;
@@ -7262,6 +7307,7 @@ function beginAdventure(){
     started:true, region: startPick.region, starterSpecies: sp, currentNodeId: startPick.town,
     defeatedGymLeaders: [], turnCount: 0, eliteFourProgress: null, eliteFourTeamIds: [],
     customRegionLabel: startPick.region === 'custom' ? DATA.regionLabel : undefined,
+    challengeModes: Object.assign({}, challengeModes),
   };
   saveGameState();
   view = 'board';
@@ -7714,6 +7760,8 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'setHowToPlaySection') setHowToPlaySection(btn.dataset.section);
   else if(action === 'closeHowToPlay') closeHowToPlay();
   else if(action === 'pickRegion') pickRegion(btn.dataset.region);
+  else if(action === 'toggleChallengeMode') toggleChallengeMode(btn.dataset.mode);
+  else if(action === 'confirmChallengeModes') confirmChallengeModes();
   else if(action === 'moveToNode') moveToNode(btn.dataset.node);
 });
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
