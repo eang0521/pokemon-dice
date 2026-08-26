@@ -374,6 +374,17 @@
   }
   .opp-chip.current{ background: var(--gold); font-weight:700; }
   .opp-chip.defeated{ opacity:0.45; text-decoration: line-through; }
+  .e4-team-row{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 12px; }
+  .e4-team-chip{
+    display:flex; align-items:center; gap:4px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    padding: 3px 9px 3px 4px;
+    border-radius: 5px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+  }
+  .e4-team-chip.current{ background: var(--gold); font-weight:700; }
   .log-box{
     background: var(--paper);
     border: 1px solid var(--line);
@@ -6789,6 +6800,7 @@ function renderBoardScreen(){
       '<div class="card-title">'+nodeDisplayName(node)+'</div>' +
       '<div class="card-sub">Elite Four challenge in progress</div>' +
       '<div class="card-flavor">You fell to '+label+'. Continue your run from here, or roll to move on and forfeit your progress.</div>' +
+      eliteFourTeamStatusHtml() +
       '<div class="choice-grid">' +
         '<button type="button" class="btn btn-primary" data-action="resumeEliteFour">Continue vs. '+label+'</button>' +
         '<button type="button" class="btn" data-action="leaveEliteFourTown">Roll Movement (resets Elite Four progress)</button>' +
@@ -6958,6 +6970,22 @@ function opponentDisplayHtml(opp, statusClass){
   return '<span class="opp-chip'+(statusClass?(' '+statusClass):'')+'">'+opp.species+' Lv'+opp.level+'</span>';
 }
 
+// Compact "locked-in team of 6" strip -- shown wherever an Elite Four run is active
+// (mid-battle, between members, or paused at the E4 town) so the player can always
+// see which Pokemon are already committed to this run, even many battles later.
+function eliteFourTeamStatusHtml(currentId){
+  const ids = gameState.eliteFourTeamIds || [];
+  if(!ids.length) return '';
+  const list = loadGamePokemon();
+  const chips = ids.map(id=>{
+    const m = list.find(x=>x.id===id);
+    if(!m) return '';
+    return '<span class="e4-team-chip'+(id===currentId?' current':'')+'">'+spriteImgHtml(m.name,'sprite-sm')+m.name+'</span>';
+  }).join('');
+  return '<div class="field-label">Your Elite Four Team ('+ids.length+'/6)</div>' +
+    '<div class="e4-team-row">'+chips+'</div>';
+}
+
 function fmtEffMult(mult){
   if(mult >= 4) return '×4';
   if(mult === 2) return '×2';
@@ -7059,6 +7087,7 @@ function renderEncounterScreen(){
 
   return '<div class="card">' +
     '<div class="card-sub">'+cardSub+'</div>' +
+    (e.type === 'elite4' ? eliteFourTeamStatusHtml(e.currentPlayerId) : '') +
     teamRow +
     oppCard +
     '<hr style="border:none;border-top:1px dashed var(--line);margin:12px 0;">' +
@@ -7085,6 +7114,7 @@ function renderMessageScreen(){
     : '';
   return '<div class="card">' +
     '<div class="card-title">'+pendingMessage+'</div>' +
+    eliteFourTeamStatusHtml() +
     '<div class="choice-grid">' +
       '<button type="button" class="btn btn-primary" data-action="endTurn">Continue</button>' +
       tmButton +
@@ -7201,6 +7231,7 @@ function renderElite4AckScreen(){
   return '<div class="card">' +
     '<div class="card-sub">Elite Four</div>' +
     '<div class="card-title">'+pendingMessage+'</div>' +
+    eliteFourTeamStatusHtml() +
     '<div class="choice-grid"><button type="button" class="btn btn-primary" data-action="continueEliteFour">Continue to '+currentEliteFourMemberLabel(encounter)+'</button></div>' +
   '</div>';
 }
