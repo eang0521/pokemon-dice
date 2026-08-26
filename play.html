@@ -385,6 +385,18 @@
     background: var(--paper);
   }
   .e4-team-chip.current{ background: var(--gold); font-weight:700; }
+  .team-export-box{
+    width:100%;
+    min-height:140px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--paper);
+    resize:vertical;
+    box-sizing:border-box;
+  }
   .log-box{
     background: var(--paper);
     border: 1px solid var(--line);
@@ -1169,6 +1181,8 @@ function loadGameStateFromSlot(slot){
       if(!Array.isArray(s.eliteFourTeamIds)) s.eliteFourTeamIds = [];
       if(!s.region) s.region = 'calli'; // older saves predate multi-region support
       if(!s.challengeModes || typeof s.challengeModes !== 'object') s.challengeModes = { levelCap:false }; // older saves predate Challenge Modes
+      if(typeof s.championDefeated !== 'boolean') s.championDefeated = false;
+      if(typeof s.teamBuilderExported !== 'boolean') s.teamBuilderExported = false;
       return s;
     }
   } catch(e){}
@@ -1176,7 +1190,7 @@ function loadGameStateFromSlot(slot){
 }
 function loadGameState(){
   return loadGameStateFromSlot(currentSlot) ||
-    { started:false, region:null, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0, eliteFourProgress:null, eliteFourTeamIds:[] };
+    { started:false, region:null, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0, eliteFourProgress:null, eliteFourTeamIds:[], challengeModes:{levelCap:false}, championDefeated:false, teamBuilderExported:false };
 }
 function saveGameState(){
   try { localStorage.setItem(gameKey(), JSON.stringify(gameState)); }
@@ -6291,6 +6305,9 @@ let startPick = { region:null, starter:null, town:null };
 // after picking a region, skipped for the Tutorial) and copied onto gameState
 // once the adventure actually begins -- see beginAdventure().
 let challengeModes = { levelCap:false };
+// Which owned Pokemon (by id) are currently checked on the 50-Turn Team Builder
+// export screen -- see teamBuilderMaxSelectable/renderTeamBuilderExportScreen.
+let teamBuilderSelectedIds = [];
 let myPokemonSort = 'obtained'; // 'obtained' | 'stat' | 'level' -- sort order of the roster list
 let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
 let rollingBattle = null; // { nA, nB } dice counts while the "Fight!" roll animation is playing
@@ -6465,6 +6482,7 @@ function render(){
   else if(view === 'tmPickMon') app.innerHTML = renderTmPickMonScreen();
   else if(view === 'tmPickType') app.innerHTML = renderTmPickTypeScreen();
   else if(view === 'customRegionMap') app.innerHTML = renderCustomRegionMapScreen();
+  else if(view === 'teamBuilderExport') app.innerHTML = renderTeamBuilderExportScreen();
   else if(view === 'howToPlay') app.innerHTML = renderHowToPlayScreen();
   const inTutorial = (startPick && startPick.region === 'tutorial') || (gameState && gameState.region === 'tutorial');
   if(inTutorial){
@@ -6722,6 +6740,7 @@ function createNewAdventure(){
   gameState = loadGameState();
   startPick = { region:null, starter:null, town:null };
   challengeModes = { levelCap:false };
+  teamBuilderSelectedIds = [];
   view = 'regionPick';
   encounter = null;
   movement = null;
@@ -6786,6 +6805,8 @@ function playCustomRegion(){
 const CHALLENGE_MODE_DEFS = [
   { key:'levelCap', title:'Level Cap',
     desc:'No Pokemon can level up past 5 + the number of Gym Badges you\'ve earned. XP still banks past the cap and unlocks automatically (possibly several levels at once) the moment your next badge raises it.' },
+  { key:'teamBuilder50', title:'50-Turn Team Builder',
+    desc:'On turn 50, the adventure pauses so you can pick a team to export in a simple copy/paste format for an upcoming battle simulator. You may pick 1 Pokemon per 2 Gym Badges earned, plus 2 more if you\'ve beaten the Elite Four and Champion (6 max).' },
 ];
 function renderChallengeModesScreen(){
   const rows = CHALLENGE_MODE_DEFS.map(def=>{
@@ -6800,6 +6821,65 @@ function renderChallengeModesScreen(){
     '<div class="card-sub">Optional -- tap any to toggle it for this adventure. All off by default.</div>' +
     rows +
     '<div class="choice-grid" style="margin-top:16px;"><button type="button" class="btn btn-primary" data-action="confirmChallengeModes">Continue</button></div>' +
+  '</div>';
+}
+
+// 50-Turn Team Builder: how many of the player's owned Pokemon they're allowed
+// to select for export -- 1 per 2 Gym Badges earned, plus 2 more once the
+// Elite Four + Champion have been beaten, capped at 6 (the natural max: 8
+// badges / 2 = 4, +2).
+function teamBuilderMaxSelectable(){
+  const badges = (gameState.defeatedGymLeaders||[]).length;
+  const bonus = gameState.championDefeated ? 2 : 0;
+  return Math.min(6, Math.floor(badges/2) + bonus);
+}
+function shouldPromptTeamBuilder(){
+  return !!(gameState.challengeModes && gameState.challengeModes.teamBuilder50) &&
+    (gameState.turnCount||0) >= 50 &&
+    !gameState.teamBuilderExported;
+}
+// Deliberately plain, human-readable text -- not JSON -- so it's easy to eyeball
+// and paste into whatever simulator eventually reads it.
+function teamBuilderMonExportText(m){
+  const level = m.ev.reduce((a,b)=>a+b,0);
+  const stats = m.base.map((b,i)=>b+m.ev[i]);
+  const typeStr = [m.t1, m.t2].filter(Boolean).join(' / ');
+  return m.name+' Lv'+level+'\n' +
+    'Type: '+typeStr+'\n' +
+    'Attack: '+m.atk+'\n' +
+    'HP '+stats[0]+' / Atk '+stats[1]+' / Def '+stats[2]+' / SpA '+stats[3]+' / SpD '+stats[4]+' / Spe '+stats[5];
+}
+function teamBuilderExportText(){
+  const list = loadGamePokemon();
+  const selected = teamBuilderSelectedIds.map(id=>list.find(m=>m.id===id)).filter(Boolean);
+  return selected.map(teamBuilderMonExportText).join('\n\n');
+}
+function renderTeamBuilderExportScreen(){
+  const max = teamBuilderMaxSelectable();
+  const badges = (gameState.defeatedGymLeaders||[]).length;
+  const mons = loadGamePokemon();
+  const cards = mons.map(m=>{
+    const selected = teamBuilderSelectedIds.includes(m.id);
+    const atLimit = !selected && teamBuilderSelectedIds.length >= max;
+    const label = selected ? 'Selected -- Remove' : (max === 0 ? 'Not Eligible Yet' : (atLimit ? 'Limit Reached' : 'Select'));
+    const btn = '<div class="choice-grid" style="margin-top:8px;">' +
+      '<button type="button" class="btn'+(selected?' btn-primary':'')+'" data-action="toggleTeamBuilderMon" data-id="'+m.id+'"'+(atLimit?' disabled':'')+'>'+label+'</button>' +
+    '</div>';
+    return monStatCardHtml(m, btn);
+  }).join('');
+  const exportText = teamBuilderExportText();
+  const exportBlock = exportText
+    ? '<div class="field-label" style="margin-top:16px;">Export (click the box, then copy)</div>' +
+      '<textarea readonly class="team-export-box" onclick="this.select()">'+exportText.replace(/</g,'&lt;')+'</textarea>'
+    : '<div class="empty-note">Select at least one Pokemon to see its export text.</div>';
+  return '<div class="card">' +
+    '<div class="card-title">Team Builder Export</div>' +
+    '<div class="card-sub">Turn 50 reached -- pick your team for the upcoming battle simulator</div>' +
+    '<div class="card-flavor">You may select up to '+max+' Pokemon ('+Math.floor(badges/2)+' from '+badges+' badge'+(badges===1?'':'s')+(gameState.championDefeated?' + 2 for beating the Champion':'')+').</div>' +
+    '<div class="field-label">Selected: '+teamBuilderSelectedIds.length+' / '+max+'</div>' +
+    (mons.length ? cards : '<div class="empty-note">No Pokemon caught yet.</div>') +
+    exportBlock +
+    '<div class="choice-grid" style="margin-top:16px;"><button type="button" class="btn btn-primary" data-action="confirmTeamBuilderExport">Continue</button></div>' +
   '</div>';
 }
 
@@ -7308,6 +7388,7 @@ function beginAdventure(){
     defeatedGymLeaders: [], turnCount: 0, eliteFourProgress: null, eliteFourTeamIds: [],
     customRegionLabel: startPick.region === 'custom' ? DATA.regionLabel : undefined,
     challengeModes: Object.assign({}, challengeModes),
+    championDefeated:false, teamBuilderExported:false,
   };
   saveGameState();
   view = 'board';
@@ -7315,11 +7396,30 @@ function beginAdventure(){
 }
 
 function rollMovement(){
+  if(shouldPromptTeamBuilder()){
+    teamBuilderSelectedIds = [];
+    view = 'teamBuilderExport';
+    render();
+    return;
+  }
   const n = rand(6);
   movement = { total:n };
   gameState.turnCount = (gameState.turnCount || 0) + 1;
   saveGameState();
   view = 'moving';
+  render();
+}
+function toggleTeamBuilderMon(id){
+  const idx = teamBuilderSelectedIds.indexOf(id);
+  if(idx !== -1) teamBuilderSelectedIds.splice(idx,1);
+  else if(teamBuilderSelectedIds.length < teamBuilderMaxSelectable()) teamBuilderSelectedIds.push(id);
+  render();
+}
+function confirmTeamBuilderExport(){
+  gameState.teamBuilderExported = true;
+  saveGameState();
+  teamBuilderSelectedIds = [];
+  view = 'board';
   render();
 }
 function resolveLanding(nodeId, forfeited){
@@ -7569,6 +7669,7 @@ async function fight(){
           team.map(m=>monStatCardHtml(m)).join('');
         gameState.eliteFourProgress = null;
         gameState.eliteFourTeamIds = [];
+        gameState.championDefeated = true;
         saveGameState();
         pendingTmOffer = false;
         view = 'message';
@@ -7762,6 +7863,8 @@ document.getElementById('app').addEventListener('click', (e)=>{
   else if(action === 'pickRegion') pickRegion(btn.dataset.region);
   else if(action === 'toggleChallengeMode') toggleChallengeMode(btn.dataset.mode);
   else if(action === 'confirmChallengeModes') confirmChallengeModes();
+  else if(action === 'toggleTeamBuilderMon') toggleTeamBuilderMon(btn.dataset.id);
+  else if(action === 'confirmTeamBuilderExport') confirmTeamBuilderExport();
   else if(action === 'moveToNode') moveToNode(btn.dataset.node);
 });
 document.getElementById('statusStrip').addEventListener('click', (e)=>{
