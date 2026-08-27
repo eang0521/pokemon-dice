@@ -6061,23 +6061,28 @@ function currentLevelCap(){
   if(!(gameState && gameState.challengeModes && gameState.challengeModes.levelCap)) return MAX_LEVEL;
   return Math.min(MAX_LEVEL, 5 + (gameState.defeatedGymLeaders||[]).length);
 }
-// XP always keeps accumulating (even past the cap -- it's just no longer "toward"
-// anything); the level-up loop itself stops once the cap is reached. Under Level
-// Cap this means XP banks past the current cap and unlocks on its own -- possibly
-// several levels at once -- the moment a new badge raises the cap. Returns
-// whether at least one level was actually gained -- callers only run the
-// evolution check when this is true. A level-up evolution's trigger is "you
-// just leveled up," not "your current level happens to already qualify": a
-// Pokemon caught at or above its own evolution level (wild encounters only
-// downgrade when too LOW, never resolve to "best reachable stage") must not
-// spontaneously evolve the next time it earns any XP at all -- it only
+// XP always keeps accumulating (even past a level-up -- it's just no longer "toward"
+// anything until the next one is allowed); at most ONE level is ever granted per
+// call, and `allowLevelUp` lets a caller block that single level too -- battle call
+// sites pass false once a Pokemon has already leveled up earlier in the SAME battle,
+// so a mon that racks up enough XP to jump 2+ levels in one battle (whether from one
+// huge grant or several opponents in a row) still only gains 1 of them on the spot;
+// the rest sits banked and comes due next battle. This is also what keeps a level-up
+// evolution from chaining twice in one go (e.g. Squirtle straight into Blastoise) --
+// see checkAndApplyLevelEvolution's deferred, once-per-battle check. Under Level Cap,
+// banked XP past the current cap unlocks the same way: one level at a time, one
+// battle at a time, as badges raise the cap. Returns whether a level was actually
+// gained -- callers only run the evolution check when this is true. A level-up
+// evolution's trigger is "you just leveled up," not "your current level happens to
+// already qualify": a Pokemon caught at or above its own evolution level (wild
+// encounters only downgrade when too LOW, never resolve to "best reachable stage")
+// must not spontaneously evolve the next time it earns any XP at all -- it only
 // evolves the next time it genuinely gains a level, same as mainline.
-function grantXP(entry, xpGain, highIdx){
+function grantXP(entry, xpGain, highIdx, allowLevelUp){
   let level = entry.ev.reduce((a,b)=>a+b,0);
   const startLevel = level;
-  const cap = currentLevelCap();
   entry.xp = (entry.xp || 0) + xpGain;
-  while(level < cap && entry.xp >= level*10 && level>0){
+  if(allowLevelUp !== false && level < currentLevelCap() && entry.xp >= level*10 && level>0){
     entry.xp -= level*10;
     entry.ev[highIdx] = (entry.ev[highIdx]||0) + 1;
     level += 1;
@@ -7704,7 +7709,11 @@ async function fight(){
     splits.forEach(({id, xp})=>{
       const mon = list.find(x=>x.id===id);
       if(!mon) return;
-      const leveledUp = grantXP(mon, xp, opp.highIdx);
+      // A Pokemon that already leveled up once earlier in THIS battle (against a
+      // previous opponent on the same team) can't do it again -- xpRecipientIds
+      // doubles as that "already used this battle's one level-up" marker, since
+      // it's only ever populated exactly when a level-up happens.
+      const leveledUp = grantXP(mon, xp, opp.highIdx, !e.xpRecipientIds.has(id));
       e.log.push(mon.name+' gained '+xp+' XP.');
       // Evolution check deferred until the whole encounter ends, not mid-battle --
       // and only for mons that actually leveled up at some point in it (a mon
