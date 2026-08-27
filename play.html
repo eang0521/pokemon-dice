@@ -323,7 +323,7 @@
     top:10px; right:12px;
     width:96px; height:96px;
     object-fit:contain;
-    image-rendering:pixelated;
+    image-rendering:auto;
     transform: translateY(-20%); /* pokemondb icons sit low in their own box -- nudge up */
   }
   .trainer-type-block{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
@@ -362,7 +362,7 @@
     text-align:center;
     margin-top:3px;
   }
-  .sprite-battle{ width:108px; height:108px; object-fit:contain; image-rendering:pixelated; transform: translateY(-20%); }
+  .sprite-battle{ width:108px; height:108px; object-fit:contain; image-rendering:auto; transform: translateY(-20%); }
   .opp-team-row{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 12px; }
   .opp-chip{
     font-family:'IBM Plex Mono', monospace;
@@ -374,17 +374,21 @@
   }
   .opp-chip.current{ background: var(--gold); font-weight:700; }
   .opp-chip.defeated{ opacity:0.45; text-decoration: line-through; }
-  .e4-team-row{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 12px; }
+  .e4-team-row{ display:flex; flex-wrap:wrap; gap:6px; margin: 8px 0 12px; }
   .e4-team-chip{
-    display:flex; align-items:center; gap:4px;
+    display:flex; align-items:center; gap:3px;
     font-family:'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    padding: 3px 9px 3px 4px;
+    font-size: 10.5px;
+    white-space: nowrap;
+    padding: 2px 7px 2px 3px;
     border-radius: 5px;
     border: 1.5px solid var(--ink);
     background: var(--paper);
   }
   .e4-team-chip.current{ background: var(--gold); font-weight:700; }
+  /* Smaller than the usual .sprite-sm so all 6 possible team members -- the max
+     under the Elite Four's 6-Pokemon limit -- fit on one row instead of wrapping. */
+  .e4-team-chip img{ width:22px; height:22px; }
   .team-export-box{
     width:100%;
     min-height:140px;
@@ -662,7 +666,7 @@
     flex: 1;
   }
   .map-encounter-types{ display:flex; gap:4px; }
-  .sprite-sm{ width:36px; height:36px; object-fit:contain; image-rendering:pixelated; flex-shrink:0; transform: translateY(-20%); }
+  .sprite-sm{ width:36px; height:36px; object-fit:contain; image-rendering:auto; flex-shrink:0; transform: translateY(-20%); }
   .tab-row{ display:flex; gap:6px; margin-bottom:16px; }
   .tab-btn{
     flex:1; min-width:0; padding:9px 4px;
