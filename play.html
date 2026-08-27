@@ -730,6 +730,7 @@
   </div>
   <div class="status-strip" id="statusStrip"></div>
   <div class="badge-panel" id="badgePanel" style="display:none;"></div>
+  <div class="badge-panel" id="championPanel" style="display:none;"></div>
   <div id="app"></div>
   <div class="tab-row" id="gameTabRow" style="display:none;">
     <button type="button" class="tab-btn active" id="tabMapBtn" data-tab="map">Map</button>
@@ -1187,6 +1188,7 @@ function loadGameStateFromSlot(slot){
       if(!s.challengeModes || typeof s.challengeModes !== 'object') s.challengeModes = { levelCap:false }; // older saves predate Challenge Modes
       if(typeof s.championDefeated !== 'boolean') s.championDefeated = false;
       if(typeof s.teamBuilderExported !== 'boolean') s.teamBuilderExported = false;
+      if(!Array.isArray(s.championshipTeam)) s.championshipTeam = null;
       return s;
     }
   } catch(e){}
@@ -1194,7 +1196,7 @@ function loadGameStateFromSlot(slot){
 }
 function loadGameState(){
   return loadGameStateFromSlot(currentSlot) ||
-    { started:false, region:null, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0, eliteFourProgress:null, eliteFourTeamIds:[], challengeModes:{levelCap:false}, championDefeated:false, teamBuilderExported:false };
+    { started:false, region:null, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0, eliteFourProgress:null, eliteFourTeamIds:[], challengeModes:{levelCap:false}, championDefeated:false, teamBuilderExported:false, championshipTeam:null };
 }
 function saveGameState(){
   try { localStorage.setItem(gameKey(), JSON.stringify(gameState)); }
@@ -6319,6 +6321,7 @@ let challengeModes = { levelCap:false };
 let teamBuilderSelectedIds = [];
 let myPokemonSort = 'obtained'; // 'obtained' | 'stat' | 'level' -- sort order of the roster list
 let badgePanelOpen = false; // collapsed/expanded state of the badge breakdown panel
+let championPanelOpen = false; // collapsed/expanded state of the saved championship team panel
 let rollingBattle = null; // { nA, nB } dice counts while the "Fight!" roll animation is playing
 let activeGameTab = 'map'; // 'map' | 'mypokemon' | 'data' -- which of the three secondary panels is showing
 let dataBuilt = false; // whether #dataList has been populated for the current DATA/region
@@ -6364,17 +6367,22 @@ function statRowHtml(statsArr){
 function renderStatus(){
   const el = document.getElementById('statusStrip');
   const panel = document.getElementById('badgePanel');
-  if(!gameState || !gameState.started){ el.innerHTML=''; panel.style.display='none'; return; }
+  const champPanel = document.getElementById('championPanel');
+  if(!gameState || !gameState.started){ el.innerHTML=''; panel.style.display='none'; champPanel.style.display='none'; return; }
   const badges = gameState.defeatedGymLeaders.length;
   const levelCapChip = (gameState.challengeModes && gameState.challengeModes.levelCap)
     ? '<span class="status-turns">Level Cap: '+currentLevelCap()+'</span>' : '';
+  const championChip = (gameState.championshipTeam && gameState.championshipTeam.length)
+    ? '<span class="status-badges" data-action="toggleChampionPanel">&#127942; Champion Team</span>' : '';
   el.innerHTML =
     '<span class="status-badges" data-action="toggleBadgePanel">Badges: '+badges+' / '+gymCount()+'</span>' +
     '<span class="status-turns">Turn '+(gameState.turnCount||0)+'</span>' +
     levelCapChip +
+    championChip +
     '<span class="status-slot">Slot '+currentSlot+'</span>' +
     '<button type="button" class="reset-btn" data-action="goHome">Home</button>';
   renderBadgePanel();
+  renderChampionPanel();
 }
 // One box per gym leader, in the same left-to-right order the region's gym
 // leaders are defined in (DATA.gymLeaders' own key order), labeled with that
@@ -6394,6 +6402,17 @@ function renderBadgePanel(){
     return '<div class="badge-box" style="background:'+bg+'; color:'+fg+';" title="'+name+' -- '+info.town+' ('+info.type+')'+(beaten?' -- beaten':'')+'">'+abbrev+'</div>';
   }).join('');
   panel.innerHTML = '<div class="badge-panel-grid">'+boxes+'</div>';
+}
+// The frozen snapshot from the moment the Champion fell, toggled by the "Champion
+// Team" status-strip chip (only shown once gameState.championshipTeam exists) --
+// see championTeamRowHtml.
+function renderChampionPanel(){
+  const panel = document.getElementById('championPanel');
+  const team = gameState.championshipTeam;
+  const has = team && team.length;
+  panel.style.display = (championPanelOpen && has) ? '' : 'none';
+  if(!championPanelOpen || !has) return;
+  panel.innerHTML = '<div class="field-label" style="margin-top:0;">Who you beat the Champion with</div>' + championTeamRowHtml(team);
 }
 
 function gameMonLevel(m){ return m.ev.reduce((a,b)=>a+b,0); }
@@ -6542,6 +6561,12 @@ function renderHomeScreen(){
     const seedLine = (customData && customData.seed)
       ? '<div class="save-slot-meta">Seed: <span class="seed-code">'+customData.seed+'</span></div>'
       : '';
+    // A frozen snapshot from the moment the Champion fell (see the elite4 win
+    // branch in fight()) -- always shows who was actually beaten with, even if
+    // the live roster has kept changing since.
+    const championLine = (gs.championshipTeam && gs.championshipTeam.length)
+      ? '<div class="save-slot-meta" style="margin-top:6px;">&#127942; Beat the Champion with:</div>' + championTeamRowHtml(gs.championshipTeam)
+      : '';
     return '<div class="save-slot-card">' +
         '<button type="button" class="save-slot-delete-btn" data-action="deleteSlot" data-slot="'+slot+'" title="Delete this save" aria-label="Delete this save">&times;</button>' +
         '<div class="save-slot-row">' +
@@ -6549,6 +6574,7 @@ function renderHomeScreen(){
             '<div class="save-slot-title">'+regionLabel+'</div>' +
             '<div class="save-slot-meta">At '+locName+' &middot; '+badges+' badge'+(badges===1?'':'s')+' &middot; Turn '+(gs.turnCount||0)+'</div>' +
             seedLine +
+            championLine +
             '<div class="choice-grid">' +
               '<button type="button" class="btn btn-primary" data-action="continueSlot" data-slot="'+slot+'">Continue</button>' +
             '</div>' +
@@ -7102,6 +7128,13 @@ function opponentDisplayHtml(opp, statusClass){
   return '<span class="opp-chip'+(statusClass?(' '+statusClass):'')+'">'+opp.species+' Lv'+opp.level+'</span>';
 }
 
+// Shared compact chip row -- takes any array of mon-like objects (just needs
+// .name) so it works equally for live roster entries and frozen snapshots.
+function monChipRowHtml(mons, currentId){
+  return '<div class="e4-team-row">' + mons.map(m=>
+    '<span class="e4-team-chip'+(currentId && m.id===currentId?' current':'')+'">'+spriteImgHtml(m.name,'sprite-sm')+m.name+'</span>'
+  ).join('') + '</div>';
+}
 // Compact "locked-in team of 6" strip -- shown wherever an Elite Four run is active
 // (mid-battle, between members, or paused at the E4 town) so the player can always
 // see which Pokemon are already committed to this run, even many battles later.
@@ -7109,13 +7142,16 @@ function eliteFourTeamStatusHtml(currentId){
   const ids = gameState.eliteFourTeamIds || [];
   if(!ids.length) return '';
   const list = loadGamePokemon();
-  const chips = ids.map(id=>{
-    const m = list.find(x=>x.id===id);
-    if(!m) return '';
-    return '<span class="e4-team-chip'+(id===currentId?' current':'')+'">'+spriteImgHtml(m.name,'sprite-sm')+m.name+'</span>';
-  }).join('');
-  return '<div class="field-label">Your Elite Four Team ('+ids.length+'/6)</div>' +
-    '<div class="e4-team-row">'+chips+'</div>';
+  const mons = ids.map(id=>list.find(x=>x.id===id)).filter(Boolean);
+  return '<div class="field-label">Your Elite Four Team ('+ids.length+'/6)</div>' + monChipRowHtml(mons);
+}
+// The championship team is a frozen SNAPSHOT taken the instant the Champion falls
+// (see the elite4 win branch in fight()) -- not a live view of the roster, which
+// can keep changing afterward (more catches, more evolutions). This is what lets
+// the player always know who they actually won with, even much later.
+function championTeamRowHtml(team){
+  if(!team || !team.length) return '';
+  return monChipRowHtml(team);
 }
 
 function fmtEffMult(mult){
@@ -7397,7 +7433,7 @@ function beginAdventure(){
     defeatedGymLeaders: [], turnCount: 0, eliteFourProgress: null, eliteFourTeamIds: [],
     customRegionLabel: startPick.region === 'custom' ? DATA.regionLabel : undefined,
     challengeModes: Object.assign({}, challengeModes),
-    championDefeated:false, teamBuilderExported:false,
+    championDefeated:false, teamBuilderExported:false, championshipTeam:null,
   };
   saveGameState();
   view = 'board';
@@ -7679,6 +7715,11 @@ async function fight(){
         gameState.eliteFourProgress = null;
         gameState.eliteFourTeamIds = [];
         gameState.championDefeated = true;
+        // Frozen forever at this moment -- a deep copy, not a live reference, so
+        // later catches/evolutions to the same Pokemon don't rewrite history. If
+        // the Champion is beaten again on a later run, this simply overwrites
+        // with the newest win.
+        gameState.championshipTeam = JSON.parse(JSON.stringify(team));
         saveGameState();
         pendingTmOffer = false;
         view = 'message';
@@ -7885,6 +7926,10 @@ document.getElementById('statusStrip').addEventListener('click', (e)=>{
   if(e.target.closest('[data-action="toggleBadgePanel"]')){
     badgePanelOpen = !badgePanelOpen;
     renderBadgePanel();
+  }
+  if(e.target.closest('[data-action="toggleChampionPanel"]')){
+    championPanelOpen = !championPanelOpen;
+    renderChampionPanel();
   }
 });
 document.getElementById('mapInfo').addEventListener('click', (e)=>{
