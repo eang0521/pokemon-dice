@@ -900,15 +900,17 @@ function sleep(ms){ return new Promise(res=>setTimeout(res, ms)); }
 // Cycles a die square through the Pokemon's own possible stat values (its face is
 // literally which stat got picked), then settles on finalFace -- the actual rolled
 // result, not a cosmetic one.
+// Displayed face values are always floored -- a tiebreaker STAB's +0.5 is real for
+// comparison purposes but never meant to be seen as "3.5" on a die.
 async function tumble(el, durationMs, possibleValues, finalFace){
   if(!el) return;
   el.classList.add('rolling');
   const steps = Math.max(1, Math.round(durationMs/85));
   for(let i=0;i<steps-1;i++){
-    el.textContent = possibleValues[Math.floor(Math.random()*possibleValues.length)];
+    el.textContent = Math.floor(possibleValues[Math.floor(Math.random()*possibleValues.length)]);
     await sleep(85);
   }
-  el.textContent = finalFace;
+  el.textContent = Math.floor(finalFace);
   el.classList.remove('rolling');
   await sleep(85);
 }
@@ -7203,8 +7205,8 @@ function battlePanelHtml(nameA, t1A, t2A, atkA, effA, nameB, t1B, t2B, atkB, eff
 }
 function diceStageHtml(rb){
   const pick = (arr)=>arr[Math.floor(Math.random()*arr.length)];
-  const diceA = Array.from({length: rb.nA}, (_,i)=>'<div class="die" id="battleDieA'+i+'">'+pick(rb.statsA)+'</div>').join('');
-  const diceB = Array.from({length: rb.nB}, (_,i)=>'<div class="die" id="battleDieB'+i+'">'+pick(rb.statsB)+'</div>').join('');
+  const diceA = Array.from({length: rb.nA}, (_,i)=>'<div class="die" id="battleDieA'+i+'">'+Math.floor(pick(rb.statsA))+'</div>').join('');
+  const diceB = Array.from({length: rb.nB}, (_,i)=>'<div class="die" id="battleDieB'+i+'">'+Math.floor(pick(rb.statsB))+'</div>').join('');
   return '<div class="field-label" style="text-align:center;">Rolling...</div>' +
     '<div class="dice-stage">' +
       '<div class="dice-group">'+diceA+'</div>' +
@@ -7716,7 +7718,7 @@ async function fight(){
     : { winner: rA.final > rB.final ? 'A' : 'B', finalA: rA.final, finalB: rB.final };
 
   if(result.winner === 'A'){
-    e.log.push(entry.name+' ('+result.finalA+') defeated '+opp.species+' ('+result.finalB+')!');
+    e.log.push(entry.name+' ('+Math.floor(result.finalA)+') defeated '+opp.species+' ('+Math.floor(result.finalB)+')!');
     const isLastOpponent = (e.oppIdx === e.opponents.length - 1);
 
     if(e.type === 'elite4'){
@@ -7808,7 +7810,7 @@ async function fight(){
   }
 
   // Loss
-  e.log.push(entry.name+' ('+result.finalA+') lost to '+opp.species+' ('+result.finalB+').');
+  e.log.push(entry.name+' ('+Math.floor(result.finalA)+') lost to '+opp.species+' ('+Math.floor(result.finalB)+').');
 
   if(e.type === 'elite4'){
     e.currentMemberLostIds.add(e.currentPlayerId);
