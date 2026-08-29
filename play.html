@@ -1357,7 +1357,11 @@ function dataEntryHtml(species){
   const evolvesInto = info.evolvesInto || [];
 
   let evoHtml = '';
-  if(info.evolvesFrom) evoHtml += '<div class="dex-evo-line">Evolves from <b>'+info.evolvesFrom+'</b></div>';
+  if(info.evolvesFrom){
+    const fromBranch = ((DATA.evoInfo[info.evolvesFrom] || {}).evolvesInto || []).find(e => e.species === species);
+    const fromMethod = fromBranch ? fromBranch.method : null;
+    evoHtml += '<div class="dex-evo-line">Evolves from <b>'+info.evolvesFrom+'</b>'+(fromMethod ? ' ('+fromMethod+')'+evoItemLocationNote(fromMethod) : '')+'</div>';
+  }
   evolvesInto.forEach(e=>{
     evoHtml += '<div class="dex-evo-line">Evolves into <b>'+e.species+'</b> ('+e.method+')'+evoItemLocationNote(e.method)+'</div>';
   });
