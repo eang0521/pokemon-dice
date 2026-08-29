@@ -1309,7 +1309,7 @@ function buildEncounterPreviewHtml(locationId){
     return '<div class="map-encounter-row">' +
       '<span class="map-encounter-sum">' + sum + '</span>' +
       spriteImgHtml(species, 'sprite-sm') +
-      '<span class="map-encounter-name">' + species + '</span>' +
+      '<span class="map-encounter-name">' + species + (LEGENDARY_DEX[species] ? ' ★' : '') + '</span>' +
       '<span class="map-encounter-types">' + types.map(t=>typePillHtml(t)).join('') + '</span>' +
     '</div>';
   }).join('');
@@ -1380,7 +1380,7 @@ function dataEntryHtml(species){
 
   return '<div class="mon-detail-card dex-entry" data-name="'+species.toLowerCase()+'" data-types="'+types.map(t=>t.toLowerCase()).join(',')+'">' +
     spriteImgHtml(species, 'sprite-lg') +
-    '<div class="mon-detail-name">'+species+'</div>' +
+    '<div class="mon-detail-name">'+species+(LEGENDARY_DEX[species] ? ' ★' : '')+'</div>' +
     '<div class="trainer-type-block"><span class="trainer-type-label">Type</span>' +
       '<span class="trainer-mon-types">'+types.map(t=>trainerStylePill(t)).join('')+'</span></div>' +
     statRowHtml(dice) +
@@ -1391,6 +1391,7 @@ function dataEntryHtml(species){
 const DEX_SORTS = [
   { mode:'regional', label:'Regional #' },
   { mode:'alpha', label:'A-Z' },
+  { mode:'stat', label:'Stat Total' },
 ];
 // "Regional #" order: each offered starter's full line (base -> final,
 // grouped line by line, in STARTERS_BY_REGION's own order), then every
@@ -1420,10 +1421,14 @@ function dexRegionalOrder(){
   const legendary = rest.filter(sp=>LEGENDARY_DEX[sp]);
   return starterOrder.concat(normal, legendary);
 }
+function dexStatTotalOrder(){
+  return Object.keys(DATA.dice).sort((a,b)=>
+    statTotal(DATA.dice[b] || [0,0,0,0,0,0]) - statTotal(DATA.dice[a] || [0,0,0,0,0,0]));
+}
 function dexSortedSpeciesList(){
-  return dexSort === 'alpha'
-    ? Object.keys(DATA.dice).sort((a,b)=>a.localeCompare(b))
-    : dexRegionalOrder();
+  if(dexSort === 'alpha') return Object.keys(DATA.dice).sort((a,b)=>a.localeCompare(b));
+  if(dexSort === 'stat') return dexStatTotalOrder();
+  return dexRegionalOrder();
 }
 function dexTypeFilterButtonHtml(type, label){
   const active = (dexTypeFilter||'') === type;
