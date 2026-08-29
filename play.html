@@ -1089,14 +1089,21 @@ function crossOdds(distA, distB){
   if(decided <= 1e-12) return {winA:0, winB:0, unbreakable:true};
   return {winA: winA/decided, winB: winB/decided, unbreakable:false};
 }
+// Normally a flat +1. The "STAB as Tiebreaker" setting (Settings screen) shrinks it
+// to +0.5 instead -- since every base stat is a whole number, half a point can only
+// ever settle what would otherwise be an exact tie, never flip a result that would've
+// gone the other way anyway.
+function stabBonusValue(){
+  return (gameState && gameState.challengeModes && gameState.challengeModes.stabTiebreaker) ? 0.5 : 1;
+}
 // Exact post-reroll odds that A beats B in one exchange (§14) -- same STAB
 // and attacker-vs-opponent-types wiring as resolveBattle, just computing the
 // full distribution instead of rolling once.
 function winOdds(statsA, typesA, atkA, statsB, typesB, atkB){
   const cfgA = diceConfig(effectiveness(atkA, typesB[0], typesB[1]));
   const cfgB = diceConfig(effectiveness(atkB, typesA[0], typesA[1]));
-  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? 1 : 0;
-  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? 1 : 0;
+  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? stabBonusValue() : 0;
+  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? stabBonusValue() : 0;
   return crossOdds(resultDistribution(statsA, cfgA, stabA), resultDistribution(statsB, cfgB, stabB));
 }
 
@@ -6632,7 +6639,7 @@ const HOW_TO_PLAY_SECTIONS = [
     'Battles are resolved one single exchange at a time -- no HP bars, no multi-turn slog. Winning an exchange ends the fight against that opponent.',
     'Every Pokemon has 6 stats -- HP, Atk, Def, SpA, SpD, Spe -- shown as "die faces," plus any bonus points it\'s earned from leveling. Each side rolls to see which of its own 6 stats is in play; the result is that stat\'s value, not the raw 1-6 roll.',
     'Your current Attack Type against the opponent\'s true type(s) decides how many of these rolls you get, and whether you keep the best or the worst: doubly effective rolls 3 and keeps the best, effective rolls 2 and keeps the best, normal is a single roll, resisted rolls 2 and keeps the worst, and doubly resisted or immune rolls 3 and keeps the worst.',
-    'STAB: if your Attack Type matches one of your Pokemon\'s own true types, add +1 to every roll.',
+    'STAB: if your Attack Type matches one of your Pokemon\'s own true types, add +1 to every roll (or +0.5, just enough to break a tie, if you\'ve turned on the STAB as Tiebreaker setting).',
     'Whoever\'s result is higher wins the exchange. A tie doesn\'t end anything -- both sides just reroll under the exact same conditions until someone wins.',
   ])},
   { id:'catch', label:'Catching & Defeating', body: htp([
@@ -6851,6 +6858,8 @@ const CHALLENGE_MODE_DEFS = [
     desc:'No Pokemon can level up past 5 + the number of Gym Badges you\'ve earned. XP still banks past the cap and unlocks automatically (possibly several levels at once) the moment your next badge raises it.' },
   { key:'teamBuilder50', title:'50-Turn Team Builder',
     desc:'On turn 50, the adventure pauses so you can pick a team to export in a simple copy/paste format for an upcoming battle simulator. You may pick 1 Pokemon per 2 Gym Badges earned, plus 2 more if you\'ve beaten the Elite Four and Champion (6 max).' },
+  { key:'stabTiebreaker', title:'STAB as Tiebreaker',
+    desc:'STAB (matching Attack Type) normally adds a full +1 to every roll. Turn this on to shrink it to +0.5 instead -- just enough to settle what would otherwise be an exact tie, never enough to flip a result that would\'ve gone the other way anyway.' },
 ];
 function renderChallengeModesScreen(){
   const rows = CHALLENGE_MODE_DEFS.map(def=>{
@@ -6861,7 +6870,7 @@ function renderChallengeModesScreen(){
     '</div>';
   }).join('');
   return '<div class="card">' +
-    '<div class="card-title">Challenge Modes</div>' +
+    '<div class="card-title">Settings</div>' +
     '<div class="card-sub">Optional -- tap any to toggle it for this adventure. All off by default.</div>' +
     rows +
     '<div class="choice-grid" style="margin-top:16px;"><button type="button" class="btn btn-primary" data-action="confirmChallengeModes">Continue</button></div>' +
@@ -7670,8 +7679,8 @@ async function fight(){
   // type is against the OTHER side's defending types -- not against its own.
   const cfgA = diceConfig(effectiveness(atkA, typesB[0], typesB[1]));
   const cfgB = diceConfig(effectiveness(atkB, typesA[0], typesA[1]));
-  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? 1 : 0;
-  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? 1 : 0;
+  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? stabBonusValue() : 0;
+  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? stabBonusValue() : 0;
   // STAB is baked into every die face shown (not just the kept one) so the two sides'
   // dice can be compared face-to-face -- the cycling animation shows the same
   // STAB-inclusive numbers the dice will actually land on, not a mismatched raw value.
