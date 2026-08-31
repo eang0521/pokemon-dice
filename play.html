@@ -1406,15 +1406,15 @@ const DEX_SORTS = [
   { mode:'alpha', label:'A-Z' },
   { mode:'stat', label:'Stat Total' },
 ];
-// "Regional #" order: each offered starter's full line (base -> final,
-// grouped line by line, in STARTERS_BY_REGION's own order), then every
-// other species in the order it was originally added to this region's own
-// dex (DATA.dice's natural key-insertion order -- true for both a real
-// region's hand-authored data and a generated one, since both build that
-// object by inserting keys in a meaningful order rather than reassigning
-// them), non-Legendary/Mythical/Ultra-Beast/Paradox species before ones
-// LEGENDARY_DEX recognizes (a universal fact about a species, independent
-// of which region it's in).
+// "Regional #" order: each offered starter's full line (base -> final, grouped line
+// by line, in STARTERS_BY_REGION's own order) always comes first, since starters
+// always lead a real regional dex. Then every other species in the order it was
+// placed into an encounter table -- walking DATA.locations in their own array order
+// and each table by 2d6 sum (its own array index), taking each species' FIRST
+// appearance anywhere. Non-Legendary/Mythical/Ultra-Beast/Paradox species before
+// ones LEGENDARY_DEX recognizes (a universal fact about a species, independent of
+// which region it's in) -- those always come last, even the ones that do turn up in
+// some table (e.g. a roaming legendary).
 function dexRegionalOrder(){
   const allSpecies = Object.keys(DATA.dice);
   const allSpeciesSet = new Set(allSpecies);
@@ -1429,9 +1429,47 @@ function dexRegionalOrder(){
       sp = branch.length ? branch[0].species : null;
     }
   });
-  const rest = allSpecies.filter(sp=>!starterSet.has(sp));
-  const normal = rest.filter(sp=>!LEGENDARY_DEX[sp]);
-  const legendary = rest.filter(sp=>LEGENDARY_DEX[sp]);
+  const legendarySet = new Set(allSpecies.filter(sp=>LEGENDARY_DEX[sp]));
+  const excluded = new Set([...starterSet, ...legendarySet]);
+
+  const normal = [];
+  const placed = new Set();
+  (DATA.locations || []).forEach(loc=>{
+    (loc.table || []).forEach(sp=>{
+      if(sp && allSpeciesSet.has(sp) && !excluded.has(sp) && !placed.has(sp)){
+        placed.add(sp);
+        normal.push(sp);
+      }
+    });
+  });
+  // A species never placed directly in any wild table (only reachable by evolving
+  // one that is, or obtained some other way entirely) slots in right after its own
+  // predecessor once that ancestor has a spot -- same "keep the family together"
+  // idea the starter-line walk above already uses. Looped since a multi-stage gap
+  // (evolving from something that's ALSO table-absent) can take more than one pass
+  // to resolve.
+  let leftover = allSpecies.filter(sp=>!excluded.has(sp) && !placed.has(sp));
+  let progress = true;
+  while(leftover.length && progress){
+    progress = false;
+    leftover = leftover.filter(sp=>{
+      const pred = DATA.predecessor && DATA.predecessor[sp];
+      if(pred && placed.has(pred)){
+        normal.splice(normal.indexOf(pred)+1, 0, sp);
+        placed.add(sp);
+        progress = true;
+        return false;
+      }
+      return true;
+    });
+  }
+  // Anything still stranded (no predecessor of its own, and never placed in any
+  // wild table -- e.g. a standalone species only obtainable some other way) just
+  // falls in after everything else that resolved, in whatever order DATA.dice
+  // itself lists it.
+  normal.push(...leftover);
+
+  const legendary = allSpecies.filter(sp=>legendarySet.has(sp));
   return starterOrder.concat(normal, legendary);
 }
 function dexStatTotalOrder(){
@@ -6121,19 +6159,27 @@ function evoRequiredLevel(method){
   const m = method.match(/Level (\d+)/);
   return m ? parseInt(m[1], 10) : null;
 }
+// An "[Type] attack type" move-trigger (see isEvoMethodAnItem's own list of the
+// method shapes NATIONAL_EVOLUTION_DATA uses) standing in for mainline's "knows
+// [move]" -- this game has no move-tracking system, so current attack type is the
+// closest checkable equivalent. Returns the required type, or null if this isn't
+// that kind of method.
+function evoRequiredAttackType(method){
+  const m = method.match(/^(\w+) attack type$/);
+  return m ? m[1] : null;
+}
 
 // Level-up (and friendship) evolution -- checked right after XP is granted,
 // separate from the town-item evolve flow (which only ever handles item/trade
 // branches). Triggers automatically, no confirmation, matching mainline: a
 // friendship branch's threshold is "level >= level caught at + 4" (SS11 of the
-// ruleset); a plain level branch just needs an explicit "Level N" in its
-// method text; Piloswine -> Mamoswine (Calli) is a one-off "Rock attack type"
-// condition standing in for mainline's "knows Ancient Power" (this game has no
-// move-tracking system, so attack type is the closest checkable equivalent) --
-// no level floor of its own, just needs a level-up tick while atk is Rock.
-// Loops in case evolving lands it on another already-eligible stage. Returns
-// an array of "X evolved into Y!" messages for the caller to surface (e.g.
-// into the encounter log).
+// ruleset); a plain level branch just needs an explicit "Level N" in its method
+// text; an "[Type] attack type" branch (Piloswine -> Mamoswine, Dipplin ->
+// Hydrapple, etc. -- see evoRequiredAttackType) has no level floor of its own,
+// just needs a level-up tick while current attack type matches. Loops in case
+// evolving lands it on another already-eligible stage. Returns an array of
+// "X evolved into Y!" messages for the caller to surface (e.g. into the
+// encounter log).
 function checkAndApplyLevelEvolution(entry, list){
   const messages = [];
   while(true){
@@ -6142,10 +6188,11 @@ function checkAndApplyLevelEvolution(entry, list){
     const level = entry.ev.reduce((a,b)=>a+b,0);
     let target = null;
     for(const branch of info.evolvesInto){
+      const atkType = evoRequiredAttackType(branch.method);
       if(branch.method.indexOf('Friendship') !== -1){
         if(level >= (entry.catchLevel||0) + 4){ target = branch.species; break; }
-      } else if(branch.method.indexOf('Rock attack type') !== -1){
-        if((entry.atk||'').toLowerCase() === 'rock'){ target = branch.species; break; }
+      } else if(atkType !== null){
+        if((entry.atk||'').toLowerCase() === atkType.toLowerCase()){ target = branch.species; break; }
       } else {
         const req = evoRequiredLevel(branch.method);
         if(req !== null && level >= req){ target = branch.species; break; }
