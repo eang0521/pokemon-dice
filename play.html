@@ -1454,7 +1454,12 @@ function dexRegionalOrder(){
   const allSpeciesSet = new Set(allSpecies);
   const starterOrder = [];
   const starterSet = new Set();
-  (STARTERS_BY_REGION[gameState.region] || []).forEach(base=>{
+  // A player can open the Pokedex from the starter-picker screen too, before
+  // gameState exists at all (it's only created once "Begin Adventure" is
+  // clicked) -- startPick.region is set as soon as a region is chosen, so fall
+  // back to that whenever there's no real (in-progress-adventure) region yet.
+  const regionKey = (gameState && gameState.region) || startPick.region;
+  (STARTERS_BY_REGION[regionKey] || []).forEach(base=>{
     let sp = base;
     while(sp && allSpeciesSet.has(sp) && !starterSet.has(sp)){
       starterOrder.push(sp);
