@@ -7738,6 +7738,13 @@ async function fight(){
   const displayStatsA = stabA ? statsA.map(v=>v+stabA) : statsA;
   const displayStatsB = stabB ? statsB.map(v=>v+stabB) : statsB;
 
+  // A matchup where every possible dice outcome ties (identical effective stats,
+  // dice config, and STAB on both sides) can never resolve on its own -- the same
+  // "unbreakable" check winOdds already uses for the pre-battle odds picker (§
+  // "who do I send out") catches it here too, so the reroll loop below only ever
+  // plays out that one guaranteed-tied round instead of spinning for real.
+  const preOdds = winOdds(statsA, typesA, atkA, statsB, typesB, atkB);
+
   // The dice you see ARE the actual roll -- animate real rounds (including real ties,
   // paused on-screen so the player can see what happened) rather than faking a replay.
   let rA, rB, roundNum = 0, animate = true;
@@ -7759,12 +7766,20 @@ async function fight(){
       await sleep(600);
       if(roundNum >= 8) animate = false; // an extreme tie streak stops animating and fast-forwards
     }
-  } while(rA.final === rB.final && roundNum < 300);
+  } while(rA.final === rB.final && !preOdds.unbreakable && roundNum < 300);
   rollingBattle = null;
 
-  const result = (rA.final === rB.final)
-    ? { winner: 'tie', finalA: null, finalB: null }
-    : { winner: rA.final > rB.final ? 'A' : 'B', finalA: rA.final, finalB: rB.final };
+  // Still tied here means either the unbreakable case above (guaranteed, after
+  // exactly 1 round) or, in principle, an ordinary tie that somehow still hasn't
+  // broken after 300 real rerolls -- astronomically unlikely, but silently handing
+  // the exchange to the opponent would be worse than just flipping a coin, so both
+  // cases resolve the same way instead of ever falling through as an unresolved tie.
+  const coinFlipped = rA.final === rB.final;
+  if(coinFlipped){
+    e.log.push(entry.name+' and '+opp.species+' are perfectly matched -- every roll ties, so this exchange was decided by a coin flip.');
+  }
+  const winnerIsA = coinFlipped ? Math.random() < 0.5 : (rA.final > rB.final);
+  const result = { winner: winnerIsA ? 'A' : 'B', finalA: rA.final, finalB: rB.final };
 
   if(result.winner === 'A'){
     e.log.push(entry.name+' ('+Math.floor(result.finalA)+') defeated '+opp.species+' ('+Math.floor(result.finalB)+')!');
