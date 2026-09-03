@@ -6178,65 +6178,67 @@ function evoRequiredAttackType(method){
 // ruleset); a plain level branch just needs an explicit "Level N" in its method
 // text; an "[Type] attack type" branch (Piloswine -> Mamoswine, Dipplin ->
 // Hydrapple, etc. -- see evoRequiredAttackType) has no level floor of its own,
-// just needs a level-up tick while current attack type matches. Loops in case
-// evolving lands it on another already-eligible stage. Returns an array of
+// just needs a level-up tick while current attack type matches. Resolves AT MOST
+// ONE stage per call -- leveling itself isn't capped per battle, but evolution is
+// (see resolveDeferredEvolutions), so a Pokemon whose level already qualifies for
+// a second consecutive stage right after this one just picks that up the next
+// time it earns any XP at all, in a later battle, rather than cascading straight
+// through both stages in the same battle. Returns an array (0 or 1 entries) of
 // "X evolved into Y!" messages for the caller to surface (e.g. into the
 // encounter log).
 function checkAndApplyLevelEvolution(entry, list){
   const messages = [];
-  while(true){
-    const info = DATA.evoInfo[entry.name];
-    if(!info || !info.evolvesInto || !info.evolvesInto.length) break;
-    const level = entry.ev.reduce((a,b)=>a+b,0);
-    let target = null;
-    for(const branch of info.evolvesInto){
-      const atkType = evoRequiredAttackType(branch.method);
-      if(branch.method.indexOf('Friendship') !== -1){
-        if(level >= (entry.catchLevel||0) + 4){ target = branch.species; break; }
-      } else if(atkType !== null){
-        if((entry.atk||'').toLowerCase() === atkType.toLowerCase()){ target = branch.species; break; }
-      } else {
-        const req = evoRequiredLevel(branch.method);
-        if(req !== null && level >= req){ target = branch.species; break; }
-      }
+  const info = DATA.evoInfo[entry.name];
+  if(!info || !info.evolvesInto || !info.evolvesInto.length) return messages;
+  const level = entry.ev.reduce((a,b)=>a+b,0);
+  let target = null;
+  for(const branch of info.evolvesInto){
+    const atkType = evoRequiredAttackType(branch.method);
+    if(branch.method.indexOf('Friendship') !== -1){
+      if(level >= (entry.catchLevel||0) + 4){ target = branch.species; break; }
+    } else if(atkType !== null){
+      if((entry.atk||'').toLowerCase() === atkType.toLowerCase()){ target = branch.species; break; }
+    } else {
+      const req = evoRequiredLevel(branch.method);
+      if(req !== null && level >= req){ target = branch.species; break; }
     }
-    if(!target) break;
+  }
+  if(!target) return messages;
 
-    // Nincada -> Ninjask also spawns a Shedinja alongside it (mainline mechanic):
-    // a brand-new Pokemon added to the collection, at the same level and EVs as
-    // the Nincada that just evolved, with its own random attack type. Nincada
-    // itself still just becomes Ninjask -- Shedinja is purely a bonus.
-    const shedinjaBranch = info.evolvesInto.find(b => b.species === 'Shedinja');
-    if(shedinjaBranch && target !== 'Shedinja' && list){
-      const sTypes = DATA.types['Shedinja'] || [null, null];
-      list.push({
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
-        name: 'Shedinja',
-        t1: sTypes[0] || null,
-        t2: sTypes[1] || null,
-        atk: randomAttackType(sTypes[0], sTypes[1]),
-        base: (DATA.dice['Shedinja'] || [0,0,0,0,0,0]).slice(),
-        ev: entry.ev.slice(),
-        xp: entry.xp || 0,
-        catchLevel: entry.catchLevel,
-        caughtAt: new Date().toISOString(),
-        note: 'Appeared alongside ' + entry.name + '\'s evolution',
-      });
-      messages.push('A Shedinja appeared!');
-    }
+  // Nincada -> Ninjask also spawns a Shedinja alongside it (mainline mechanic):
+  // a brand-new Pokemon added to the collection, at the same level and EVs as
+  // the Nincada that just evolved, with its own random attack type. Nincada
+  // itself still just becomes Ninjask -- Shedinja is purely a bonus.
+  const shedinjaBranch = info.evolvesInto.find(b => b.species === 'Shedinja');
+  if(shedinjaBranch && target !== 'Shedinja' && list){
+    const sTypes = DATA.types['Shedinja'] || [null, null];
+    list.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+      name: 'Shedinja',
+      t1: sTypes[0] || null,
+      t2: sTypes[1] || null,
+      atk: randomAttackType(sTypes[0], sTypes[1]),
+      base: (DATA.dice['Shedinja'] || [0,0,0,0,0,0]).slice(),
+      ev: entry.ev.slice(),
+      xp: entry.xp || 0,
+      catchLevel: entry.catchLevel,
+      caughtAt: new Date().toISOString(),
+      note: 'Appeared alongside ' + entry.name + '\'s evolution',
+    });
+    messages.push('A Shedinja appeared!');
+  }
 
-    const oldName = entry.name;
-    entry.name = target;
-    const types = DATA.types[target] || [null, null];
-    entry.t1 = types[0] || null;
-    entry.t2 = types[1] || null;
-    entry.base = (DATA.dice[target] || [0,0,0,0,0,0]).slice();
-    messages.push(oldName + ' evolved into ' + target + '!');
+  const oldName = entry.name;
+  entry.name = target;
+  const types = DATA.types[target] || [null, null];
+  entry.t1 = types[0] || null;
+  entry.t2 = types[1] || null;
+  entry.base = (DATA.dice[target] || [0,0,0,0,0,0]).slice();
+  messages.push(oldName + ' evolved into ' + target + '!');
 
-    const rolledAtk = randomAttackType(entry.t1, entry.t2);
-    if(rolledAtk !== entry.atk && confirm('Change '+entry.name+'\'s attack type from '+entry.atk+' to '+rolledAtk+'?')){
-      entry.atk = rolledAtk;
-    }
+  const rolledAtk = randomAttackType(entry.t1, entry.t2);
+  if(rolledAtk !== entry.atk && confirm('Change '+entry.name+'\'s attack type from '+entry.atk+' to '+rolledAtk+'?')){
+    entry.atk = rolledAtk;
   }
   return messages;
 }
