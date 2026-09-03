@@ -1283,7 +1283,7 @@ function evolveOptionsForTown(node){
     if(!info || !info.evolvesInto) return;
     info.evolvesInto.forEach(e=>{
       const item = items.find(it => e.method.indexOf(it) !== -1);
-      if(item) options.push({ monId: m.id, monName: m.name, targetSpecies: e.species, item });
+      if(item) options.push({ monId: m.id, monName: m.name, targetSpecies: e.species, item, mon: m });
     });
   });
   return options;
@@ -7097,14 +7097,23 @@ function renderTownMenuScreen(){
   '</div>';
 }
 
+// Full detail cards (same monStatCardHtml the My Pokemon list and battle picker
+// use), one per eligible (owned Pokemon, branch) pair, each with its own Evolve
+// button -- plain "Evolve Gloom into Vileplume" buttons look identical when you
+// own two of the same eligible species, so showing the full card (level, stats,
+// XP) is the only way to tell which one a button actually acts on.
 function renderEvolveChoiceScreen(){
-  const options = pendingEvolveOptions.map(o=>
-    '<button type="button" class="btn btn-wild" data-action="chooseEvolveOption" data-mon="'+o.monId+'" data-target="'+o.targetSpecies+'">Evolve '+o.monName+' into '+o.targetSpecies+' ('+o.item+')</button>'
+  const cards = pendingEvolveOptions.map(o =>
+    monStatCardHtml(o.mon,
+      '<div class="choice-grid" style="margin-top:8px;">' +
+        '<button type="button" class="btn btn-wild" data-action="chooseEvolveOption" data-mon="'+o.monId+'" data-target="'+o.targetSpecies+'">Evolve into '+o.targetSpecies+' ('+o.item+')</button>' +
+      '</div>'
+    )
   ).join('');
   return '<div class="card">' +
     '<div class="card-title">Evolve a Pokemon</div>' +
     '<div class="card-sub">Using an item found here</div>' +
-    '<div class="choice-grid">'+options+'</div>' +
+    cards +
     '<div class="choice-grid" style="margin-top:10px;"><button type="button" class="btn" data-action="backToTownMenu">Back</button></div>' +
   '</div>';
 }
