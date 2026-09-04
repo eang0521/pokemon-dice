@@ -748,6 +748,13 @@
   .rr-standings-toggle{ cursor:pointer; user-select:none; display:flex; align-items:center; gap:6px; }
   .rr-standings-toggle:hover{ color:var(--redwood); }
   .mega-select{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; padding:7px 9px; border:1.5px solid var(--ink); border-radius:4px; background:var(--paper); color:var(--ink); width:100%; }
+  .ban-bar{ background:var(--paper-deep); border:1.5px solid var(--ink); border-radius:6px; padding:8px 10px; margin-bottom:14px; }
+  .ban-bar-row{ display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-bottom:7px; }
+  .ban-bar-label{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--redwood); }
+  .ban-check-item{ display:flex; align-items:center; gap:4px; font-family:'IBM Plex Mono', monospace; font-size:10.5px; cursor:pointer; white-space:nowrap; }
+  .ban-check-item input{ width:12px; height:12px; cursor:pointer; accent-color:var(--rust); margin:0; }
+  .ban-bar-count{ margin-left:auto; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--sage); }
+  .ban-bar-btn{ width:100%; }
   .progress-bar-track{ background:var(--paper); border:1.5px solid var(--ink); border-radius:5px; height:16px; overflow:hidden; margin-top:8px; }
   .progress-bar-fill{ background:var(--gold); height:100%; transition:width .15s ease; }
 </style>
@@ -1780,6 +1787,44 @@ Object.keys(LEGENDARY_DEX).forEach(n=>{
 });
 const SPECIES_LIST = Object.keys(SPECIES_DATA);
 
+// Sub-categorizes every LEGENDARY_DEX species (Legendary/Mythical/Ultra Beast/Paradox
+// as a whole) for the Round Robin ban-category options. "restricted" is the VGC/raid
+// sense of the term -- box-art legendaries and their pre-evolutions -- as distinct from
+// every other (non-restricted) Legendary. Ordinary species are never in this map.
+const LEGENDARY_CATEGORY = {};
+[
+  ['restricted', ['Mewtwo','Lugia','Ho-oh','Kyogre','Groudon','Rayquaza','Dialga','Palkia','Giratina',
+    'Reshiram','Zekrom','Kyurem','Xerneas','Yveltal','Zygarde','Cosmog','Cosmoem','Solgaleo','Lunala',
+    'Necrozma','Zacian','Zamazenta','Eternatus','Calyrex','Koraidon','Miraidon','Terapagos']],
+  ['mythical', ['Mew','Celebi','Jirachi','Deoxys','Manaphy','Phione','Darkrai','Shaymin','Arceus',
+    'Victini','Keldeo','Meloetta','Genesect','Diancie','Hoopa','Volcanion','Magearna','Marshadow',
+    'Zeraora','Meltan','Melmetal','Zarude','Pecharunt']],
+  ['ultrabeast', ['Nihilego','Buzzwole','Pheromosa','Xurkitree','Celesteela','Kartana','Guzzlord',
+    'Poipole','Naganadel','Stakataka','Blacephalon']],
+  ['paradox', ['Great Tusk','Scream Tail','Brute Bonnet','Flutter Mane','Slither Wing','Sandy Shocks',
+    'Roaring Moon','Walking Wake','Gouging Fire','Raging Bolt','Iron Treads','Iron Bundle','Iron Hands',
+    'Iron Jugulis','Iron Moth','Iron Thorns','Iron Valiant','Iron Leaves','Iron Boulder','Iron Crown']],
+  ['legendary', ['Articuno','Zapdos','Moltres','Raikou','Entei','Suicune','Regirock','Regice','Registeel',
+    'Latias','Latios','Uxie','Mesprit','Azelf','Heatran','Regigigas','Cresselia','Cobalion','Terrakion',
+    'Virizion','Tornadus','Thundurus','Landorus','Enamorus','Type: Null','Silvally','Tapu Koko','Tapu Lele',
+    'Tapu Bulu','Tapu Fini','Kubfu','Urshifu','Regieleki','Regidrago','Glastrier','Spectrier','Wo-Chien',
+    'Chien-Pao','Ting-Lu','Chi-Yu','Okidogi','Munkidori','Fezandipiti','Ogerpon']],
+].forEach(([cat, names])=>{ names.forEach(n=>{ LEGENDARY_CATEGORY[n] = cat; }); });
+const BAN_CATEGORY_DEFS = [
+  { key:'restricted', label:'Restricted Legendaries', desc:'Box-cover legendaries and their pre-evolutions -- Groudon, Kyogre, Rayquaza, Zacian, Koraidon, and the like.' },
+  { key:'legendary', label:'Other Legendaries', desc:'Every Legendary not on the restricted list -- birds, beasts, Tapus, Regis, and so on.' },
+  { key:'mythical', label:'Mythicals', desc:'Mew, Celebi, Jirachi, Arceus, and the rest of the event-only tier.' },
+  { key:'ultrabeast', label:'Ultra Beasts', desc:'Nihilego, Buzzwole, and the rest of the Ultra Beasts.' },
+  { key:'paradox', label:'Paradox Pok\u00e9mon', desc:'Great Tusk, Iron Hands, and the rest of the past/future Paradox forms.' },
+];
+function isSpeciesBanned(name){
+  const cat = LEGENDARY_CATEGORY[name];
+  return !!(cat && settings.bannedCategories[cat]);
+}
+function eligibleSpeciesList(){
+  return SPECIES_LIST.filter(n=>!isSpeciesBanned(n));
+}
+
 const STAT_NAMES = ['HP','Atk','Def','SpA','SpD','Spe'];
 const EV_TOTAL = 12; // matches the game's Lv12 rule: level == sum of EVs
 const TOURNEY_SIZE = 128;
@@ -1970,16 +2015,22 @@ function loadStore(){
     const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if(raw) return raw;
   } catch(e){}
-  return { tourney:null, roundRobin:null, activeMode:'elimination', strongerStab:false };
+  return { tourney:null, roundRobin:null, activeMode:'elimination', strongerStab:false, bannedCategories:null };
 }
 function saveStore(){
-  localStorage.setItem(STORE_KEY, JSON.stringify({ tourney, roundRobin, activeMode, strongerStab: settings.strongerStab }));
+  localStorage.setItem(STORE_KEY, JSON.stringify({ tourney, roundRobin, activeMode, strongerStab: settings.strongerStab, bannedCategories: settings.bannedCategories }));
 }
 const initialStore = loadStore();
 let tourney = initialStore.tourney;
 let roundRobin = initialStore.roundRobin || null;
 let activeMode = initialStore.activeMode || 'elimination';
-const settings = { strongerStab: !!initialStore.strongerStab };
+const settings = {
+  strongerStab: !!initialStore.strongerStab,
+  // Round Robin / Long Round Robin only (not the Elimination Bracket) -- which of the
+  // 5 special-tier categories to exclude from random generation. Ordinary species are
+  // never banned; each key maps to a bucket in LEGENDARY_CATEGORY below.
+  bannedCategories: Object.assign({ restricted:false, legendary:false, mythical:false, ultrabeast:false, paradox:false }, initialStore.bannedCategories || {}),
+};
 
 // Long Round Robin results can run ~1-2MB of JSON (10,000 entrants in Round 1 alone),
 // so it gets its own storage key rather than bloating every save of the small elimination/
@@ -2013,8 +2064,11 @@ function finalStatsOf(mon){
 }
 
 /* ============ Tournament generation ============ */
-function shuffledSpeciesSample(n){
-  const pool = SPECIES_LIST.slice();
+// sourceList defaults to the full roster -- the Elimination Bracket always calls
+// this with no override, so ban categories (Round Robin / Long Round Robin only)
+// never affect it.
+function shuffledSpeciesSample(n, sourceList){
+  const pool = (sourceList || SPECIES_LIST).slice();
   for(let i=pool.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
     [pool[i],pool[j]] = [pool[j],pool[i]];
@@ -2081,7 +2135,7 @@ function simulateOneExchange(A, B){
   return { winnerIsA, finalA: Math.floor(rA.final), finalB: Math.floor(rB.final) };
 }
 function generateRoundRobin(){
-  const names = shuffledSpeciesSample(ROUND_ROBIN_SIZE);
+  const names = shuffledSpeciesSample(ROUND_ROBIN_SIZE, eligibleSpeciesList());
   const entrants = names.map(generateEntrant);
   const stats = entrants.map(()=>({ wins:0, losses:0, diff:0 }));
   for(let i=0;i<entrants.length;i++){
@@ -2108,8 +2162,9 @@ function rankedRoundRobin(){
    down (100 robins -> 40 -> 10 -> 1 Championship). Unlike every other mode, repeats
    are explicitly allowed here, even within the same round robin: entrants are drawn
    independently (with replacement) rather than sampled without repeats. ============ */
-function randomEntrantWithRepeats(){
-  const name = SPECIES_LIST[Math.floor(Math.random()*SPECIES_LIST.length)];
+function randomEntrantWithRepeats(sourceList){
+  const list = sourceList || SPECIES_LIST;
+  const name = list[Math.floor(Math.random()*list.length)];
   return generateEntrant(name);
 }
 function simulateRoundRobinGroup(entrants){
@@ -2143,9 +2198,10 @@ async function generateMegaRoundRobin(){
   render();
   await sleep(0);
 
+  const sourceList = eligibleSpeciesList();
   let pool = [];
   const round1Count = MEGA_ROUND_DEFS[0].robinCount * MEGA_ROBIN_SIZE;
-  for(let i=0;i<round1Count;i++) pool.push(randomEntrantWithRepeats());
+  for(let i=0;i<round1Count;i++) pool.push(randomEntrantWithRepeats(sourceList));
 
   const rounds = [];
   let doneRobins = 0;
@@ -2294,15 +2350,36 @@ function generatorScreenHtml(){
     '</div>' +
   '</div>';
 }
+// Round Robin / Long Round Robin only -- lets the pool of random entrants exclude any
+// of the 5 special-tier categories (see LEGENDARY_CATEGORY / BAN_CATEGORY_DEFS above).
+// Persistent bar shown right under the tabs for both Round Robin and Long Round
+// Robin (never the Elimination Bracket) -- stays visible whether or not a result is
+// already showing, so bans can be changed and a fresh simulation started without
+// having to scroll or navigate back to an initial generator screen.
+function banAndGenerateBarHtml(action, buttonLabel){
+  const checkboxes = BAN_CATEGORY_DEFS.map(def=>{
+    const on = !!settings.bannedCategories[def.key];
+    return '<label class="ban-check-item" title="'+esc(def.desc)+'">' +
+      '<input type="checkbox" data-action="toggleBanCategory" data-cat="'+def.key+'"'+(on?' checked':'')+'>' +
+      '<span>'+def.label+'</span>' +
+    '</label>';
+  }).join('');
+  const eligibleCount = eligibleSpeciesList().length;
+  return '<div class="ban-bar">' +
+    '<div class="ban-bar-row">' +
+      '<span class="ban-bar-label">Ban</span>' +
+      checkboxes +
+      '<span class="ban-bar-count">'+eligibleCount+'/'+SPECIES_LIST.length+' eligible</span>' +
+    '</div>' +
+    '<button type="button" class="btn btn-primary ban-bar-btn" data-action="'+action+'">'+buttonLabel+'</button>' +
+  '</div>';
+}
 function roundRobinGeneratorScreenHtml(){
   return '<div class="card">' +
     '<div class="card-title">Random Round Robin</div>' +
     '<div class="card-sub">'+ROUND_ROBIN_SIZE+' randomly generated Pok\u00e9mon, everyone plays everyone once</div>' +
     '<div class="card-flavor">Same random generation as the bracket -- random species (no repeats) at Level '+EV_TOTAL+', '+EV_TOTAL+' Effort Values scattered randomly across its 6 stats, and an attack type rolled off the attack wheel. Every one of the '+ROUND_ROBIN_SIZE+' entrants battles every other entrant exactly once ('+ROUND_ROBIN_MATCH_COUNT.toLocaleString()+' matches total, resolved instantly), then gets ranked by win-loss record.</div>' +
     stabToggleHtml() +
-    '<div class="choice-grid" style="margin-top:12px; justify-content:center;">' +
-      '<button type="button" class="btn btn-primary" data-action="generateRoundRobin" style="font-size:15px; padding:12px 20px;">Generate &amp; Simulate Round Robin</button>' +
-    '</div>' +
   '</div>';
 }
 function rrEntrantCardHtml(r, rank){
@@ -2353,8 +2430,7 @@ function rrResultsBlockHtml(ranked, cutoff){
     ranked.map((r,i)=>rrEntrantCardHtml(r, i+1)).join('');
 }
 function roundRobinResultsHtml(){
-  return rrResultsBlockHtml(rankedRoundRobin(), null) +
-    '<div class="card" style="text-align:center;"><button type="button" class="btn btn-danger" data-action="generateRoundRobin">New Round Robin</button></div>';
+  return rrResultsBlockHtml(rankedRoundRobin(), null);
 }
 function megaGeneratorScreenHtml(){
   return '<div class="card">' +
@@ -2367,9 +2443,6 @@ function megaGeneratorScreenHtml(){
       'Championship: the final 100 play one round robin to crown the strongest Pok\u00e9mon.' +
     '</div>' +
     stabToggleHtml() +
-    '<div class="choice-grid" style="margin-top:12px; justify-content:center;">' +
-      '<button type="button" class="btn btn-primary" data-action="generateMegaRR" style="font-size:15px; padding:12px 20px;">Generate Long Round Robin</button>' +
-    '</div>' +
   '</div>';
 }
 function megaProgressHtml(){
@@ -2402,8 +2475,7 @@ function megaResultsScreenHtml(){
   const robin = round.robins[megaSelection.robin];
   const ranked = rankGroup(robin.entrants, robin.stats);
 
-  return championHtml + pickerHtml + rrResultsBlockHtml(ranked, round.cutoff) +
-    '<div class="card" style="text-align:center;"><button type="button" class="btn btn-danger" data-action="generateMegaRR">New Long Round Robin</button></div>';
+  return championHtml + pickerHtml + rrResultsBlockHtml(ranked, round.cutoff);
 }
 function championBannerHtml(){
   const e = tourney.entrants[tourney.championIdx];
@@ -2480,15 +2552,18 @@ function render(){
     '<button type="button" class="tab-btn'+(activeMode==='roundrobin'?' active':'')+'" data-action="setMode" data-mode="roundrobin">Round Robin</button>' +
     '<button type="button" class="tab-btn'+(activeMode==='megarr'?' active':'')+'" data-action="setMode" data-mode="megarr">Long Round Robin</button>' +
   '</div>';
+  let barHtml = '';
   let bodyHtml;
   if(activeMode==='roundrobin'){
+    barHtml = banAndGenerateBarHtml('generateRoundRobin', 'Simulate New Round Robin');
     bodyHtml = roundRobin ? roundRobinResultsHtml() : roundRobinGeneratorScreenHtml();
   } else if(activeMode==='megarr'){
+    barHtml = megaProgress ? '' : banAndGenerateBarHtml('generateMegaRR', 'Simulate New Long Round Robin');
     bodyHtml = megaProgress ? megaProgressHtml() : (megaRR ? megaResultsScreenHtml() : megaGeneratorScreenHtml());
   } else {
     bodyHtml = tourney ? bracketScreenHtml() : generatorScreenHtml();
   }
-  document.getElementById('app').innerHTML = tabsHtml + bodyHtml;
+  document.getElementById('app').innerHTML = tabsHtml + barHtml + bodyHtml;
 }
 
 /* ============ Event delegation ============ */
@@ -2499,6 +2574,13 @@ document.addEventListener('click', (ev)=>{
 
   if(action==='toggleStab'){
     settings.strongerStab = !settings.strongerStab;
+    saveStore();
+    render();
+    return;
+  }
+  if(action==='toggleBanCategory'){
+    const cat = el.dataset.cat;
+    settings.bannedCategories[cat] = !settings.bannedCategories[cat];
     saveStore();
     render();
     return;
