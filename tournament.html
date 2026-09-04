@@ -755,6 +755,7 @@
   .ban-check-item input{ width:12px; height:12px; cursor:pointer; accent-color:var(--rust); margin:0; }
   .ban-bar-count{ margin-left:auto; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--sage); }
   .ban-bar-btn{ width:100%; }
+  .ban-region-select{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; padding:2px 5px; border:1.5px solid var(--ink); border-radius:4px; background:var(--paper); color:var(--ink); }
   .progress-bar-track{ background:var(--paper); border:1.5px solid var(--ink); border-radius:5px; height:16px; overflow:hidden; margin-top:8px; }
   .progress-bar-fill{ background:var(--gold); height:100%; transition:width .15s ease; }
 </style>
@@ -1773,6 +1774,12 @@ const LEGENDARY_DEX = {
   "Iron Crown":["Steel","Psychic",5,4,6,7,6,6]
 };
 const SPRITE_SLUGS = {"Bulbasaur":"bulbasaur","Ivysaur":"ivysaur","Venusaur":"venusaur","Charmander":"charmander","Charmeleon":"charmeleon","Charizard":"charizard","Squirtle":"squirtle","Wartortle":"wartortle","Blastoise":"blastoise","Caterpie":"caterpie","Metapod":"metapod","Butterfree":"butterfree","Weedle":"weedle","Kakuna":"kakuna","Beedrill":"beedrill","Pidgey":"pidgey","Pidgeotto":"pidgeotto","Pidgeot":"pidgeot","Rattata":"rattata","Raticate":"raticate","Spearow":"spearow","Fearow":"fearow","Ekans":"ekans","Arbok":"arbok","Pikachu":"pikachu","Raichu":"raichu","Sandshrew":"sandshrew","Sandslash":"sandslash","Nidoran♀":"nidoran-f","Nidorina":"nidorina","Nidoqueen":"nidoqueen","Nidoran♂":"nidoran-m","Nidorino":"nidorino","Nidoking":"nidoking","Clefairy":"clefairy","Clefable":"clefable","Vulpix":"vulpix","Ninetales":"ninetales","Jigglypuff":"jigglypuff","Wigglytuff":"wigglytuff","Zubat":"zubat","Golbat":"golbat","Oddish":"oddish","Gloom":"gloom","Vileplume":"vileplume","Paras":"paras","Parasect":"parasect","Venonat":"venonat","Venomoth":"venomoth","Diglett":"diglett","Dugtrio":"dugtrio","Meowth":"meowth","Persian":"persian","Psyduck":"psyduck","Golduck":"golduck","Mankey":"mankey","Primeape":"primeape","Growlithe":"growlithe","Arcanine":"arcanine","Poliwag":"poliwag","Poliwhirl":"poliwhirl","Poliwrath":"poliwrath","Abra":"abra","Kadabra":"kadabra","Alakazam":"alakazam","Machop":"machop","Machoke":"machoke","Machamp":"machamp","Bellsprout":"bellsprout","Weepinbell":"weepinbell","Victreebel":"victreebel","Tentacool":"tentacool","Tentacruel":"tentacruel","Geodude":"geodude","Graveler":"graveler","Golem":"golem","Ponyta":"ponyta","Rapidash":"rapidash","Slowpoke":"slowpoke","Slowbro":"slowbro","Magnemite":"magnemite","Magneton":"magneton","Farfetch'd":"farfetchd","Doduo":"doduo","Dodrio":"dodrio","Seel":"seel","Dewgong":"dewgong","Grimer":"grimer","Muk":"muk","Shellder":"shellder","Cloyster":"cloyster","Gastly":"gastly","Haunter":"haunter","Gengar":"gengar","Onix":"onix","Drowzee":"drowzee","Hypno":"hypno","Krabby":"krabby","Kingler":"kingler","Voltorb":"voltorb","Electrode":"electrode","Exeggcute":"exeggcute","Exeggutor":"exeggutor","Cubone":"cubone","Marowak":"marowak","Hitmonlee":"hitmonlee","Hitmonchan":"hitmonchan","Lickitung":"lickitung","Koffing":"koffing","Weezing":"weezing","Rhyhorn":"rhyhorn","Rhydon":"rhydon","Chansey":"chansey","Tangela":"tangela","Kangaskhan":"kangaskhan","Horsea":"horsea","Seadra":"seadra","Goldeen":"goldeen","Seaking":"seaking","Staryu":"staryu","Starmie":"starmie","Mr. Mime":"mr-mime","Scyther":"scyther","Jynx":"jynx","Electabuzz":"electabuzz","Magmar":"magmar","Pinsir":"pinsir","Tauros":"tauros","Magikarp":"magikarp","Gyarados":"gyarados","Lapras":"lapras","Ditto":"ditto","Eevee":"eevee","Vaporeon":"vaporeon","Jolteon":"jolteon","Flareon":"flareon","Porygon":"porygon","Omanyte":"omanyte","Omastar":"omastar","Kabuto":"kabuto","Kabutops":"kabutops","Aerodactyl":"aerodactyl","Snorlax":"snorlax","Articuno":"articuno","Zapdos":"zapdos","Moltres":"moltres","Dratini":"dratini","Dragonair":"dragonair","Dragonite":"dragonite","Mewtwo":"mewtwo","Mew":"mew","Chikorita":"chikorita","Bayleef":"bayleef","Meganium":"meganium","Cyndaquil":"cyndaquil","Quilava":"quilava","Typhlosion":"typhlosion","Totodile":"totodile","Croconaw":"croconaw","Feraligatr":"feraligatr","Sentret":"sentret","Furret":"furret","Hoothoot":"hoothoot","Noctowl":"noctowl","Ledyba":"ledyba","Ledian":"ledian","Spinarak":"spinarak","Ariados":"ariados","Crobat":"crobat","Chinchou":"chinchou","Lanturn":"lanturn","Pichu":"pichu","Cleffa":"cleffa","Igglybuff":"igglybuff","Togepi":"togepi","Togetic":"togetic","Natu":"natu","Xatu":"xatu","Mareep":"mareep","Flaaffy":"flaaffy","Ampharos":"ampharos","Bellossom":"bellossom","Marill":"marill","Azumarill":"azumarill","Sudowoodo":"sudowoodo","Politoed":"politoed","Hoppip":"hoppip","Skiploom":"skiploom","Jumpluff":"jumpluff","Aipom":"aipom","Sunkern":"sunkern","Sunflora":"sunflora","Yanma":"yanma","Wooper":"wooper","Quagsire":"quagsire","Espeon":"espeon","Umbreon":"umbreon","Murkrow":"murkrow","Slowking":"slowking","Misdreavus":"misdreavus","Unown":"unown","Wobbuffet":"wobbuffet","Girafarig":"girafarig","Pineco":"pineco","Forretress":"forretress","Dunsparce":"dunsparce","Gligar":"gligar","Steelix":"steelix","Snubbull":"snubbull","Granbull":"granbull","Qwilfish":"qwilfish","Scizor":"scizor","Shuckle":"shuckle","Heracross":"heracross","Sneasel":"sneasel","Teddiursa":"teddiursa","Ursaring":"ursaring","Slugma":"slugma","Magcargo":"magcargo","Swinub":"swinub","Piloswine":"piloswine","Corsola":"corsola","Remoraid":"remoraid","Octillery":"octillery","Delibird":"delibird","Mantine":"mantine","Skarmory":"skarmory","Houndour":"houndour","Houndoom":"houndoom","Kingdra":"kingdra","Phanpy":"phanpy","Donphan":"donphan","Porygon2":"porygon2","Stantler":"stantler","Smeargle":"smeargle","Tyrogue":"tyrogue","Hitmontop":"hitmontop","Smoochum":"smoochum","Elekid":"elekid","Magby":"magby","Miltank":"miltank","Blissey":"blissey","Raikou":"raikou","Entei":"entei","Suicune":"suicune","Larvitar":"larvitar","Pupitar":"pupitar","Tyranitar":"tyranitar","Lugia":"lugia","Ho-oh":"ho-oh","Celebi":"celebi","Treecko":"treecko","Grovyle":"grovyle","Sceptile":"sceptile","Torchic":"torchic","Combusken":"combusken","Blaziken":"blaziken","Mudkip":"mudkip","Marshtomp":"marshtomp","Swampert":"swampert","Poochyena":"poochyena","Mightyena":"mightyena","Zigzagoon":"zigzagoon","Linoone":"linoone","Wurmple":"wurmple","Silcoon":"silcoon","Beautifly":"beautifly","Cascoon":"cascoon","Dustox":"dustox","Lotad":"lotad","Lombre":"lombre","Ludicolo":"ludicolo","Seedot":"seedot","Nuzleaf":"nuzleaf","Shiftry":"shiftry","Taillow":"taillow","Swellow":"swellow","Wingull":"wingull","Pelipper":"pelipper","Ralts":"ralts","Kirlia":"kirlia","Gardevoir":"gardevoir","Surskit":"surskit","Masquerain":"masquerain","Shroomish":"shroomish","Breloom":"breloom","Slakoth":"slakoth","Vigoroth":"vigoroth","Slaking":"slaking","Nincada":"nincada","Ninjask":"ninjask","Shedinja":"shedinja","Whismur":"whismur","Loudred":"loudred","Exploud":"exploud","Makuhita":"makuhita","Hariyama":"hariyama","Azurill":"azurill","Nosepass":"nosepass","Skitty":"skitty","Delcatty":"delcatty","Sableye":"sableye","Mawile":"mawile","Aron":"aron","Lairon":"lairon","Aggron":"aggron","Meditite":"meditite","Medicham":"medicham","Electrike":"electrike","Manectric":"manectric","Plusle":"plusle","Minun":"minun","Volbeat":"volbeat","Illumise":"illumise","Roselia":"roselia","Gulpin":"gulpin","Swalot":"swalot","Carvanha":"carvanha","Sharpedo":"sharpedo","Wailmer":"wailmer","Wailord":"wailord","Numel":"numel","Camerupt":"camerupt","Torkoal":"torkoal","Spoink":"spoink","Grumpig":"grumpig","Spinda":"spinda","Trapinch":"trapinch","Vibrava":"vibrava","Flygon":"flygon","Cacnea":"cacnea","Cacturne":"cacturne","Swablu":"swablu","Altaria":"altaria","Zangoose":"zangoose","Seviper":"seviper","Lunatone":"lunatone","Solrock":"solrock","Barboach":"barboach","Whiscash":"whiscash","Corphish":"corphish","Crawdaunt":"crawdaunt","Baltoy":"baltoy","Claydol":"claydol","Lileep":"lileep","Cradily":"cradily","Anorith":"anorith","Armaldo":"armaldo","Feebas":"feebas","Milotic":"milotic","Castform":"castform","Kecleon":"kecleon","Shuppet":"shuppet","Banette":"banette","Duskull":"duskull","Dusclops":"dusclops","Tropius":"tropius","Chimecho":"chimecho","Absol":"absol","Wynaut":"wynaut","Snorunt":"snorunt","Glalie":"glalie","Spheal":"spheal","Sealeo":"sealeo","Walrein":"walrein","Clamperl":"clamperl","Huntail":"huntail","Gorebyss":"gorebyss","Relicanth":"relicanth","Luvdisc":"luvdisc","Bagon":"bagon","Shelgon":"shelgon","Salamence":"salamence","Beldum":"beldum","Metang":"metang","Metagross":"metagross","Regirock":"regirock","Regice":"regice","Registeel":"registeel","Latias":"latias","Latios":"latios","Kyogre":"kyogre","Groudon":"groudon","Rayquaza":"rayquaza","Jirachi":"jirachi","Deoxys":"deoxys","Turtwig":"turtwig","Grotle":"grotle","Torterra":"torterra","Chimchar":"chimchar","Monferno":"monferno","Infernape":"infernape","Piplup":"piplup","Prinplup":"prinplup","Empoleon":"empoleon","Starly":"starly","Staravia":"staravia","Staraptor":"staraptor","Bidoof":"bidoof","Bibarel":"bibarel","Kricketot":"kricketot","Kricketune":"kricketune","Shinx":"shinx","Luxio":"luxio","Luxray":"luxray","Budew":"budew","Roserade":"roserade","Cranidos":"cranidos","Rampardos":"rampardos","Shieldon":"shieldon","Bastiodon":"bastiodon","Burmy":"burmy","Wormadam":"wormadam","Mothim":"mothim","Combee":"combee","Vespiquen":"vespiquen","Pachirisu":"pachirisu","Buizel":"buizel","Floatzel":"floatzel","Cherubi":"cherubi","Cherrim":"cherrim","Shellos":"shellos","Gastrodon":"gastrodon","Ambipom":"ambipom","Drifloon":"drifloon","Drifblim":"drifblim","Buneary":"buneary","Lopunny":"lopunny","Mismagius":"mismagius","Honchkrow":"honchkrow","Glameow":"glameow","Purugly":"purugly","Chingling":"chingling","Stunky":"stunky","Skuntank":"skuntank","Bronzor":"bronzor","Bronzong":"bronzong","Bonsly":"bonsly","Mime Jr.":"mime-jr","Happiny":"happiny","Chatot":"chatot","Spiritomb":"spiritomb","Gible":"gible","Gabite":"gabite","Garchomp":"garchomp","Munchlax":"munchlax","Riolu":"riolu","Lucario":"lucario","Hippopotas":"hippopotas","Hippowdon":"hippowdon","Skorupi":"skorupi","Drapion":"drapion","Croagunk":"croagunk","Toxicroak":"toxicroak","Carnivine":"carnivine","Finneon":"finneon","Lumineon":"lumineon","Mantyke":"mantyke","Snover":"snover","Abomasnow":"abomasnow","Weavile":"weavile","Magnezone":"magnezone","Lickilicky":"lickilicky","Rhyperior":"rhyperior","Tangrowth":"tangrowth","Electivire":"electivire","Magmortar":"magmortar","Togekiss":"togekiss","Yanmega":"yanmega","Leafeon":"leafeon","Glaceon":"glaceon","Gliscor":"gliscor","Mamoswine":"mamoswine","Porygon-Z":"porygon-z","Gallade":"gallade","Probopass":"probopass","Dusknoir":"dusknoir","Froslass":"froslass","Rotom":"rotom","Uxie":"uxie","Mesprit":"mesprit","Azelf":"azelf","Dialga":"dialga","Palkia":"palkia","Heatran":"heatran","Regigigas":"regigigas","Giratina":"giratina","Cresselia":"cresselia","Phione":"phione","Manaphy":"manaphy","Darkrai":"darkrai","Shaymin":"shaymin","Arceus":"arceus","Victini":"victini","Snivy":"snivy","Servine":"servine","Serperior":"serperior","Tepig":"tepig","Pignite":"pignite","Emboar":"emboar","Oshawott":"oshawott","Dewott":"dewott","Samurott":"samurott","Patrat":"patrat","Watchog":"watchog","Lillipup":"lillipup","Herdier":"herdier","Stoutland":"stoutland","Purrloin":"purrloin","Liepard":"liepard","Pansage":"pansage","Simisage":"simisage","Pansear":"pansear","Simisear":"simisear","Panpour":"panpour","Simipour":"simipour","Munna":"munna","Musharna":"musharna","Pidove":"pidove","Tranquill":"tranquill","Unfezant":"unfezant","Blitzle":"blitzle","Zebstrika":"zebstrika","Roggenrola":"roggenrola","Boldore":"boldore","Gigalith":"gigalith","Woobat":"woobat","Swoobat":"swoobat","Drilbur":"drilbur","Excadrill":"excadrill","Audino":"audino","Timburr":"timburr","Gurdurr":"gurdurr","Conkeldurr":"conkeldurr","Tympole":"tympole","Palpitoad":"palpitoad","Seismitoad":"seismitoad","Throh":"throh","Sawk":"sawk","Sewaddle":"sewaddle","Swadloon":"swadloon","Leavanny":"leavanny","Venipede":"venipede","Whirlipede":"whirlipede","Scolipede":"scolipede","Cottonee":"cottonee","Whimsicott":"whimsicott","Petilil":"petilil","Lilligant":"lilligant","Basculin":"basculin","Sandile":"sandile","Krokorok":"krokorok","Krookodile":"krookodile","Darumaka":"darumaka","Darmanitan":"darmanitan","Maractus":"maractus","Dwebble":"dwebble","Crustle":"crustle","Scraggy":"scraggy","Scrafty":"scrafty","Sigilyph":"sigilyph","Yamask":"yamask","Cofagrigus":"cofagrigus","Tirtouga":"tirtouga","Carracosta":"carracosta","Archen":"archen","Archeops":"archeops","Trubbish":"trubbish","Garbodor":"garbodor","Zorua":"zorua","Zoroark":"zoroark","Minccino":"minccino","Cinccino":"cinccino","Gothita":"gothita","Gothorita":"gothorita","Gothitelle":"gothitelle","Solosis":"solosis","Duosion":"duosion","Reuniclus":"reuniclus","Ducklett":"ducklett","Swanna":"swanna","Vanillite":"vanillite","Vanillish":"vanillish","Vanilluxe":"vanilluxe","Deerling":"deerling","Sawsbuck":"sawsbuck","Emolga":"emolga","Karrablast":"karrablast","Escavalier":"escavalier","Foongus":"foongus","Amoonguss":"amoonguss","Frillish":"frillish","Jellicent":"jellicent","Alomomola":"alomomola","Joltik":"joltik","Galvantula":"galvantula","Ferroseed":"ferroseed","Ferrothorn":"ferrothorn","Klink":"klink","Klang":"klang","Klinklang":"klinklang","Tynamo":"tynamo","Eelektrik":"eelektrik","Eelektross":"eelektross","Elgyem":"elgyem","Beheeyem":"beheeyem","Litwick":"litwick","Lampent":"lampent","Chandelure":"chandelure","Axew":"axew","Fraxure":"fraxure","Haxorus":"haxorus","Cubchoo":"cubchoo","Beartic":"beartic","Cryogonal":"cryogonal","Shelmet":"shelmet","Accelgor":"accelgor","Stunfisk":"stunfisk","Mienfoo":"mienfoo","Mienshao":"mienshao","Druddigon":"druddigon","Golett":"golett","Golurk":"golurk","Pawniard":"pawniard","Bisharp":"bisharp","Bouffalant":"bouffalant","Rufflet":"rufflet","Braviary":"braviary","Vullaby":"vullaby","Mandibuzz":"mandibuzz","Heatmor":"heatmor","Durant":"durant","Deino":"deino","Zweilous":"zweilous","Hydreigon":"hydreigon","Larvesta":"larvesta","Volcarona":"volcarona","Cobalion":"cobalion","Terrakion":"terrakion","Virizion":"virizion","Tornadus":"tornadus","Thundurus":"thundurus","Reshiram":"reshiram","Zekrom":"zekrom","Landorus":"landorus","Kyurem":"kyurem","Keldeo":"keldeo","Meloetta":"meloetta","Genesect":"genesect","Chespin":"chespin","Quilladin":"quilladin","Chesnaught":"chesnaught","Fennekin":"fennekin","Braixen":"braixen","Delphox":"delphox","Froakie":"froakie","Frogadier":"frogadier","Greninja":"greninja","Bunnelby":"bunnelby","Diggersby":"diggersby","Fletchling":"fletchling","Fletchinder":"fletchinder","Talonflame":"talonflame","Scatterbug":"scatterbug","Spewpa":"spewpa","Vivillon":"vivillon","Litleo":"litleo","Pyroar":"pyroar","Flabébé":"flabebe","Floette":"floette","Florges":"florges","Skiddo":"skiddo","Gogoat":"gogoat","Pancham":"pancham","Pangoro":"pangoro","Furfrou":"furfrou","Espurr":"espurr","Meowstic":"meowstic","Honedge":"honedge","Doublade":"doublade","Aegislash":"aegislash","Spritzee":"spritzee","Aromatisse":"aromatisse","Swirlix":"swirlix","Slurpuff":"slurpuff","Inkay":"inkay","Malamar":"malamar","Binacle":"binacle","Barbaracle":"barbaracle","Skrelp":"skrelp","Dragalge":"dragalge","Clauncher":"clauncher","Clawitzer":"clawitzer","Helioptile":"helioptile","Heliolisk":"heliolisk","Tyrunt":"tyrunt","Tyrantrum":"tyrantrum","Amaura":"amaura","Aurorus":"aurorus","Sylveon":"sylveon","Hawlucha":"hawlucha","Dedenne":"dedenne","Carbink":"carbink","Goomy":"goomy","Sliggoo":"sliggoo","Goodra":"goodra","Klefki":"klefki","Phantump":"phantump","Trevenant":"trevenant","Pumpkaboo":"pumpkaboo","Gourgeist":"gourgeist","Bergmite":"bergmite","Avalugg":"avalugg","Noibat":"noibat","Noivern":"noivern","Xerneas":"xerneas","Yveltal":"yveltal","Zygarde":"zygarde","Diancie":"diancie","Hoopa":"hoopa","Volcanion":"volcanion","Rowlet":"rowlet","Dartrix":"dartrix","Decidueye":"decidueye","Litten":"litten","Torracat":"torracat","Incineroar":"incineroar","Popplio":"popplio","Brionne":"brionne","Primarina":"primarina","Pikipek":"pikipek","Trumbeak":"trumbeak","Toucannon":"toucannon","Yungoos":"yungoos","Gumshoos":"gumshoos","Grubbin":"grubbin","Charjabug":"charjabug","Vikavolt":"vikavolt","Crabrawler":"crabrawler","Crabominable":"crabominable","Oricorio":"oricorio","Cutiefly":"cutiefly","Ribombee":"ribombee","Rockruff":"rockruff","Lycanroc":"lycanroc","Wishiwashi":"wishiwashi","Mareanie":"mareanie","Toxapex":"toxapex","Mudbray":"mudbray","Mudsdale":"mudsdale","Dewpider":"dewpider","Araquanid":"araquanid","Fomantis":"fomantis","Lurantis":"lurantis","Morelull":"morelull","Shiinotic":"shiinotic","Salandit":"salandit","Salazzle":"salazzle","Stufful":"stufful","Bewear":"bewear","Bounsweet":"bounsweet","Steenee":"steenee","Tsareena":"tsareena","Comfey":"comfey","Oranguru":"oranguru","Passimian":"passimian","Wimpod":"wimpod","Golisopod":"golisopod","Sandygast":"sandygast","Palossand":"palossand","Pyukumuku":"pyukumuku","Type: Null":"type-null","Silvally":"silvally","Minior":"minior","Komala":"komala","Turtonator":"turtonator","Togedemaru":"togedemaru","Mimikyu":"mimikyu","Bruxish":"bruxish","Drampa":"drampa","Dhelmise":"dhelmise","Jangmo-o":"jangmo-o","Hakamo-o":"hakamo-o","Kommo-o":"kommo-o","Tapu Koko":"tapu-koko","Tapu Lele":"tapu-lele","Tapu Bulu":"tapu-bulu","Tapu Fini":"tapu-fini","Cosmog":"cosmog","Cosmoem":"cosmoem","Solgaleo":"solgaleo","Lunala":"lunala","Nihilego":"nihilego","Buzzwole":"buzzwole","Pheromosa":"pheromosa","Xurkitree":"xurkitree","Celesteela":"celesteela","Kartana":"kartana","Guzzlord":"guzzlord","Necrozma":"necrozma","Magearna":"magearna","Marshadow":"marshadow","Poipole":"poipole","Naganadel":"naganadel","Stakataka":"stakataka","Blacephalon":"blacephalon","Zeraora":"zeraora","Meltan":"meltan","Melmetal":"melmetal","Grookey":"grookey","Thwackey":"thwackey","Rillaboom":"rillaboom","Scorbunny":"scorbunny","Raboot":"raboot","Cinderace":"cinderace","Sobble":"sobble","Drizzile":"drizzile","Inteleon":"inteleon","Skwovet":"skwovet","Greedent":"greedent","Rookidee":"rookidee","Corvisquire":"corvisquire","Corviknight":"corviknight","Blipbug":"blipbug","Dottler":"dottler","Orbeetle":"orbeetle","Nickit":"nickit","Thievul":"thievul","Gossifleur":"gossifleur","Eldegoss":"eldegoss","Wooloo":"wooloo","Dubwool":"dubwool","Chewtle":"chewtle","Drednaw":"drednaw","Yamper":"yamper","Boltund":"boltund","Rolycoly":"rolycoly","Carkol":"carkol","Coalossal":"coalossal","Applin":"applin","Flapple":"flapple","Appletun":"appletun","Silicobra":"silicobra","Sandaconda":"sandaconda","Cramorant":"cramorant","Arrokuda":"arrokuda","Barraskewda":"barraskewda","Toxel":"toxel","Toxtricity":"toxtricity","Sizzlipede":"sizzlipede","Centiskorch":"centiskorch","Clobbopus":"clobbopus","Grapploct":"grapploct","Sinistea":"sinistea","Polteageist":"polteageist","Hatenna":"hatenna","Hattrem":"hattrem","Hatterene":"hatterene","Impidimp":"impidimp","Morgrem":"morgrem","Grimmsnarl":"grimmsnarl","Obstagoon":"obstagoon","Perrserker":"perrserker","Cursola":"cursola","Sirfetch'd":"sirfetchd","Mr. Rime":"mr-rime","Runerigus":"runerigus","Milcery":"milcery","Alcremie":"alcremie","Falinks":"falinks","Pincurchin":"pincurchin","Snom":"snom","Frosmoth":"frosmoth","Stonjourner":"stonjourner","Eiscue":"eiscue","Indeedee":"indeedee","Morpeko":"morpeko","Cufant":"cufant","Copperajah":"copperajah","Dracozolt":"dracozolt","Arctozolt":"arctozolt","Dracovish":"dracovish","Arctovish":"arctovish","Duraludon":"duraludon","Dreepy":"dreepy","Drakloak":"drakloak","Dragapult":"dragapult","Zacian":"zacian","Zamazenta":"zamazenta","Eternatus":"eternatus","Kubfu":"kubfu","Urshifu":"urshifu","Zarude":"zarude","Regieleki":"regieleki","Regidrago":"regidrago","Glastrier":"glastrier","Spectrier":"spectrier","Calyrex":"calyrex","Wyrdeer":"wyrdeer","Kleavor":"kleavor","Ursaluna":"ursaluna","Basculegion":"basculegion","Sneasler":"sneasler","Overqwil":"overqwil","Enamorus":"enamorus","Sprigatito":"sprigatito","Floragato":"floragato","Meowscarada":"meowscarada","Fuecoco":"fuecoco","Crocalor":"crocalor","Skeledirge":"skeledirge","Quaxly":"quaxly","Quaxwell":"quaxwell","Quaquaval":"quaquaval","Lechonk":"lechonk","Oinkologne":"oinkologne","Tarountula":"tarountula","Spidops":"spidops","Nymble":"nymble","Lokix":"lokix","Pawmi":"pawmi","Pawmo":"pawmo","Pawmot":"pawmot","Tandemaus":"tandemaus","Maushold":"maushold","Fidough":"fidough","Dachsbun":"dachsbun","Smoliv":"smoliv","Dolliv":"dolliv","Arboliva":"arboliva","Squawkabilly":"squawkabilly","Nacli":"nacli","Naclstack":"naclstack","Garganacl":"garganacl","Charcadet":"charcadet","Armarouge":"armarouge","Ceruledge":"ceruledge","Tadbulb":"tadbulb","Bellibolt":"bellibolt","Wattrel":"wattrel","Kilowattrel":"kilowattrel","Maschiff":"maschiff","Mabosstiff":"mabosstiff","Shroodle":"shroodle","Grafaiai":"grafaiai","Bramblin":"bramblin","Brambleghast":"brambleghast","Toedscool":"toedscool","Toedscruel":"toedscruel","Klawf":"klawf","Capsakid":"capsakid","Scovillain":"scovillain","Rellor":"rellor","Rabsca":"rabsca","Flittle":"flittle","Espathra":"espathra","Tinkatink":"tinkatink","Tinkatuff":"tinkatuff","Tinkaton":"tinkaton","Wiglett":"wiglett","Wugtrio":"wugtrio","Bombirdier":"bombirdier","Finizen":"finizen","Palafin":"palafin","Varoom":"varoom","Revavroom":"revavroom","Cyclizar":"cyclizar","Orthworm":"orthworm","Glimmet":"glimmet","Glimmora":"glimmora","Greavard":"greavard","Houndstone":"houndstone","Flamigo":"flamigo","Cetoddle":"cetoddle","Cetitan":"cetitan","Veluza":"veluza","Dondozo":"dondozo","Tatsugiri":"tatsugiri","Annihilape":"annihilape","Clodsire":"clodsire","Farigiraf":"farigiraf","Dudunsparce":"dudunsparce","Kingambit":"kingambit","Great Tusk":"great-tusk","Scream Tail":"scream-tail","Brute Bonnet":"brute-bonnet","Flutter Mane":"flutter-mane","Slither Wing":"slither-wing","Sandy Shocks":"sandy-shocks","Iron Treads":"iron-treads","Iron Bundle":"iron-bundle","Iron Hands":"iron-hands","Iron Jugulis":"iron-jugulis","Iron Moth":"iron-moth","Iron Thorns":"iron-thorns","Frigibax":"frigibax","Arctibax":"arctibax","Baxcalibur":"baxcalibur","Gimmighoul":"gimmighoul","Gholdengo":"gholdengo","Wo-Chien":"wo-chien","Chien-Pao":"chien-pao","Ting-Lu":"ting-lu","Chi-Yu":"chi-yu","Roaring Moon":"roaring-moon","Iron Valiant":"iron-valiant","Koraidon":"koraidon","Miraidon":"miraidon","Walking Wake":"walking-wake","Iron Leaves":"iron-leaves","Dipplin":"dipplin","Poltchageist":"poltchageist","Sinistcha":"sinistcha","Okidogi":"okidogi","Munkidori":"munkidori","Fezandipiti":"fezandipiti","Ogerpon":"ogerpon","Archaludon":"archaludon","Hydrapple":"hydrapple","Gouging Fire":"gouging-fire","Raging Bolt":"raging-bolt","Iron Boulder":"iron-boulder","Iron Crown":"iron-crown","Terapagos":"terapagos","Pecharunt":"pecharunt"};
+// Each region's regional dex (every species that shows up somewhere in that region's
+// encounter tables/trainers/gyms/legendary placements in the Adventure) -- extracted
+// from play.html's REGIONS.<key>.data.dice keys, same species-name universe as
+// NATIONAL_DEX/LEGENDARY_DEX above (a small handful of names that only exist inside a
+// region's own data and never got a global dex entry are filtered out at lookup time).
+const REGIONAL_DEX_SPECIES = {"calli":["Staryu","Starmie","Krabby","Kingler","Pyukumuku","Wingull","Pelipper","Horsea","Gastly","Haunter","Gengar","Drifloon","Drifblim","Litwick","Lampent","Chandelure","Snorunt","Froslass","Frillish","Drilbur","Excadrill","Onix","Steelix","Trapinch","Vibrava","Flygon","Rhyhorn","Rhydon","Baltoy","Swinub","Piloswine","Mamoswine","Sneasel","Weavile","Delibird","Spheal","Walrein","Snover","Houndour","Houndoom","Absol","Sableye","Vullaby","Mandibuzz","Cacnea","Darumaka","Darmanitan","Growlithe","Arcanine","Ponyta","Rapidash","Salandit","Salazzle","Litleo","Clefairy","Clefable","Ralts","Kirlia","Gardevoir","Igglybuff","Jigglypuff","Wigglytuff","Swirlix","Slurpuff","Sunkern","Abra","Kadabra","Alakazam","Drowzee","Hypno","Natu","Xatu","Elgyem","Beheeyem","Bronzor","Abomasnow","Aerodactyl","Altaria","Bagon","Beedrill","Bellossom","Bellsprout","Bibarel","Bidoof","Boldore","Braixen","Brionne","Bronzong","Butterfree","Cacturne","Carvanha","Caterpie","Celebi","Chinchou","Claydol","Cloyster","Corsola","Crobat","Deino","Delphox","Diglett","Dodrio","Doduo","Drapion","Dugtrio","Electrode","Fearow","Fennekin","Floragato","Furret","Gallade","Geodude","Gigalith","Glalie","Gloom","Golbat","Golduck","Golem","Graveler","Gyarados","Heatran","Heliolisk","Helioptile","Hoppip","Hydreigon","Jellicent","Jirachi","Jumpluff","Kakuna","Kangaskhan","Kingdra","Landorus","Lanturn","Larvitar","Linoone","Lucario","Machamp","Machoke","Machop","Magikarp","Magnemite","Magneton","Magnezone","Meowscarada","Meowth","Metapod","Miltank","Nincada","Ninjask","Oddish","Palossand","Paras","Parasect","Persian","Pidgeot","Pidgeotto","Pidgey","Pikachu","Popplio","Primarina","Psyduck","Pupitar","Pyroar","Raichu","Raticate","Rattata","Rhyperior","Riolu","Roggenrola","Salamence","Sandygast","Scrafty","Scraggy","Seadra","Sealeo","Sentret","Sharpedo","Shedinja","Shelgon","Shellder","Skarmory","Skiploom","Skorupi","Spearow","Sprigatito","Stantler","Suicune","Sunflora","Swablu","Tauros","Teddiursa","Tentacool","Tentacruel","Thundurus","Tornadus","Tyranitar","Ursaring","Venomoth","Venonat","Victreebel","Vileplume","Voltorb","Wailmer","Wailord","Weedle","Weepinbell","Zigzagoon","Zubat","Zweilous"],"neokanto":["Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Rattata","Raticate","Pidgey","Pidgeotto","Pidgeot","Magikarp","Gyarados","Ditto","Caterpie","Metapod","Butterfree","Pikachu","Raichu","Sandshrew","Sandslash","Jigglypuff","Wigglytuff","Eevee","Vaporeon","Jolteon","Flareon","Espeon","Umbreon","Snover","Abomasnow","Delibird","Geodude","Graveler","Golem","Onix","Steelix","Clefairy","Clefable","Paras","Parasect","Zubat","Golbat","Spearow","Fearow","Staryu","Starmie","Psyduck","Golduck","Poliwag","Poliwhirl","Poliwrath","Shellder","Cloyster","Horsea","Seadra","Kingdra","Sableye","Absol","Bagon","Shelgon","Salamence","Deino","Zweilous","Hydreigon","Abra","Kadabra","Alakazam","Meowth","Persian","Drowzee","Hypno","Mr. Mime","Porygon","Porygon2","Porygon-Z","Munna","Musharna","Girafarig","Chatot","Lunatone","Solrock","Klefki","Ekans","Arbok","Machop","Machoke","Machamp","Magnemite","Magneton","Magnezone","Voltorb","Electrode","Electabuzz","Electivire","Snorlax","Joltik","Galvantula","Skarmory","Mawile","Finneon","Lumineon","Wingull","Pelipper","Luvdisc","Cubone","Marowak","Gastly","Haunter","Gengar","Rhyhorn","Rhydon","Rhyperior","Diglett","Dugtrio","Duskull","Dusclops","Dusknoir","Litwick","Lampent","Chandelure","Oddish","Gloom","Vileplume","Bellossom","Bellsprout","Weepinbell","Victreebel","Tangela","Tangrowth","Exeggcute","Exeggutor","Cottonee","Whimsicott","Carnivine","Nidoran♀","Nidorina","Nidoqueen","Nidoran♂","Nidorino","Nidoking","Scyther","Scizor","Pinsir","Tauros","Chansey","Blissey","Lickitung","Lickilicky","Farfetch'd","Sirfetch'd","Hitmonlee","Hitmonchan","Mankey","Primeape","Koffing","Weezing","Stunfisk","Illumise","Volbeat","Jynx","Vulpix","Ninetales","Growlithe","Arcanine","Ponyta","Rapidash","Magmar","Magmortar","Seel","Dewgong","Tentacool","Tentacruel","Kabuto","Kabutops","Aerodactyl","Larvesta","Volcarona","Torkoal","Relicanth","Corsola","Lapras","Dratini","Dragonair","Dragonite","Articuno","Zapdos","Moltres","Mewtwo","Mew","Genesect","Latios","Slowpoke","Slowbro","Slowking","Politoed","Crobat"],"hoenn":["Grovyle","Torkoal","Vulpix","Skitty","Mudkip","Surskit","Shroomish","Poochyena","Shuppet","Carvanha","Dusclops","Grimer","Zigzagoon","Pinsir","Tropius","Latios","Huntail","Zangoose","Duskull","Goldeen","Wynaut","Slaking","Mawile","Sandshrew","Kecleon","Sandslash","Slugma","Seviper","Grumpig","Skarmory","Marill","Silcoon","Machamp","Electrode","Castform","Magnemite","Golduck","Baltoy","Dustox","Seaking","Vigoroth","Sableye","Rhyhorn","Marshtomp","Meditite","Whiscash","Spheal","Wingull","Zubat","Heracross","Seadra","Magcargo","Natu","Wurmple","Lairon","Kingdra","Loudred","Hariyama","Claydol","Ralts","Geodude","Bagon","Rhydon","Glalie","Voltorb","Breloom","Blaziken","Lileep","Kadabra","Sharpedo","Masquerain","Electrike","Treecko","Feebas","Swampert","Clamperl","Swablu","Slakoth","Chimecho","Volbeat","Sealeo","Vileplume","Latias","Shiftry","Lanturn","Machoke","Snorunt","Nincada","Nuzleaf","Beautifly","Kyogre","Manectric","Ludicolo","Girafarig","Gulpin","Abra","Wigglytuff","Chinchou","Anorith","Crobat","Illumise","Torchic","Jigglypuff","Dodrio","Nosepass","Swalot","Trapinch","Gyarados","Wailmer","Camerupt","Golbat","Doduo","Flygon","Aggron","Groudon","Beldum","Milotic","Rayquaza","Alakazam","Swellow","Makuhita","Solrock","Machop","Shelgon","Combusken","Lombre","Gardevoir","Delcatty","Spoink","Roselia","Barboach","Walrein","Numel","Taillow","Exploud","Corsola","Crawdaunt","Metang","Relicanth","Weezing","Seedot","Aron","Golem","Sceptile","Staryu","Donphan","Medicham","Spinda","Psyduck","Pelipper","Banette","Vibrava","Altaria","Linoone","Cacnea","Armaldo","Mightyena","Ninjask","Cacturne","Koffing","Absol","Wobbuffet","Starmie","Horsea","Wailord","Cradily","Magikarp","Luvdisc","Tentacruel","Kirlia","Tentacool","Graveler","Whismur","Muk","Pikachu","Shedinja","Azumarill","Magneton","Plusle","Lotad","Corphish","Gorebyss","Metagross","Cascoon","Gloom","Ninetales","Phanpy","Oddish","Salamence","Lunatone","Raichu","Bellossom","Minun","Xatu"]};
 </script>
 <script>
 /* ============ Species roster -- same die-face stat scale as play.html/battle-sim.html. ============ */
@@ -1821,8 +1828,17 @@ function isSpeciesBanned(name){
   const cat = LEGENDARY_CATEGORY[name];
   return !!(cat && settings.bannedCategories[cat]);
 }
+const REGION_LABELS = { calli:'Calli', hoenn:'Hoenn', neokanto:'Neo Kanto' };
+// Precomputed once -- Sets of every species in each region's regional dex, intersected
+// with SPECIES_LIST so a lookup never has to special-case the rare name that only
+// exists in a region's own data and never got a NATIONAL_DEX/LEGENDARY_DEX entry.
+const REGIONAL_DEX_SETS = {};
+Object.keys(REGIONAL_DEX_SPECIES).forEach(key=>{
+  REGIONAL_DEX_SETS[key] = new Set(REGIONAL_DEX_SPECIES[key].filter(n=>SPECIES_DATA[n]));
+});
 function eligibleSpeciesList(){
-  return SPECIES_LIST.filter(n=>!isSpeciesBanned(n));
+  const regionSet = settings.regionFilter ? REGIONAL_DEX_SETS[settings.regionFilter] : null;
+  return SPECIES_LIST.filter(n=> !isSpeciesBanned(n) && (!regionSet || regionSet.has(n)));
 }
 
 const STAT_NAMES = ['HP','Atk','Def','SpA','SpD','Spe'];
@@ -1864,6 +1880,7 @@ const TYPE_CHART = {
   Steel:    { Fire:0.5, Water:0.5, Electric:0.5, Ice:2, Rock:2, Steel:0.5, Fairy:2 },
   Fairy:    { Fire:0.5, Fighting:2, Poison:0.5, Dragon:2, Dark:2, Steel:0.5 },
 };
+const ALL_TYPES = Object.keys(TYPE_CHART);
 const TYPE_COLOR = {
   dragon:'#7B4FE0', flying:'#8FA8DE', normal:'#B0A890', fighting:'#C1443C', dark:'#4A4038',
   fire:'#E0713C', ghost:'#6E5A9E', psychic:'#E0637F', fairy:'#E8A0C4', grass:'#6C9A4B',
@@ -2015,22 +2032,37 @@ function loadStore(){
     const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if(raw) return raw;
   } catch(e){}
-  return { tourney:null, roundRobin:null, activeMode:'elimination', strongerStab:false, bannedCategories:null };
+  return { tourney:null, roundRobin:null, activeMode:'elimination', strongerStab:false, randomAttackTypes:false, bannedCategories:null, regionFilter:null };
 }
 function saveStore(){
-  localStorage.setItem(STORE_KEY, JSON.stringify({ tourney, roundRobin, activeMode, strongerStab: settings.strongerStab, bannedCategories: settings.bannedCategories }));
+  localStorage.setItem(STORE_KEY, JSON.stringify({
+    tourney, roundRobin, activeMode,
+    strongerStab: settings.strongerStab,
+    randomAttackTypes: settings.randomAttackTypes,
+    bannedCategories: settings.bannedCategories,
+    regionFilter: settings.regionFilter,
+  }));
 }
 const initialStore = loadStore();
 let tourney = initialStore.tourney;
 let roundRobin = initialStore.roundRobin || null;
 let activeMode = initialStore.activeMode || 'elimination';
 const settings = {
+  // Both of these are truly global -- they affect every mode's battle math/generation
+  // identically, unlike the region/category filters below (Round Robin modes only).
   strongerStab: !!initialStore.strongerStab,
+  randomAttackTypes: !!initialStore.randomAttackTypes,
   // Round Robin / Long Round Robin only (not the Elimination Bracket) -- which of the
   // 5 special-tier categories to exclude from random generation. Ordinary species are
   // never banned; each key maps to a bucket in LEGENDARY_CATEGORY below.
   bannedCategories: Object.assign({ restricted:false, legendary:false, mythical:false, ultrabeast:false, paradox:false }, initialStore.bannedCategories || {}),
+  // null = all regions; otherwise a key into REGIONAL_DEX_SPECIES ('calli'/'hoenn'/'neokanto').
+  regionFilter: initialStore.regionFilter || null,
 };
+const GLOBAL_SETTING_DEFS = [
+  { key:'strongerStab', label:'Stronger STAB', desc:'Off = matching-type bonus is +0.5 (a tiebreaker only). On = full +1.' },
+  { key:'randomAttackTypes', label:'Random Attack Types', desc:'Off = attack type is rolled off the same attack wheel wild Pok\u00e9mon use (usually near one of the Pok\u00e9mon\'s own types). On = a genuinely uniform random pick among all 18 types.' },
+];
 
 // Long Round Robin results can run ~1-2MB of JSON (10,000 entrants in Round 1 alone),
 // so it gets its own storage key rather than bloating every save of the small elimination/
@@ -2058,6 +2090,7 @@ let megaProgress = null; // { label, done, total } while a generation is in prog
 /* ============ Transient UI state ============ */
 let animatingMatch = null; // { r, m, nA, nB } while one match's dice are animating
 let standingsCollapsed = false; // shared toggle for the standings table (Round Robin + Long Round Robin)
+let settingsCollapsed = false; // shared toggle for the Settings section (all 3 modes)
 
 function finalStatsOf(mon){
   return SPECIES_DATA[mon.name].base.map((b,i)=>b+mon.ev[i]);
@@ -2075,9 +2108,16 @@ function shuffledSpeciesSample(n, sourceList){
   }
   return pool.slice(0,n);
 }
+// Off (default): the attack wheel, same as wild Pokemon in the Adventure -- usually
+// near one of the species' own types. On: a genuinely uniform pick among all 18 types,
+// regardless of the species' own typing.
+function rollEntrantAttackType(t1, t2){
+  if(settings.randomAttackTypes) return ALL_TYPES[Math.floor(Math.random()*ALL_TYPES.length)];
+  return randomAttackType(t1, t2);
+}
 function generateEntrant(name){
   const sd = SPECIES_DATA[name];
-  return { name, ev: randomEvSpread(), atk: randomAttackType(sd.t1, sd.t2) };
+  return { name, ev: randomEvSpread(), atk: rollEntrantAttackType(sd.t1, sd.t2) };
 }
 function generateTournament(){
   const names = shuffledSpeciesSample(TOURNEY_SIZE);
@@ -2333,53 +2373,71 @@ function monCardHtml(mon){
     statRowHtml(finalStats) +
   '</div>';
 }
-function stabToggleHtml(){
-  return '<div class="save-slot-card" data-action="toggleStab" style="cursor:pointer; border-color:'+(settings.strongerStab?'var(--gold)':'var(--line)')+'; border-width:'+(settings.strongerStab?'2px':'1px')+';">' +
-    '<div class="save-slot-title">Stronger STAB <span style="float:right;">'+(settings.strongerStab?'ON':'OFF')+'</span></div>' +
-    '<div class="save-slot-meta">Off = matching-type bonus is +0.5 (a tiebreaker only). On = full +1.</div>' +
-  '</div>';
-}
 function generatorScreenHtml(){
   return '<div class="card">' +
     '<div class="card-title">Random Tournament</div>' +
     '<div class="card-sub">'+TOURNEY_SIZE+' randomly generated Pok\u00e9mon, single elimination</div>' +
-    '<div class="card-flavor">Every entrant is a random species (no repeats) fixed at Level '+EV_TOTAL+' -- its '+EV_TOTAL+' Effort Values are scattered randomly across its 6 stats, and its attack type is rolled off the same attack wheel wild Pok\u00e9mon use. See odds for every ready matchup, then simulate one fight at a time or a whole round at once.</div>' +
-    stabToggleHtml() +
+    '<div class="card-flavor">Every entrant is a random species (no repeats) fixed at Level '+EV_TOTAL+' -- its '+EV_TOTAL+' Effort Values are scattered randomly across its 6 stats. See odds for every ready matchup, then simulate one fight at a time or a whole round at once.</div>' +
     '<div class="choice-grid" style="margin-top:12px; justify-content:center;">' +
       '<button type="button" class="btn btn-primary" data-action="newTournament" style="font-size:15px; padding:12px 20px;">Generate Tournament</button>' +
     '</div>' +
   '</div>';
 }
-// Round Robin / Long Round Robin only -- lets the pool of random entrants exclude any
-// of the 5 special-tier categories (see LEGENDARY_CATEGORY / BAN_CATEGORY_DEFS above).
-// Persistent bar shown right under the tabs for both Round Robin and Long Round
-// Robin (never the Elimination Bracket) -- stays visible whether or not a result is
-// already showing, so bans can be changed and a fresh simulation started without
-// having to scroll or navigate back to an initial generator screen.
-function banAndGenerateBarHtml(action, buttonLabel){
-  const checkboxes = BAN_CATEGORY_DEFS.map(def=>{
-    const on = !!settings.bannedCategories[def.key];
-    return '<label class="ban-check-item" title="'+esc(def.desc)+'">' +
-      '<input type="checkbox" data-action="toggleBanCategory" data-cat="'+def.key+'"'+(on?' checked':'')+'>' +
-      '<span>'+def.label+'</span>' +
-    '</label>';
-  }).join('');
-  const eligibleCount = eligibleSpeciesList().length;
+// Persistent, collapsible section shown right under the tabs on all 3 modes -- stays
+// visible whether or not a result is already showing, so settings can be changed and a
+// fresh simulation started without navigating back to an initial generator screen.
+// Stronger STAB / Random Attack Types are truly global (affect every mode's battle math
+// or generation identically); the region/category-ban rows only ever apply to the two
+// Round Robin modes (Elimination Bracket always draws from the full roster), so
+// includeFilters gates those two rows off for that tab.
+function settingsSectionHtml(includeFilters, action, buttonLabel){
+  const arrow = settingsCollapsed ? '\u25b6' : '\u25bc';
+  let body = '';
+  if(!settingsCollapsed){
+    if(includeFilters){
+      const regionOptions = '<option value=""'+(settings.regionFilter?'':' selected')+'>All Regions</option>' +
+        Object.keys(REGION_LABELS).map(key=>
+          '<option value="'+key+'"'+(settings.regionFilter===key?' selected':'')+'>'+REGION_LABELS[key]+'</option>'
+        ).join('');
+      const banCheckboxes = BAN_CATEGORY_DEFS.map(def=>{
+        const on = !!settings.bannedCategories[def.key];
+        return '<label class="ban-check-item" title="'+esc(def.desc)+'">' +
+          '<input type="checkbox" data-action="toggleBanCategory" data-cat="'+def.key+'"'+(on?' checked':'')+'>' +
+          '<span>'+def.label+'</span>' +
+        '</label>';
+      }).join('');
+      const eligibleCount = eligibleSpeciesList().length;
+      body +=
+        '<div class="ban-bar-row">' +
+          '<span class="ban-bar-label">Region</span>' +
+          '<select class="ban-region-select" id="banRegionSelect">'+regionOptions+'</select>' +
+          '<span class="ban-bar-label">Ban</span>' +
+          banCheckboxes +
+          '<span class="ban-bar-count">'+eligibleCount+'/'+SPECIES_LIST.length+' eligible</span>' +
+        '</div>';
+    }
+    const globalCheckboxes = GLOBAL_SETTING_DEFS.map(def=>{
+      const on = !!settings[def.key];
+      return '<label class="ban-check-item" title="'+esc(def.desc)+'">' +
+        '<input type="checkbox" data-action="toggleGlobalSetting" data-key="'+def.key+'"'+(on?' checked':'')+'>' +
+        '<span>'+def.label+'</span>' +
+      '</label>';
+    }).join('');
+    body += '<div class="ban-bar-row">' + globalCheckboxes + '</div>';
+    if(action){
+      body += '<button type="button" class="btn btn-primary ban-bar-btn" data-action="'+action+'">'+buttonLabel+'</button>';
+    }
+  }
   return '<div class="ban-bar">' +
-    '<div class="ban-bar-row">' +
-      '<span class="ban-bar-label">Ban</span>' +
-      checkboxes +
-      '<span class="ban-bar-count">'+eligibleCount+'/'+SPECIES_LIST.length+' eligible</span>' +
-    '</div>' +
-    '<button type="button" class="btn btn-primary ban-bar-btn" data-action="'+action+'">'+buttonLabel+'</button>' +
+    '<div class="card-title rr-standings-toggle" data-action="toggleSettingsSection"><span>'+arrow+' Settings</span></div>' +
+    body +
   '</div>';
 }
 function roundRobinGeneratorScreenHtml(){
   return '<div class="card">' +
     '<div class="card-title">Random Round Robin</div>' +
     '<div class="card-sub">'+ROUND_ROBIN_SIZE+' randomly generated Pok\u00e9mon, everyone plays everyone once</div>' +
-    '<div class="card-flavor">Same random generation as the bracket -- random species (no repeats) at Level '+EV_TOTAL+', '+EV_TOTAL+' Effort Values scattered randomly across its 6 stats, and an attack type rolled off the attack wheel. Every one of the '+ROUND_ROBIN_SIZE+' entrants battles every other entrant exactly once ('+ROUND_ROBIN_MATCH_COUNT.toLocaleString()+' matches total, resolved instantly), then gets ranked by win-loss record.</div>' +
-    stabToggleHtml() +
+    '<div class="card-flavor">Same random generation as the bracket -- random species (no repeats) at Level '+EV_TOTAL+', '+EV_TOTAL+' Effort Values scattered randomly across its 6 stats. Every one of the '+ROUND_ROBIN_SIZE+' entrants battles every other entrant exactly once ('+ROUND_ROBIN_MATCH_COUNT.toLocaleString()+' matches total, resolved instantly), then gets ranked by win-loss record.</div>' +
   '</div>';
 }
 function rrEntrantCardHtml(r, rank){
@@ -2442,7 +2500,6 @@ function megaGeneratorScreenHtml(){
       'Round 3: those 1,000 reshuffle into 10 round robins of 100 -- top 10 from each advance. ' +
       'Championship: the final 100 play one round robin to crown the strongest Pok\u00e9mon.' +
     '</div>' +
-    stabToggleHtml() +
   '</div>';
 }
 function megaProgressHtml(){
@@ -2555,12 +2612,13 @@ function render(){
   let barHtml = '';
   let bodyHtml;
   if(activeMode==='roundrobin'){
-    barHtml = banAndGenerateBarHtml('generateRoundRobin', 'Simulate New Round Robin');
+    barHtml = settingsSectionHtml(true, 'generateRoundRobin', 'Simulate New Round Robin');
     bodyHtml = roundRobin ? roundRobinResultsHtml() : roundRobinGeneratorScreenHtml();
   } else if(activeMode==='megarr'){
-    barHtml = megaProgress ? '' : banAndGenerateBarHtml('generateMegaRR', 'Simulate New Long Round Robin');
+    barHtml = megaProgress ? '' : settingsSectionHtml(true, 'generateMegaRR', 'Simulate New Long Round Robin');
     bodyHtml = megaProgress ? megaProgressHtml() : (megaRR ? megaResultsScreenHtml() : megaGeneratorScreenHtml());
   } else {
+    barHtml = settingsSectionHtml(false, null, null);
     bodyHtml = tourney ? bracketScreenHtml() : generatorScreenHtml();
   }
   document.getElementById('app').innerHTML = tabsHtml + barHtml + bodyHtml;
@@ -2572,9 +2630,15 @@ document.addEventListener('click', (ev)=>{
   if(!el) return;
   const action = el.dataset.action;
 
-  if(action==='toggleStab'){
-    settings.strongerStab = !settings.strongerStab;
+  if(action==='toggleGlobalSetting'){
+    const key = el.dataset.key;
+    settings[key] = !settings[key];
     saveStore();
+    render();
+    return;
+  }
+  if(action==='toggleSettingsSection'){
+    settingsCollapsed = !settingsCollapsed;
     render();
     return;
   }
@@ -2629,6 +2693,10 @@ document.addEventListener('change', (ev)=>{
   } else if(ev.target.id === 'megaRobinSelect'){
     megaSelection.robin = parseInt(ev.target.value, 10);
     saveMegaStore();
+    render();
+  } else if(ev.target.id === 'banRegionSelect'){
+    settings.regionFilter = ev.target.value || null;
+    saveStore();
     render();
   }
 });
