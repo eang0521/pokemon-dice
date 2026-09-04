@@ -1,0 +1,2451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pok&eacute;mon Adventure -- Battle Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDE6D6;
+    --paper-deep:#E2D9C4;
+    --ink:#1F2E3D;
+    --redwood:#2F4538;
+    --rust:#C4572E;
+    --gold:#D9A441;
+    --sage:#8AA399;
+    --nogym-green:#5B8A4E;
+    --elite-purple:#A98FC9;
+    --line: rgba(31,46,61,0.16);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(196,87,46,0.07), transparent 40%),
+      radial-gradient(circle at 85% 82%, rgba(47,69,56,0.08), transparent 45%),
+      repeating-linear-gradient(0deg, transparent, transparent 38px, var(--line) 39px),
+      repeating-linear-gradient(90deg, transparent, transparent 38px, var(--line) 39px);
+    color: var(--ink);
+    font-family: 'Work Sans', sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: 24px 14px 80px;
+  }
+  .sheet{ width:100%; max-width: 720px; }
+  .masthead{
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 10px 4px 14px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 16px;
+  }
+  .brand{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 22px;
+    color: var(--redwood);
+  }
+  .nav-link{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:600;
+    color: var(--ink);
+    text-decoration:none;
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 6px 10px;
+    background: var(--paper-deep);
+  }
+  .nav-link:hover{ background: var(--gold); }
+  .status-strip{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .status-badges{
+    background: var(--gold);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 4px 9px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .status-badges:hover{ background:#c4923a; }
+  .badge-panel{
+    background: var(--paper-deep);
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    padding: 12px;
+    margin: -6px 0 16px;
+  }
+  .badge-panel-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+  .badge-box{
+    width: 46px;
+    height: 46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:700;
+    border: 1.5px solid var(--ink);
+    border-radius: 5px;
+    letter-spacing:0.02em;
+  }
+  .status-turns{
+    background: var(--sage);
+    color: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 4px 9px;
+    font-weight:600;
+  }
+  .reset-btn{
+    margin-left:auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight:600;
+    color: var(--ink);
+    background: var(--paper-deep);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 5px 9px;
+    cursor:pointer;
+  }
+  .status-slot{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--sage);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .save-slot-card{
+    position:relative;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-top: 10px;
+  }
+  .save-slot-card.save-slot-empty{ border-style:dashed; opacity:0.75; }
+  .save-slot-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .save-slot-main{ flex:1; min-width:0; }
+  .save-slot-title{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .save-slot-meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--sage);
+    margin-bottom: 8px;
+  }
+  .save-slot-team{
+    flex-shrink:0;
+    margin-top: -8px;
+    margin-right: 30px;
+    display:grid;
+    grid-template-columns: repeat(3, 65px);
+    grid-template-rows: repeat(2, 50px); /* shorter than the sprites -- rows
+      overlap vertically since the art itself doesn't fill its box height */
+    gap:0;
+  }
+  .save-slot-team img{ width:65px; height:65px; object-fit:contain; image-rendering:auto; transform: translateY(-20%); }
+  .save-slot-delete-btn{
+    position:absolute; top:8px; right:8px;
+    width:22px; height:22px;
+    border-radius:50%;
+    border:1.5px solid var(--rust);
+    background:var(--paper);
+    color:var(--rust);
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:13px;
+    line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    padding:0;
+  }
+  .save-slot-delete-btn:hover{ background:var(--rust); color:var(--paper); }
+  .howtoplay-body{
+    font-family:'Work Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    margin-top: 14px;
+  }
+  .howtoplay-body p{ margin:0 0 12px; }
+  .howtoplay-body p:last-child{ margin-bottom:0; }
+  .tutorial-tip{
+    background: var(--paper-deep);
+    border: 1.5px dashed var(--gold);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-family:'Work Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .tutorial-tip-label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color: var(--rust);
+    margin-bottom: 4px;
+  }
+  .reset-btn:hover{ background:#e8bdb0; }
+  .card{
+    background: var(--paper-deep);
+    border: 1.5px solid var(--ink);
+    border-radius: 8px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .card-title{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 19px;
+    margin: 0 0 4px;
+  }
+  .card-sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--redwood);
+    margin-bottom: 10px;
+  }
+  .opp-card-wrap{ position:relative; padding-right:120px; }
+  .card-flavor{ font-size:13px; font-style:italic; color:#3c4f45; margin-bottom:10px; }
+  .btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight:600;
+    padding: 10px 14px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    cursor:pointer;
+  }
+  .btn:hover{ background: var(--gold); }
+  .btn:active{ transform: translateY(1px); }
+  .btn:disabled{ opacity:0.45; cursor:not-allowed; }
+  .btn-primary{ background: var(--gold); }
+  .btn-primary:hover{ background:#c4923a; }
+  .btn-wild{ background: var(--nogym-green); color:var(--paper); }
+  .btn-wild:hover{ background:#4a7440; }
+  .btn-danger{ background: var(--rust); color:var(--paper); }
+  .btn-danger:hover{ background:#a8451f; }
+  .choice-grid{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .type-pill{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight:600;
+    color: var(--paper);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right:4px;
+  }
+  .stat-row{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    margin: 8px 0;
+  }
+  .stat-chip{
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 3px 7px;
+  }
+  .stat-chip b{ color: var(--redwood); }
+  .starter-grid{ display:grid; grid-template-columns: 1fr; gap:10px; }
+  @media (min-width:560px){ .starter-grid{ grid-template-columns: 1fr 1fr 1fr; } }
+  .starter-card{
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    padding: 12px;
+    cursor:pointer;
+    text-align:center;
+  }
+  .starter-card.selected{ border-color: var(--rust); background: #f3d9ce; }
+  .starter-card h3{ font-family:'Fraunces', serif; margin: 6px 0 4px; }
+  .town-grid{ display:flex; flex-wrap:wrap; gap:6px; max-height:220px; overflow-y:auto; margin-top:6px; padding:2px; }
+  .town-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 7px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    background: var(--paper);
+    cursor:pointer;
+  }
+  .town-btn.selected{ background: var(--gold); }
+  .mon-detail-card{
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 120px 10px 12px;
+    margin-top: 10px;
+    position: relative;
+  }
+  .mon-detail-name{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .sprite-lg{
+    position:absolute;
+    top:10px; right:12px;
+    width:96px; height:96px;
+    object-fit:contain;
+    image-rendering:auto;
+    transform: translateY(-20%); /* pokemondb icons sit low in their own box -- nudge up */
+  }
+  .trainer-type-block{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+  .trainer-type-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--sage);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .trainer-mon-types{ display:flex; gap:5px; }
+  .trainer-atk-paren{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--ink);
+  }
+  .trainer-type-pill{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight:600;
+    color:#fff;
+    padding: 3px 9px;
+    border-radius: 12px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+  }
+  .trainer-atk-pill{ box-shadow: 0 0 0 2px var(--gold); }
+  .battle-type-pills{ display:flex; justify-content:center; gap:4px; margin-top:4px; }
+  .battle-eff-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:700;
+    color: var(--redwood);
+    text-align:center;
+    margin-top:3px;
+  }
+  .sprite-battle{ width:108px; height:108px; object-fit:contain; image-rendering:auto; transform: translateY(-20%); }
+  .opp-team-row{ display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 12px; }
+  .opp-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    padding: 5px 9px;
+    border-radius: 5px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+  }
+  .opp-chip.current{ background: var(--gold); font-weight:700; }
+  .opp-chip.defeated{ opacity:0.45; text-decoration: line-through; }
+  .e4-team-row{ display:flex; flex-wrap:wrap; gap:6px; margin: 8px 0 12px; }
+  .e4-team-chip{
+    display:flex; align-items:center; gap:3px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    white-space: nowrap;
+    padding: 2px 7px 2px 3px;
+    border-radius: 5px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+  }
+  .e4-team-chip.current{ background: var(--gold); font-weight:700; }
+  /* Smaller than the usual .sprite-sm so all 6 possible team members -- the max
+     under the Elite Four's 6-Pokemon limit -- fit on one row instead of wrapping. */
+  .e4-team-chip img{ width:22px; height:22px; }
+  .team-export-box{
+    width:100%;
+    min-height:140px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--paper);
+    resize:vertical;
+    box-sizing:border-box;
+  }
+  .log-box{
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    max-height: 220px;
+    overflow-y:auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    margin-top: 10px;
+  }
+  .log-line{ padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .log-line:last-child{ border-bottom:none; }
+  .empty-note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--sage);
+    text-align:center;
+    padding: 12px 0;
+  }
+  .field-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--redwood);
+    display:block;
+    margin: 10px 0 4px;
+  }
+  .dice-stage{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 18px;
+    margin: 14px 0 4px;
+  }
+  .dice-group{ display:flex; gap:8px; }
+  .dice-group-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--sage);
+    text-align:center;
+    margin-bottom:6px;
+  }
+  .dice-side{ display:flex; flex-direction:column; align-items:center; }
+  .die{
+    min-width:44px; height:44px;
+    padding: 0 5px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 7px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 17px;
+    font-weight:600;
+    font-variant-numeric: tabular-nums;
+  }
+  .die.rolling{ animation: dieTumble .09s linear infinite; }
+  .die.die-kept{
+    border-color: var(--gold);
+    background: var(--gold);
+    box-shadow: 0 0 0 2px var(--gold);
+  }
+  @keyframes dieTumble{
+    0%{ transform: rotate(0deg) scale(1); }
+    50%{ transform: rotate(8deg) scale(1.05); }
+    100%{ transform: rotate(-6deg) scale(1); }
+  }
+  .vs-label{
+    font-family:'Fraunces', serif;
+    font-size:18px;
+    color: var(--redwood);
+    align-self:center;
+    margin-top: 18px;
+  }
+  .map-legend{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .map-legend span{ display:flex; align-items:center; gap:5px; }
+  .legend-swatch{ display:inline-block; width:11px; height:11px; }
+  .legend-town{ background: var(--gold); border: 1.5px solid var(--ink); }
+  .legend-town-nogym{ background: var(--nogym-green); border: 1.5px solid var(--ink); }
+  .legend-dungeon{
+    width:0; height:0;
+    background: transparent;
+    border-left: 5.5px solid transparent;
+    border-right: 5.5px solid transparent;
+    border-bottom: 10px solid var(--rust);
+  }
+  .legend-route{ background: var(--sage); border: 1.5px solid var(--ink); border-radius:50%; }
+  .legend-elite{ background: var(--elite-purple); border: 1.5px solid var(--ink); }
+  .map-scroll{
+    overflow-x:auto;
+    overflow-y:hidden;
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    background: var(--paper);
+    -webkit-overflow-scrolling: touch;
+  }
+  #mapSvg{ display:block; }
+  .map-node{ cursor:pointer; }
+  .map-node-shape{
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    transition: stroke-width .12s ease, filter .12s ease;
+  }
+  .map-node:hover .map-node-shape{ stroke-width: 2.5; }
+  .map-node.player-here .map-node-shape{
+    stroke: var(--rust);
+    stroke-width: 3.5;
+    filter: drop-shadow(0 0 4px var(--rust));
+  }
+  .map-node.can-move .map-node-shape{
+    stroke: var(--gold);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 5px var(--gold));
+  }
+  .map-node.can-move{ cursor:pointer; }
+  .map-node.selected .map-node-shape{
+    stroke: var(--ink);
+    stroke-width: 3.5;
+    stroke-dasharray: 2.5,2;
+  }
+  /* Static (non-interactive) map preview -- used by the Custom Region generator,
+     which has no player position or click behavior to wire up yet. */
+  .map-node-static .map-node-shape{ stroke: var(--ink); stroke-width: 1.5; }
+  .map-node-central .map-node-shape{
+    stroke: var(--ink);
+    stroke-width: 3.5;
+    stroke-dasharray: 2.5,2;
+  }
+  .map-node-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    pointer-events:none;
+    fill: var(--ink);
+  }
+  .map-node-label-light{ fill: var(--paper); }
+  .map-node-divider{
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    pointer-events:none;
+  }
+  .map-edge{
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    opacity: 0.35;
+  }
+  .map-hint{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--redwood);
+    margin-top: 8px;
+    min-height: 16px;
+  }
+  .map-info{
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1.5px dashed var(--ink);
+    min-height: 50px;
+  }
+  .map-info-empty{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--sage);
+    text-align:center;
+  }
+  .map-info-name{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: 18px;
+    margin-bottom:4px;
+  }
+  .map-info-kind{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color: var(--redwood);
+    margin-bottom: 8px;
+  }
+  .map-info-desc{
+    font-size: 13px;
+    line-height:1.5;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .map-info-evo{
+    font-size: 12.5px;
+    line-height:1.5;
+    color: var(--ink);
+    background: rgba(201, 162, 39, 0.16);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 7px 9px;
+    margin-bottom: 10px;
+  }
+  .map-go-btn{
+    padding: 9px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight:600;
+    background: var(--rust);
+    color: var(--paper);
+    border:none;
+    border-radius: 4px;
+    cursor:pointer;
+    margin-bottom: 10px;
+  }
+  .map-go-btn:hover{ background:#a9481f; }
+  .map-encounter-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color: var(--redwood);
+    margin-top: 10px;
+    margin-bottom: 7px;
+  }
+  .map-encounter-list{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
+  .map-encounter-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 5px 8px;
+  }
+  .map-encounter-sum{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size: 11px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 3px;
+    width: 18px;
+    height: 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .map-encounter-name{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 13px;
+    flex: 1;
+  }
+  .map-encounter-types{ display:flex; gap:4px; }
+  .sprite-sm{ width:36px; height:36px; object-fit:contain; image-rendering:auto; flex-shrink:0; transform: translateY(-20%); }
+  .tab-row{ display:flex; gap:6px; margin-bottom:16px; }
+  .tab-btn{
+    flex:1; min-width:0; padding:9px 4px;
+    font-family:'Fraunces', serif; font-weight:600; font-size:14px; line-height:1.15;
+    text-align:center; background:var(--paper); color:var(--ink);
+    border:1.5px solid var(--ink); border-radius:4px; cursor:pointer;
+  }
+  @media (max-width:560px){ .tab-btn{ font-size:11.5px; padding:8px 2px; } }
+  .tab-btn.active{ background:var(--redwood); color:var(--paper); border-color:var(--redwood); }
+  /* Elite Four / Champion roster preview -- more tabs than fit at flex:1, so these
+     keep their natural width and the row scrolls horizontally instead of squeezing. */
+  .tab-row-scroll{ display:flex; gap:6px; margin:8px 0; overflow-x:auto; }
+  .tab-row-scroll .tab-btn{ flex:0 0 auto; padding:8px 12px; }
+  /* TM attack-type picker -- a little 5-slice strip of the wheel centered on the
+     Pokemon's current attack type, plus its own type(s) as a separate shortcut row. */
+  .tm-wheel-row{ display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px; margin:10px 0; }
+  .tm-type-btn, .tm-wheel-current{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; color:#fff;
+    text-transform:uppercase; letter-spacing:0.03em; border-radius:6px;
+    padding:10px 13px; text-align:center; text-shadow:0 1px 1px rgba(0,0,0,0.25);
+  }
+  .tm-type-btn{ border:none; cursor:pointer; }
+  .tm-type-btn:hover{ filter:brightness(1.12); transform:translateY(-1px); }
+  .tm-wheel-current{ opacity:0.55; }
+  .tm-wheel-current-label{ font-size:8px; letter-spacing:0.05em; margin-top:1px; font-weight:500; }
+  .tm-wheel-link{ color:var(--sage); font-size:15px; }
+  .tm-truetype-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .dex-type-btn{ opacity:0.55; }
+  .dex-type-btn.active{ opacity:1; outline:2.5px solid var(--ink); outline-offset:-2.5px; }
+  .field{ margin-bottom:14px; }
+  .dex-search{
+    width:100%; font-family:'Work Sans', sans-serif; font-size:15px;
+    padding:10px 12px; background:var(--paper); border:1.5px solid var(--ink);
+    border-radius:2px; color:var(--ink);
+  }
+  .dex-count{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--sage); margin:10px 0 4px; }
+  .seed-code{
+    font-family:'IBM Plex Mono', monospace; font-weight:700;
+    background:var(--paper-deep); border:1px solid var(--line); border-radius:3px;
+    padding:1px 6px; letter-spacing:0.03em;
+  }
+  .dex-evo-line{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink); line-height:1.5; }
+  .dex-evo-line b{ color:var(--rust); }
+  .dex-loc-line{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--redwood);
+    line-height:1.5; margin-top:6px; padding-top:6px; border-top:1px dashed var(--line);
+  }
+  .dex-loc-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--rust);
+    background:none; border:none; padding:0; text-decoration:underline; cursor:pointer;
+  }
+  .dex-loc-btn:hover{ color:var(--redwood); }
+  .dex-no-results{ text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--sage); padding:20px 0; }
+
+  .battlesim-columns{ display:grid; grid-template-columns: 1fr; gap:16px; }
+  @media (min-width:760px){ .battlesim-columns{ grid-template-columns: 1fr 1fr; } }
+  .battlesim-col{ background: var(--paper-deep); border:1.5px solid var(--ink); border-radius:8px; padding:14px; }
+  .battlesim-col-title{ font-family:'Fraunces', serif; font-weight:700; font-size:17px; margin:0 0 10px; }
+  .team-slot{ background:var(--paper); border:1.5px solid var(--line); border-radius:6px; padding:8px 10px; margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+  .team-slot-empty{ border-style:dashed; cursor:pointer; justify-content:center; color:var(--sage); font-family:'IBM Plex Mono', monospace; font-size:12.5px; padding:16px; }
+  .team-slot-empty:hover{ background:var(--paper-deep); }
+  .team-slot-sprite{ width:44px; height:44px; object-fit:contain; flex-shrink:0; transform: translateY(-10%); }
+  .team-slot-main{ flex:1; min-width:0; }
+  .team-slot-name{ font-family:'Fraunces', serif; font-weight:700; font-size:14px; }
+  .team-slot-meta{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--sage); margin-top:2px; }
+  .team-slot-actions{ display:flex; gap:6px; flex-shrink:0; }
+  .team-slot-actions .btn{ padding:5px 9px; font-size:11px; }
+  .species-search-list{ max-height:220px; overflow-y:auto; border:1px solid var(--line); border-radius:6px; margin-top:6px; background:var(--paper); }
+  .species-search-item{ display:flex; align-items:center; gap:8px; padding:6px 10px; font-family:'IBM Plex Mono', monospace; font-size:12.5px; cursor:pointer; border-bottom:1px dashed var(--line); }
+  .species-search-item:last-child{ border-bottom:none; }
+  .species-search-item:hover{ background:var(--paper-deep); }
+  .species-search-item img{ width:26px; height:26px; object-fit:contain; }
+  .ev-row{ display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono', monospace; font-size:12.5px; margin:6px 0; }
+  .ev-row-label{ width:38px; flex-shrink:0; color:var(--redwood); font-weight:600; }
+  .ev-row-base{ width:34px; flex-shrink:0; color:var(--sage); text-align:right; }
+  .ev-stepper{ display:flex; align-items:center; gap:6px; }
+  .ev-stepper-btn{ width:24px; height:24px; border:1.5px solid var(--ink); border-radius:4px; background:var(--paper); cursor:pointer; font-weight:700; line-height:1; }
+  .ev-stepper-btn:hover{ background:var(--gold); }
+  .ev-stepper-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .ev-row-val{ width:22px; text-align:center; font-weight:700; }
+  .ev-row-final{ width:34px; flex-shrink:0; text-align:right; font-weight:700; color:var(--ink); }
+  .ev-remaining{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; margin:10px 0 4px; padding:6px 9px; border-radius:5px; background:var(--paper); border:1px solid var(--line); }
+  .ev-remaining.done{ background:#d7ecd2; border-color:var(--nogym-green); }
+  .atk-select{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; padding:6px 8px; border:1.5px solid var(--ink); border-radius:4px; background:var(--paper); color:var(--ink); }
+  .vs-row{ display:flex; align-items:center; justify-content:center; gap:18px; margin:6px 0 10px; }
+  .vs-mon{ flex:1; text-align:center; }
+  .import-box{ width:100%; min-height:140px; font-family:'IBM Plex Mono', monospace; font-size:12px; padding:8px 10px; border:1px solid var(--line); border-radius:6px; background:var(--paper); resize:vertical; box-sizing:border-box; }
+  .odds-line{ text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12.5px; margin:6px 0; }
+  .parse-warn{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--rust); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="masthead">
+    <span class="brand">Battle Simulator</span>
+    <span style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+      <a class="nav-link" href="index.html">&larr; Field Guide</a>
+      <a class="nav-link" href="tournament.html">Tournament</a>
+      <a class="nav-link" href="play.html">Adventure</a>
+    </span>
+  </div>
+  <div id="app"></div>
+</div>
+<script>
+const NATIONAL_DEX = {
+  "Gothita":["Psychic",null,3,2,3,3,4,3],
+  "Taillow":["Normal","Flying",2,3,2,2,2,5],
+  "Drizzile":["Water",null,4,3,3,5,3,5],
+  "Relicanth":["Water","Rock",6,5,7,3,4,3],
+  "Whirlipede":["Bug","Poison",2,3,6,2,5,3],
+  "Buizel":["Water",null,3,4,2,3,2,5],
+  "Metapod":["Bug",null,3,1,3,1,1,2],
+  "Doduo":["Normal","Flying",2,5,3,2,2,4],
+  "Vullaby":["Dark","Flying",4,3,4,3,4,3],
+  "Omastar":["Rock","Water",4,3,7,7,4,3],
+  "Goodra":["Dragon",null,5,6,4,6,9,5],
+  "Blastoise":["Water",null,5,5,6,5,6,4],
+  "Nidoking":["Poison","Ground",5,6,4,5,4,5],
+  "Duosion":["Psychic",null,4,2,3,7,3,2],
+  "Lanturn":["Water","Electric",7,3,3,4,4,4],
+  "Poltchageist":["Grass","Ghost",2,3,3,4,3,3],
+  "Aurorus":["Rock","Ice",7,4,4,6,5,3],
+  "Trevenant":["Ghost","Grass",5,6,4,4,5,3],
+  "Nymble":["Bug",null,2,3,2,1,1,3],
+  "Watchog":["Normal",null,3,5,4,3,4,4],
+  "Dodrio":["Normal","Flying",3,6,4,3,3,6],
+  "Weedle":["Bug","Poison",2,2,2,1,1,3],
+  "Archeops":["Rock","Flying",4,8,4,6,4,6],
+  "Gurdurr":["Fighting",null,5,6,5,2,3,2],
+  "Bibarel":["Normal","Water",5,5,3,3,3,4],
+  "Flabébé":["Fairy",null,3,2,2,3,5,2],
+  "Bruxish":["Water","Psychic",4,6,4,4,4,5],
+  "Girafarig":["Normal","Psychic",4,5,4,5,4,5],
+  "Arctibax":["Dragon","Ice",5,5,4,3,4,4],
+  "Golem":["Rock","Ground",5,7,7,3,4,3],
+  "Herdier":["Normal",null,4,5,4,2,4,3],
+  "Weezing":["Poison",null,4,5,7,5,4,3],
+  "Thievul":["Dark",null,4,3,3,5,5,5],
+  "Nidoran♂":["Poison",null,3,3,2,2,2,3],
+  "Jigglypuff":["Normal","Fairy",7,3,1,3,1,1],
+  "Dustox":["Bug","Poison",3,3,4,3,5,4],
+  "Makuhita":["Fighting",null,4,3,2,1,2,1],
+  "Cacturne":["Grass","Dark",4,7,3,7,3,3],
+  "Vileplume":["Grass","Poison",4,5,5,6,5,3],
+  "Chatot":["Normal","Flying",4,4,3,5,2,5],
+  "Scovillain":["Grass","Fire",4,6,4,6,4,4],
+  "Ceruledge":["Fire","Ghost",4,7,5,3,6,5],
+  "Serperior":["Grass",null,4,4,5,4,5,6],
+  "Hydrapple":["Grass","Dragon",6,5,6,7,5,3],
+  "Sinistcha":["Grass","Ghost",4,3,6,7,5,4],
+  "Pawniard":["Dark","Steel",3,5,4,2,2,3],
+  "Diggersby":["Normal","Ground",5,3,4,3,4,4],
+  "Gastly":["Ghost","Poison",2,2,2,6,2,5],
+  "Klink":["Steel",null,2,3,4,3,3,2],
+  "Bewear":["Normal","Fighting",7,7,5,3,3,3],
+  "Whimsicott":["Grass","Fairy",3,4,5,4,4,7],
+  "Sableye":["Dark","Ghost",3,4,4,4,4,3],
+  "Squawkabilly":["Normal","Flying",5,5,3,3,3,5],
+  "Axew":["Dragon",null,3,5,3,2,2,3],
+  "Medicham":["Fighting","Psychic",3,3,4,3,4,5],
+  "Appletun":["Grass","Dragon",6,5,5,6,5,2],
+  "Claydol":["Ground","Psychic",3,4,6,4,7,4],
+  "Wingull":["Water","Flying",2,2,2,3,2,5],
+  "Vivillon":["Bug","Flying",5,3,3,5,3,5],
+  "Morgrem":["Dark","Fairy",4,3,3,4,3,4],
+  "Bulbasaur":["Grass","Poison",3,3,3,4,4,3],
+  "Dolliv":["Grass","Normal",3,3,3,4,4,2],
+  "Tympole":["Water",null,3,3,2,3,2,4],
+  "Pyukumuku":["Water",null,3,3,7,2,7,0],
+  "Turtonator":["Fire","Dragon",3,4,8,5,5,2],
+  "Toxapex":["Poison","Water",3,4,9,3,8,2],
+  "Tandemaus":["Normal",null,3,3,3,2,3,4],
+  "Tentacruel":["Water","Poison",5,4,4,5,7,6],
+  "Heatmor":["Fire",null,5,6,4,6,4,4],
+  "Ivysaur":["Grass","Poison",3,4,4,5,5,3],
+  "Skiploom":["Grass","Flying",3,3,3,3,4,5],
+  "Absol":["Dark",null,4,7,3,4,3,4],
+  "Mamoswine":["Ice","Ground",6,7,5,4,3,5],
+  "Braixen":["Fire",null,3,3,3,5,4,4],
+  "Comfey":["Fairy",null,3,3,5,5,6,6],
+  "Bellibolt":["Electric",null,6,4,5,6,5,3],
+  "Ninjask":["Bug","Flying",3,5,3,3,3,9],
+  "Druddigon":["Dragon",null,4,7,5,3,5,3],
+  "Hattrem":["Psychic",null,3,2,4,5,4,3],
+  "Spheal":["Ice","Water",4,2,3,3,3,1],
+  "Glaceon":["Ice",null,4,3,6,7,5,4],
+  "Piloswine":["Ice","Ground",6,6,5,3,3,3],
+  "Turtwig":["Grass",null,3,4,4,3,3,2],
+  "Clauncher":["Water",null,3,3,4,3,4,3],
+  "Copperajah":["Steel",null,7,7,4,5,4,2],
+  "Buneary":["Normal",null,3,4,3,3,3,5],
+  "Sliggoo":["Dragon",null,4,4,3,5,6,3],
+  "Stoutland":["Normal",null,5,6,5,3,5,5],
+  "Dubwool":["Normal",null,4,5,6,3,5,5],
+  "Sinistea":["Ghost",null,2,3,3,4,3,3],
+  "Probopass":["Rock","Steel",3,3,8,4,9,2],
+  "Pelipper":["Water","Flying",3,3,6,5,4,4],
+  "Drapion":["Poison","Dark",4,5,6,3,4,5],
+  "Dreepy":["Dragon","Ghost",2,3,2,2,2,5],
+  "Luvdisc":["Water",null,2,2,3,2,4,6],
+  "Sudowoodo":["Rock",null,4,6,7,2,4,2],
+  "Lickilicky":["Normal",null,6,5,5,5,5,3],
+  "Rhyperior":["Ground","Rock",7,8,7,3,3,2],
+  "Dugtrio":["Ground",null,2,6,3,3,4,7],
+  "Chesnaught":["Grass","Fighting",5,6,7,4,4,4],
+  "Haxorus":["Dragon",null,4,8,5,3,4,6],
+  "Volbeat":["Bug",null,4,4,4,3,5,5],
+  "Ludicolo":["Water","Grass",5,4,4,5,6,4],
+  "Kirlia":["Psychic","Fairy",2,2,2,4,3,3],
+  "Quilladin":["Grass",null,3,4,5,3,3,3],
+  "Amaura":["Rock","Ice",4,3,3,4,4,3],
+  "Quagsire":["Water","Ground",5,5,5,4,4,2],
+  "Snivy":["Grass",null,3,3,3,3,3,4],
+  "Hitmonlee":["Fighting",null,3,7,3,2,6,5],
+  "Sunkern":["Grass",null,2,2,2,2,2,2],
+  "Oddish":["Grass","Poison",3,3,3,4,4,2],
+  "Dusclops":["Ghost",null,2,4,7,3,7,1],
+  "Tropius":["Grass","Flying",6,4,5,4,5,3],
+  "Beautifly":["Bug","Flying",3,4,3,6,3,4],
+  "Eelektross":["Electric",null,5,7,5,6,5,3],
+  "Nidorina":["Poison",null,4,4,4,3,3,3],
+  "Delcatty":["Normal",null,4,4,4,3,3,5],
+  "Kingambit":["Dark","Steel",6,8,7,3,5,3],
+  "Baxcalibur":["Dragon","Ice",7,8,5,4,5,5],
+  "Corsola":["Water","Rock",4,3,5,4,5,2],
+  "Scorbunny":["Fire",null,3,4,2,2,2,4],
+  "Greavard":["Ghost",null,3,3,3,2,3,2],
+  "Pawmo":["Electric","Fighting",3,4,2,3,2,5],
+  "Swinub":["Ice","Ground",3,3,2,2,2,3],
+  "Maschiff":["Dark",null,3,4,3,2,3,3],
+  "Muk":["Poison",null,6,6,4,4,6,3],
+  "Swampert":["Water","Ground",6,6,5,5,5,3],
+  "Delphox":["Fire","Psychic",4,4,4,7,6,6],
+  "Carnivine":["Grass",null,4,6,4,5,4,3],
+  "Fuecoco":["Fire",null,4,3,3,4,2,2],
+  "Skwovet":["Normal",null,4,3,3,2,2,1],
+  "Alakazam":["Psychic",null,3,3,3,8,5,7],
+  "Cutiefly":["Bug","Fairy",2,3,2,3,2,5],
+  "Fletchinder":["Fire","Flying",4,4,3,3,3,5],
+  "Mimikyu":["Ghost","Fairy",3,5,5,3,6,5],
+  "Galvantula":["Bug","Electric",4,4,3,6,3,6],
+  "Magikarp":["Water",null,1,1,3,1,1,5],
+  "Mudsdale":["Ground",null,6,7,6,3,5,2],
+  "Staraptor":["Normal","Flying",5,7,4,3,3,6],
+  "Sandshrew":["Ground",null,3,4,5,1,2,2],
+  "Carbink":["Rock","Fairy",3,3,9,3,9,3],
+  "Polteageist":["Ghost",null,3,4,4,8,7,4],
+  "Purugly":["Normal",null,4,5,4,4,3,6],
+  "Ninetales":["Fire",null,4,4,4,5,6,6],
+  "Exeggcute":["Grass","Psychic",3,2,5,3,3,2],
+  "Sneasel":["Dark","Ice",3,5,3,2,4,7],
+  "Noibat":["Flying","Dragon",2,2,2,3,2,3],
+  "Monferno":["Fire","Fighting",4,4,3,4,3,5],
+  "Barboach":["Water","Ground",3,3,2,3,2,3],
+  "Dratini":["Dragon",null,2,4,3,3,3,3],
+  "Illumise":["Bug",null,4,3,4,4,5,5],
+  "Furfrou":["Normal",null,4,5,3,4,5,6],
+  "Lampent":["Ghost","Fire",3,2,3,5,3,3],
+  "Wugtrio":["Water",null,2,6,3,3,4,7],
+  "Tangela":["Grass",null,4,3,7,6,2,3],
+  "Yanma":["Bug","Flying",4,4,3,4,3,5],
+  "Chewtle":["Water",null,3,4,3,2,2,3],
+  "Houndstone":["Ghost",null,4,6,6,3,6,4],
+  "Kadabra":["Psychic",null,2,2,2,7,4,6],
+  "Floragato":["Grass",null,3,5,4,3,4,5],
+  "Pidgey":["Normal","Flying",2,3,2,2,2,3],
+  "Blitzle":["Electric",null,3,3,2,3,2,4],
+  "Corphish":["Water",null,2,5,4,3,2,2],
+  "Flittle":["Psychic",null,2,2,2,3,2,4],
+  "Lunatone":["Rock","Psychic",5,3,4,5,5,4],
+  "Corviknight":["Flying","Steel",6,5,6,3,5,4],
+  "Kingdra":["Water","Dragon",4,5,5,5,5,5],
+  "Zangoose":["Normal",null,4,7,3,3,3,5],
+  "Stunky":["Poison","Dark",4,4,3,2,2,4],
+  "Frillish":["Water","Ghost",3,2,3,4,5,2],
+  "Blaziken":["Fire","Fighting",5,7,4,6,4,5],
+  "Ponyta":["Fire",null,3,5,3,4,4,5],
+  "Bouffalant":["Normal",null,5,6,5,2,5,3],
+  "Pidgeot":["Normal","Flying",5,5,4,4,4,6],
+  "Scolipede":["Bug","Poison",3,6,5,3,4,6],
+  "Octillery":["Water",null,4,6,4,6,4,3],
+  "Aegislash":["Steel","Ghost",3,3,8,3,8,3],
+  "Stonjourner":["Rock",null,6,7,8,1,1,4],
+  "Escavalier":["Bug","Steel",4,8,6,3,6,1],
+  "Beheeyem":["Psychic",null,4,4,4,7,5,2],
+  "Karrablast":["Bug",null,3,4,3,2,3,3],
+  "Shuckle":["Bug","Rock",1,1,13,1,13,0],
+  "Raticate":["Normal",null,3,5,3,3,4,6],
+  "Numel":["Fire","Ground",3,3,2,4,3,2],
+  "Zubat":["Poison","Flying",2,3,2,2,2,3],
+  "Garganacl":["Rock",null,6,6,7,3,5,2],
+  "Dewott":["Water",null,4,4,3,5,3,3],
+  "Masquerain":["Bug","Flying",4,3,4,6,5,5],
+  "Azumarill":["Water","Fairy",6,3,5,3,5,3],
+  "Rotom":["Electric","Ghost",3,3,4,5,4,5],
+  "Treecko":["Grass",null,2,3,2,4,3,4],
+  "Goldeen":["Water",null,3,4,3,2,3,4],
+  "Umbreon":["Dark",null,5,4,6,3,7,4],
+  "Seedot":["Grass",null,2,2,3,2,2,2],
+  "Kingler":["Water",null,3,7,7,3,3,4],
+  "Silcoon":["Bug",null,3,2,3,1,1,1],
+  "Grafaiai":["Poison","Normal",4,5,4,5,4,6],
+  "Gimmighoul":["Ghost",null,3,2,4,4,4,1],
+  "Exeggutor":["Grass","Psychic",5,5,5,7,4,3],
+  "Salandit":["Poison","Fire",3,3,2,4,2,4],
+  "Togekiss":["Fairy","Flying",5,3,5,7,7,5],
+  "Durant":["Bug","Steel",3,6,6,3,3,6],
+  "Magneton":["Electric","Steel",3,3,5,7,4,4],
+  "Mabosstiff":["Dark",null,5,7,5,3,4,5],
+  "Vibrava":["Ground","Dragon",3,4,3,3,3,4],
+  "Smoliv":["Grass","Normal",2,2,3,3,3,2],
+  "Porygon":["Normal",null,4,3,4,5,4,2],
+  "Dracozolt":["Electric","Dragon",5,6,5,5,4,4],
+  "Applin":["Grass","Dragon",2,2,5,2,2,1],
+  "Glimmet":["Rock","Poison",3,2,2,6,3,3],
+  "Spinarak":["Bug","Poison",2,3,2,2,2,2],
+  "Sharpedo":["Water","Dark",4,7,2,5,2,5],
+  "Solrock":["Rock","Psychic",5,5,5,3,4,4],
+  "Pinsir":["Bug",null,4,7,6,3,4,5],
+  "Gastrodon":["Water","Ground",6,5,4,5,5,2],
+  "Falinks":["Fighting",null,4,6,6,4,3,4],
+  "Emboar":["Fire","Fighting",6,7,4,6,4,4],
+  "Eevee":["Normal",null,3,3,3,3,4,3],
+  "Orbeetle":["Bug","Psychic",3,3,6,5,7,5],
+  "Roserade":["Grass","Poison",3,4,4,7,6,5],
+  "Carvanha":["Water","Dark",3,5,1,4,1,4],
+  "Grovyle":["Grass",null,3,4,3,5,4,5],
+  "Shelmet":["Bug",null,3,2,5,2,4,1],
+  "Annihilape":["Fighting","Ghost",6,7,5,3,5,5],
+  "Ampharos":["Electric",null,5,4,5,7,5,3],
+  "Teddiursa":["Normal",null,3,5,3,3,3,2],
+  "Porygon2":["Normal",null,5,5,5,6,5,3],
+  "Arrokuda":["Water",null,2,4,2,2,2,4],
+  "Naclstack":["Rock",null,3,3,6,2,4,2],
+  "Accelgor":["Bug",null,5,4,2,6,3,8],
+  "Veluza":["Water","Psychic",5,6,4,4,4,4],
+  "Staravia":["Normal","Flying",3,4,3,2,2,5],
+  "Salazzle":["Poison","Fire",4,4,3,6,3,7],
+  "Murkrow":["Dark","Flying",3,5,2,5,2,5],
+  "Morpeko":["Electric","Dark",3,5,3,4,3,6],
+  "Boldore":["Rock",null,4,6,6,3,2,1],
+  "Klefki":["Steel","Fairy",3,5,5,5,5,4],
+  "Elgyem":["Psychic",null,3,3,3,5,3,2],
+  "Rapidash":["Fire",null,4,6,4,5,5,6],
+  "Inteleon":["Water",null,4,5,4,7,4,7],
+  "Aromatisse":["Fairy",null,6,4,4,6,5,2],
+  "Cherubi":["Grass",null,3,2,3,4,3,2],
+  "Pikachu":["Electric",null,2,3,2,3,3,5],
+  "Electrode":["Electric",null,3,3,4,5,5,9],
+  "Cyndaquil":["Fire",null,2,3,2,3,3,4],
+  "Shinx":["Electric",null,3,4,2,2,2,3],
+  "Musharna":["Psychic",null,7,3,5,6,5,2],
+  "Wimpod":["Bug","Water",1,2,2,1,2,5],
+  "Impidimp":["Dark","Fairy",3,3,2,3,2,3],
+  "Slugma":["Fire",null,2,2,2,4,2,1],
+  "Scatterbug":["Bug",null,2,2,2,2,1,2],
+  "Arctovish":["Water","Ice",5,5,6,5,5,3],
+  "Bagon":["Dragon",null,3,4,3,2,2,3],
+  "Kabuto":["Rock","Water",2,5,5,3,3,3],
+  "Ducklett":["Water","Flying",4,3,3,3,3,3],
+  "Garbodor":["Poison",null,5,5,5,3,5,4],
+  "Seaking":["Water",null,5,5,4,4,5,4],
+  "Rillaboom":["Grass",null,6,7,5,3,4,5],
+  "Duraludon":["Steel","Dragon",4,5,7,7,3,5],
+  "Hydreigon":["Dark","Dragon",5,6,5,7,5,6],
+  "Panpour":["Water",null,3,3,3,3,3,4],
+  "Yanmega":["Bug","Flying",5,4,5,7,3,5],
+  "Gogoat":["Grass",null,7,6,4,6,5,4],
+  "Staryu":["Water",null,2,3,3,4,3,5],
+  "Toxicroak":["Poison","Fighting",5,6,4,5,4,5],
+  "Trubbish":["Poison",null,3,3,4,2,4,4],
+  "Gloom":["Grass","Poison",3,4,4,5,4,2],
+  "Krokorok":["Ground","Dark",3,5,3,3,3,4],
+  "Venipede":["Bug","Poison",2,3,3,2,2,3],
+  "Ferrothorn":["Grass","Steel",4,5,7,3,7,1],
+  "Mienfoo":["Fighting",null,3,5,3,3,3,4],
+  "Duskull":["Ghost",null,1,2,5,2,5,1],
+  "Cradily":["Rock","Grass",5,5,6,5,6,2],
+  "Anorith":["Rock","Bug",3,5,3,2,3,4],
+  "Ledian":["Bug","Flying",3,2,3,3,6,5],
+  "Burmy":["Bug",null,2,2,3,2,3,2],
+  "Fidough":["Fairy",null,2,3,4,2,3,4],
+  "Wigglytuff":["Normal","Fairy",8,4,3,5,3,3],
+  "Bronzor":["Steel","Psychic",3,1,5,1,5,1],
+  "Tadbulb":["Electric",null,3,2,2,3,2,3],
+  "Chikorita":["Grass",null,3,3,4,3,4,3],
+  "Mareep":["Electric",null,3,2,2,4,3,2],
+  "Starly":["Normal","Flying",2,3,2,2,2,3],
+  "Minun":["Electric",null,3,2,3,4,5,5],
+  "Wattrel":["Electric","Flying",2,2,2,3,2,4],
+  "Hoppip":["Grass","Flying",2,2,2,2,3,3],
+  "Sylveon":["Fairy",null,5,4,4,6,7,3],
+  "Swellow":["Normal","Flying",3,5,3,4,3,7],
+  "Hatenna":["Psychic",null,2,2,3,3,3,2],
+  "Flareon":["Fire",null,4,7,3,5,6,4],
+  "Zoroark":["Dark",null,3,6,3,7,3,6],
+  "Electivire":["Electric",null,4,7,4,5,5,5],
+  "Torchic":["Fire",null,3,3,2,4,3,3],
+  "Qwilfish":["Water","Poison",4,5,5,3,3,5],
+  "Golisopod":["Bug","Water",4,7,8,3,5,2],
+  "Tangrowth":["Grass",null,6,6,7,6,3,3],
+  "Onix":["Rock","Ground",2,3,9,2,3,4],
+  "Zigzagoon":["Normal",null,2,2,2,2,2,3],
+  "Drilbur":["Ground",null,3,5,2,2,3,4],
+  "Litwick":["Ghost","Fire",3,2,3,4,3,1],
+  "Cacnea":["Grass",null,3,5,2,5,2,2],
+  "Patrat":["Normal",null,3,3,2,2,2,2],
+  "Baltoy":["Ground","Psychic",2,2,3,2,4,3],
+  "Sawk":["Fighting",null,4,7,4,2,4,5],
+  "Persian":["Normal",null,4,4,3,4,4,7],
+  "Pancham":["Fighting",null,4,5,4,3,3,2],
+  "Haunter":["Ghost","Poison",3,3,3,7,3,5],
+  "Diglett":["Ground",null,1,3,1,2,3,5],
+  "Nickit":["Dark",null,2,2,2,3,3,3],
+  "Basculin":["Water",null,4,5,4,5,3,6],
+  "Togedemaru":["Electric","Steel",4,6,4,2,4,5],
+  "Cofagrigus":["Ghost",null,3,3,8,5,6,2],
+  "Machamp":["Fighting",null,5,7,5,4,5,3],
+  "Mankey":["Fighting",null,2,5,2,2,3,4],
+  "Rattata":["Normal",null,2,3,2,1,2,4],
+  "Cubone":["Ground",null,3,3,5,2,3,2],
+  "Empoleon":["Water","Steel",5,5,5,6,6,3],
+  "Nincada":["Bug","Ground",2,3,5,2,2,2],
+  "Dragalge":["Poison","Dragon",4,4,5,6,7,3],
+  "Grookey":["Grass",null,3,4,3,2,2,4],
+  "Klawf":["Rock",null,4,6,7,2,3,4],
+  "Charizard":["Fire","Flying",4,5,4,6,5,6],
+  "Typhlosion":["Fire",null,4,5,4,6,5,6],
+  "Togetic":["Fairy","Flying",3,2,5,5,6,2],
+  "Darumaka":["Fire",null,4,5,3,1,3,3],
+  "Wurmple":["Bug",null,3,3,2,1,2,1],
+  "Forretress":["Bug","Steel",4,5,8,3,3,2],
+  "Audino":["Normal",null,6,3,5,3,5,3],
+  "Farfetch'd":["Normal","Flying",3,5,3,3,4,3],
+  "Mandibuzz":["Dark","Flying",6,4,6,3,5,5],
+  "Dartrix":["Grass","Flying",4,4,4,4,4,3],
+  "Gardevoir":["Psychic","Fairy",4,4,4,7,7,5],
+  "Jellicent":["Water","Ghost",6,3,4,5,6,3],
+  "Purrloin":["Dark",null,2,3,2,3,2,4],
+  "Unown":["Psychic",null,3,4,3,4,3,3],
+  "Cottonee":["Grass","Fairy",2,2,3,2,3,4],
+  "Mismagius":["Ghost",null,3,3,3,6,6,6],
+  "Cascoon":["Bug",null,3,2,3,1,1,1],
+  "Rellor":["Bug",null,2,3,3,2,3,2],
+  "Cherrim":["Grass",null,4,3,4,5,4,5],
+  "Skuntank":["Poison","Dark",6,5,4,4,3,5],
+  "Swirlix":["Fairy",null,4,3,4,3,3,3],
+  "Seismitoad":["Water","Ground",6,5,4,5,4,4],
+  "Pansear":["Fire",null,3,3,3,3,3,4],
+  "Feebas":["Water",null,1,1,1,1,3,5],
+  "Meowth":["Normal",null,2,3,2,2,2,5],
+  "Amoonguss":["Grass","Poison",7,5,4,5,5,2],
+  "Carkol":["Rock","Fire",5,3,5,3,4,3],
+  "Shroodle":["Poison","Normal",2,4,2,2,2,4],
+  "Incineroar":["Fire","Dark",5,7,5,5,5,3],
+  "Bunnelby":["Normal",null,2,2,2,2,2,3],
+  "Bellsprout":["Grass","Poison",3,4,2,4,2,2],
+  "Wailord":["Water",null,10,5,3,5,3,3],
+  "Drakloak":["Dragon","Ghost",4,5,3,3,3,6],
+  "Arboliva":["Grass","Normal",4,4,5,7,6,2],
+  "Totodile":["Water",null,3,4,4,3,3,2],
+  "Sandile":["Ground","Dark",3,4,2,2,2,4],
+  "Blissey":["Normal",null,15,1,1,4,8,3],
+  "Scyther":["Bug","Flying",4,6,5,3,5,6],
+  "Drampa":["Normal","Dragon",4,3,5,8,5,2],
+  "Arbok":["Poison",null,3,5,4,4,5,5],
+  "Heracross":["Bug","Fighting",5,7,4,2,5,5],
+  "Shroomish":["Grass",null,3,2,3,2,3,2],
+  "Ferroseed":["Grass","Steel",3,3,5,1,5,1],
+  "Aerodactyl":["Rock","Flying",5,6,4,3,4,7],
+  "Maractus":["Grass",null,4,5,4,6,4,3],
+  "Omanyte":["Rock","Water",2,2,6,5,3,2],
+  "Zorua":["Dark",null,2,4,2,5,2,4],
+  "Toedscruel":["Ground","Grass",5,4,4,5,7,6],
+  "Sandygast":["Ghost","Ground",3,3,5,4,3,1],
+  "Vanillish":["Ice",null,3,4,4,5,4,3],
+  "Mawile":["Steel","Fairy",3,5,5,3,3,3],
+  "Quaquaval":["Water","Fighting",5,7,5,5,4,5],
+  "Gliscor":["Ground","Flying",4,5,7,3,4,5],
+  "Vaporeon":["Water",null,7,4,3,6,5,4],
+  "Swanna":["Water","Flying",4,5,4,5,4,6],
+  "Sceptile":["Grass",null,4,5,4,6,5,7],
+  "Cetoddle":["Ice",null,6,4,3,2,2,2],
+  "Rampardos":["Rock",null,6,9,3,4,3,3],
+  "Wobbuffet":["Psychic",null,11,2,3,2,3,2],
+  "Politoed":["Water",null,5,4,4,5,6,4],
+  "Marill":["Water","Fairy",4,1,3,1,3,2],
+  "Gengar":["Ghost","Poison",3,4,3,7,4,6],
+  "Machoke":["Fighting",null,5,6,4,3,3,3],
+  "Snubbull":["Fairy",null,3,5,3,2,2,2],
+  "Chespin":["Grass",null,3,3,4,3,3,2],
+  "Flygon":["Ground","Dragon",5,6,5,5,5,6],
+  "Slakoth":["Normal",null,3,3,3,2,2,2],
+  "Castform":["Normal",null,4,4,4,4,4,4],
+  "Drifloon":["Ghost","Flying",5,3,2,3,3,4],
+  "Magmar":["Fire",null,4,5,3,6,5,5],
+  "Mr. Mime":["Psychic","Fairy",2,3,4,6,7,5],
+  "Jumpluff":["Grass","Flying",4,3,4,3,5,6],
+  "Spearow":["Normal","Flying",2,3,2,2,2,4],
+  "Natu":["Psychic","Flying",2,3,3,4,3,4],
+  "Bayleef":["Grass",null,3,4,5,4,5,3],
+  "Golurk":["Ground","Ghost",5,7,5,3,5,3],
+  "Oricorio":["Fire","Flying",4,4,4,6,4,5],
+  "Wailmer":["Water",null,7,4,2,4,2,3],
+  "Vulpix":["Fire",null,2,2,2,3,4,4],
+  "Linoone":["Normal",null,4,4,3,3,3,6],
+  "Gyarados":["Water","Flying",5,7,5,3,6,5],
+  "Tynamo":["Electric",null,2,3,2,3,2,3],
+  "Darmanitan":["Fire",null,6,8,3,2,3,5],
+  "Revavroom":["Steel","Poison",5,7,5,3,4,5],
+  "Venomoth":["Bug","Poison",4,4,3,5,4,5],
+  "Tsareena":["Grass",null,4,7,6,3,6,4],
+  "Venonat":["Bug","Poison",3,3,3,2,3,3],
+  "Manectric":["Electric",null,4,4,3,6,3,6],
+  "Barbaracle":["Rock","Water",4,6,7,3,5,4],
+  "Mareanie":["Poison","Water",3,3,4,2,3,3],
+  "Shedinja":["Bug","Ghost",0,5,3,2,2,2],
+  "Tinkaton":["Fairy","Steel",5,4,4,4,6,5],
+  "Pansage":["Grass",null,3,3,3,3,3,4],
+  "Psyduck":["Water",null,3,3,3,4,3,3],
+  "Lopunny":["Normal",null,4,4,5,3,5,6],
+  "Roggenrola":["Rock",null,3,4,5,1,1,1],
+  "Tauros":["Normal",null,4,6,5,2,4,6],
+  "Espathra":["Psychic",null,5,3,3,6,3,6],
+  "Camerupt":["Fire","Ground",4,6,4,6,4,2],
+  "Swadloon":["Bug","Grass",3,4,5,3,5,2],
+  "Simisear":["Fire",null,4,6,4,6,4,6],
+  "Cramorant":["Flying","Water",4,5,3,5,5,5],
+  "Victreebel":["Grass","Poison",5,6,4,6,4,4],
+  "Goomy":["Dragon",null,3,3,2,3,4,2],
+  "Blipbug":["Bug",null,1,1,1,1,3,3],
+  "Finneon":["Water",null,3,3,3,3,3,4],
+  "Poliwhirl":["Water",null,4,4,4,3,3,5],
+  "Archen":["Rock","Flying",3,6,3,4,3,4],
+  "Rolycoly":["Rock",null,2,2,3,2,3,2],
+  "Dewpider":["Water","Bug",2,2,3,2,4,2],
+  "Poliwag":["Water",null,2,3,2,2,2,5],
+  "Alcremie":["Fairy",null,4,3,4,6,7,4],
+  "Hakamo-o":["Dragon","Fighting",3,4,5,4,4,4],
+  "Riolu":["Fighting",null,2,4,2,2,2,3],
+  "Mothim":["Bug","Flying",4,5,3,5,3,4],
+  "Eelektrik":["Electric",null,4,5,4,4,4,2],
+  "Flamigo":["Flying","Fighting",5,7,4,4,4,5],
+  "Ambipom":["Normal",null,4,6,4,3,4,7],
+  "Hoothoot":["Normal","Flying",3,2,2,2,3,3],
+  "Dragonite":["Dragon","Flying",5,8,5,6,6,5],
+  "Weavile":["Dark","Ice",4,7,4,3,5,7],
+  "Charcadet":["Fire",null,2,3,2,3,2,2],
+  "Finizen":["Water",null,4,3,2,3,2,4],
+  "Paras":["Bug","Grass",2,4,3,3,3,1],
+  "Dunsparce":["Normal",null,6,4,4,4,4,3],
+  "Simisage":["Grass",null,4,6,4,6,4,6],
+  "Farigiraf":["Normal","Psychic",7,5,4,6,4,3],
+  "Parasect":["Bug","Grass",3,5,5,3,5,2],
+  "Beldum":["Steel","Psychic",2,3,5,2,3,2],
+  "Rookidee":["Flying",null,2,3,2,2,2,3],
+  "Snorlax":["Normal",null,9,6,4,4,6,2],
+  "Skorupi":["Poison","Bug",2,3,5,2,3,4],
+  "Larvesta":["Bug","Fire",3,5,3,3,3,3],
+  "Timburr":["Fighting",null,4,5,3,1,2,2],
+  "Lycanroc":["Rock",null,4,7,4,3,4,6],
+  "Coalossal":["Rock","Fire",6,5,7,5,5,2],
+  "Litten":["Fire",null,3,4,2,3,2,4],
+  "Popplio":["Water",null,3,3,3,4,3,2],
+  "Hippowdon":["Ground",null,6,6,7,4,4,3],
+  "Poochyena":["Dark",null,2,3,2,2,2,2],
+  "Orthworm":["Steel",null,4,5,8,3,3,4],
+  "Beedrill":["Bug","Poison",4,5,2,3,5,4],
+  "Jynx":["Ice","Psychic",4,3,2,7,5,5],
+  "Torkoal":["Fire",null,4,5,8,5,4,1],
+  "Croagunk":["Poison","Fighting",3,3,2,3,2,3],
+  "Glalie":["Ice",null,5,5,5,5,5,5],
+  "Decidueye":["Grass","Ghost",4,6,4,6,6,4],
+  "Flaaffy":["Electric",null,4,3,3,5,3,3],
+  "Loudred":["Normal",null,5,4,2,4,2,3],
+  "Kommo-o":["Dragon","Fighting",4,6,7,6,6,5],
+  "Fennekin":["Fire",null,2,3,2,4,3,3],
+  "Boltund":["Electric",null,4,5,3,5,3,7],
+  "Charmander":["Fire",null,2,3,2,3,3,4],
+  "Lairon":["Steel","Rock",3,5,8,3,3,2],
+  "Mantine":["Water","Flying",5,2,4,5,8,4],
+  "Ledyba":["Bug","Flying",2,1,2,2,5,3],
+  "Kilowattrel":["Electric","Flying",4,4,3,6,3,7],
+  "Scizor":["Bug","Steel",4,7,6,3,5,4],
+  "Whiscash":["Water","Ground",6,4,4,4,4,3],
+  "Oinkologne":["Normal",null,6,6,4,3,5,4],
+  "Roselia":["Grass","Poison",3,3,3,6,5,4],
+  "Dipplin":["Grass","Dragon",5,5,6,5,5,2],
+  "Espeon":["Psychic",null,4,4,3,7,5,6],
+  "Crawdaunt":["Water","Dark",4,7,5,5,3,3],
+  "Pachirisu":["Electric",null,3,3,4,3,5,5],
+  "Slowking":["Water","Psychic",5,4,5,6,6,2],
+  "Swablu":["Normal","Flying",3,2,3,2,4,3],
+  "Bergmite":["Ice",null,3,4,5,2,2,2],
+  "Fomantis":["Grass",null,2,3,2,3,2,2],
+  "Eldegoss":["Grass",null,3,3,5,5,7,3],
+  "Xatu":["Psychic","Flying",4,4,4,5,4,5],
+  "Hitmonchan":["Fighting",null,3,6,5,2,6,4],
+  "Kabutops":["Rock","Water",3,7,6,4,4,5],
+  "Chimchar":["Fire",null,3,3,3,3,3,3],
+  "Feraligatr":["Water",null,5,6,6,5,5,4],
+  "Shelgon":["Dragon",null,4,5,6,3,3,3],
+  "Lillipup":["Normal",null,3,3,3,1,3,3],
+  "Foongus":["Grass","Poison",4,3,3,3,3,1],
+  "Alomomola":["Water",null,9,4,5,2,3,4],
+  "Stunfisk":["Ground","Electric",6,4,5,5,6,2],
+  "Toucannon":["Normal","Flying",5,7,4,4,4,3],
+  "Gallade":["Psychic","Fighting",4,7,4,4,7,5],
+  "Honedge":["Steel","Ghost",3,5,6,2,2,2],
+  "Honchkrow":["Dark","Flying",6,7,3,6,3,4],
+  "Milcery":["Fairy",null,3,2,2,3,3,2],
+  "Yamper":["Electric",null,3,3,3,2,3,1],
+  "Pikipek":["Normal","Flying",2,4,2,2,2,4],
+  "Sawsbuck":["Normal","Grass",5,6,4,3,4,5],
+  "Pineco":["Bug",null,3,4,5,2,2,1],
+  "Donphan":["Ground",null,5,7,7,3,3,3],
+  "Altaria":["Dragon","Flying",4,4,5,4,6,5],
+  "Graveler":["Rock","Ground",3,5,7,3,3,2],
+  "Aron":["Steel","Rock",3,4,6,2,2,2],
+  "Lucario":["Fighting","Steel",4,6,4,7,4,5],
+  "Simipour":["Water",null,4,6,4,6,4,6],
+  "Rowlet":["Grass","Flying",4,3,3,3,3,2],
+  "Charjabug":["Bug","Electric",3,5,5,3,4,2],
+  "Spewpa":["Bug",null,3,1,3,2,2,2],
+  "Dusknoir":["Ghost",null,3,6,8,4,8,3],
+  "Scrafty":["Dark","Fighting",4,5,7,3,7,3],
+  "Lokix":["Bug","Dark",4,6,4,3,3,5],
+  "Spinda":["Normal",null,3,3,3,3,3,3],
+  "Rhyhorn":["Ground","Rock",5,5,5,2,2,1],
+  "Tepig":["Fire",null,4,4,3,3,3,3],
+  "Gothitelle":["Psychic",null,4,3,5,5,6,4],
+  "Pyroar":["Fire","Normal",5,4,4,6,4,6],
+  "Noctowl":["Normal","Flying",6,3,3,5,5,4],
+  "Brambleghast":["Grass","Ghost",3,7,4,5,4,5],
+  "Toxel":["Electric","Poison",2,2,2,3,2,2],
+  "Golduck":["Water",null,5,5,4,5,5,5],
+  "Floatzel":["Water",null,5,6,3,5,3,7],
+  "Krookodile":["Ground","Dark",5,7,5,4,4,5],
+  "Skiddo":["Grass",null,4,4,3,4,3,3],
+  "Vikavolt":["Bug","Electric",4,4,5,8,4,2],
+  "Armaldo":["Rock","Bug",4,7,6,4,5,3],
+  "Tinkatink":["Fairy","Steel",3,3,3,2,4,3],
+  "Minior":["Rock","Flying",3,3,6,3,6,3],
+  "Ribombee":["Bug","Fairy",3,3,3,5,4,7],
+  "Krabby":["Water",null,2,6,5,1,1,3],
+  "Porygon-Z":["Normal",null,5,5,4,8,4,5],
+  "Kecleon":["Normal",null,3,5,4,3,7,2],
+  "Palossand":["Ghost","Ground",5,4,6,6,4,2],
+  "Greedent":["Normal",null,7,5,5,3,4,1],
+  "Cinccino":["Normal",null,4,5,3,4,3,7],
+  "Cinderace":["Fire",null,5,7,4,4,4,7],
+  "Toedscool":["Ground","Grass",2,2,2,3,6,4],
+  "Kricketot":["Bug",null,2,1,2,1,2,1],
+  "Dachsbun":["Fairy",null,3,5,7,3,5,5],
+  "Sealeo":["Ice","Water",5,3,4,4,4,3],
+  "Nosepass":["Rock",null,2,3,8,3,5,2],
+  "Crustle":["Bug","Rock",4,6,7,4,4,3],
+  "Wooper":["Water","Ground",3,3,3,1,1,1],
+  "Malamar":["Dark","Psychic",5,5,5,4,4,4],
+  "Ekans":["Poison",null,2,3,3,2,3,3],
+  "Meganium":["Grass",null,5,5,6,5,6,5],
+  "Quaxly":["Water",null,3,4,3,3,3,3],
+  "Frogadier":["Water",null,3,4,3,5,3,6],
+  "Lapras":["Water","Ice",7,5,5,5,5,3],
+  "Metang":["Steel","Psychic",3,4,6,3,5,3],
+  "Ditto":["Normal",null,3,3,3,3,3,3],
+  "Sunflora":["Grass",null,4,4,3,6,5,2],
+  "Binacle":["Rock","Water",2,3,4,2,3,3],
+  "Conkeldurr":["Fighting",null,6,8,5,3,4,3],
+  "Horsea":["Water",null,2,2,4,4,1,3],
+  "Skeledirge":["Fire","Ghost",6,4,6,6,4,4],
+  "Cufant":["Steel",null,4,5,3,2,3,2],
+  "Komala":["Normal",null,4,7,4,4,5,4],
+  "Oranguru":["Normal","Psychic",5,3,5,5,6,3],
+  "Aipom":["Normal",null,3,4,3,2,3,5],
+  "Klang":["Steel",null,3,5,5,4,5,3],
+  "Heliolisk":["Electric","Normal",4,3,3,6,5,6],
+  "Gothorita":["Psychic",null,3,3,4,4,5,3],
+  "Nidorino":["Poison",null,3,4,3,3,3,4],
+  "Machop":["Fighting",null,4,5,3,2,2,2],
+  "Golett":["Ground","Ghost",3,4,3,2,3,2],
+  "Crabrawler":["Fighting",null,3,5,3,2,3,4],
+  "Pawmot":["Electric","Fighting",4,7,4,4,3,6],
+  "Shieldon":["Rock","Steel",2,2,7,2,5,2],
+  "Shiftry":["Grass","Dark",5,6,3,5,3,5],
+  "Frosmoth":["Ice","Bug",4,4,3,7,5,4],
+  "Barraskewda":["Water",null,3,7,3,3,3,8],
+  "Magcargo":["Fire","Rock",3,3,7,5,5,2],
+  "Sobble":["Water",null,3,2,2,4,2,4],
+  "Tarountula":["Bug",null,2,2,3,2,2,1],
+  "Crocalor":["Fire",null,5,3,4,5,3,3],
+  "Sentret":["Normal",null,2,3,2,2,3,1],
+  "Throh":["Fighting",null,7,6,5,2,5,3],
+  "Archaludon":["Steel","Dragon",5,6,7,7,4,5],
+  "Spiritomb":["Ghost","Dark",3,5,6,5,6,2],
+  "Stufful":["Normal","Fighting",4,4,3,3,3,3],
+  "Tyranitar":["Rock","Dark",6,8,6,5,6,3],
+  "Primarina":["Water","Fairy",5,4,4,7,7,3],
+  "Growlithe":["Fire",null,3,4,3,4,3,3],
+  "Seel":["Water",null,4,3,3,3,4,3],
+  "Magnemite":["Electric","Steel",1,2,4,5,3,3],
+  "Wiglett":["Water",null,1,3,1,2,1,5],
+  "Kangaskhan":["Normal",null,6,5,5,2,5,5],
+  "Chansey":["Normal",null,14,0,0,2,6,3],
+  "Torterra":["Grass","Ground",5,6,6,4,5,3],
+  "Lickitung":["Normal",null,5,3,4,3,4,2],
+  "Sprigatito":["Grass",null,2,3,3,3,3,4],
+  "Hawlucha":["Fighting","Flying",4,5,4,4,4,7],
+  "Abra":["Psychic",null,1,1,1,6,3,5],
+  "Quaxwell":["Water",null,4,5,4,4,3,4],
+  "Armarouge":["Fire","Psychic",5,3,6,7,5,4],
+  "Jangmo-o":["Dragon",null,3,3,4,3,3,3],
+  "Rhydon":["Ground","Rock",6,7,7,3,3,2],
+  "Vespiquen":["Bug","Flying",4,5,6,5,6,2],
+  "Clefable":["Fairy",null,5,4,4,5,5,3],
+  "Snom":["Ice","Bug",2,1,2,3,2,1],
+  "Huntail":["Water",null,3,6,6,5,4,3],
+  "Clawitzer":["Water",null,4,4,5,7,5,3],
+  "Meditite":["Fighting","Psychic",2,2,3,2,3,3],
+  "Samurott":["Water",null,5,6,5,6,4,4],
+  "Floette":["Fairy",null,3,3,3,4,6,3],
+  "Mightyena":["Dark",null,4,5,4,3,3,4],
+  "Yamask":["Ghost",null,2,2,5,3,4,2],
+  "Misdreavus":["Ghost",null,3,3,3,5,5,5],
+  "Electrike":["Electric",null,2,3,2,4,2,4],
+  "Lilligant":["Grass",null,4,3,4,6,4,5],
+  "Helioptile":["Electric","Normal",3,2,2,3,2,4],
+  "Remoraid":["Water",null,2,4,2,4,2,4],
+  "Delibird":["Ice","Flying",3,3,3,4,3,4],
+  "Gulpin":["Poison",null,4,2,3,2,3,2],
+  "Ralts":["Psychic","Fairy",2,1,1,3,2,2],
+  "Mudbray":["Ground",null,4,6,4,3,3,3],
+  "Swoobat":["Psychic","Flying",4,3,3,4,3,7],
+  "Dewgong":["Water","Ice",5,4,5,4,5,4],
+  "Exploud":["Normal",null,6,5,4,5,4,4],
+  "Talonflame":["Fire","Flying",4,5,4,4,4,7],
+  "Kricketune":["Bug",null,4,5,3,3,3,4],
+  "Marowak":["Ground",null,3,5,6,3,5,3],
+  "Excadrill":["Ground","Steel",6,8,3,3,4,5],
+  "Shiinotic":["Grass","Fairy",3,3,5,5,6,2],
+  "Dhelmise":["Ghost","Grass",4,7,6,5,5,2],
+  "Morelull":["Grass","Fairy",2,2,3,4,4,1],
+  "Stantler":["Normal",null,4,5,4,5,4,5],
+  "Skarmory":["Steel","Flying",4,5,8,2,4,4],
+  "Combee":["Bug","Flying",2,2,2,2,2,4],
+  "Chinchou":["Water","Electric",4,2,2,3,3,4],
+  "Trapinch":["Ground",null,3,6,3,3,3,1],
+  "Braviary":["Normal","Flying",6,7,4,3,4,5],
+  "Greninja":["Water","Dark",4,5,4,6,4,7],
+  "Unfezant":["Normal","Flying",5,7,5,4,3,5],
+  "Pangoro":["Fighting","Dark",5,7,4,4,4,3],
+  "Raboot":["Fire",null,4,5,3,3,3,5],
+  "Bellossom":["Grass",null,4,5,5,5,6,3],
+  "Slowbro":["Water","Psychic",5,4,6,6,5,2],
+  "Grimmsnarl":["Dark","Fairy",5,7,4,5,4,3],
+  "Gligar":["Ground","Flying",4,4,6,2,4,5],
+  "Plusle":["Electric",null,3,3,2,5,4,5],
+  "Vanillite":["Ice",null,2,3,3,4,3,3],
+  "Piplup":["Water",null,3,3,3,3,3,2],
+  "Scraggy":["Dark","Fighting",3,4,4,2,4,3],
+  "Froslass":["Ice","Ghost",4,5,4,5,4,6],
+  "Hitmontop":["Fighting",null,3,5,5,2,6,4],
+  "Oshawott":["Water",null,3,3,3,4,3,3],
+  "Gossifleur":["Grass",null,2,2,3,2,3,1],
+  "Dondozo":["Water",null,9,6,7,4,4,2],
+  "Caterpie":["Bug",null,3,2,2,1,1,3],
+  "Togepi":["Fairy",null,2,1,4,2,4,1],
+  "Tentacool":["Water","Poison",2,2,2,3,6,4],
+  "Zweilous":["Dark","Dragon",4,5,4,4,4,3],
+  "Shellder":["Water",null,2,4,6,3,1,2],
+  "Dragapult":["Dragon","Ghost",5,7,4,6,4,8],
+  "Prinplup":["Water",null,4,4,4,5,4,3],
+  "Aggron":["Steel","Rock",4,6,10,3,3,3],
+  "Noivern":["Flying","Dragon",5,4,5,6,5,7],
+  "Brionne":["Water",null,3,4,4,5,5,3],
+  "Capsakid":["Grass",null,3,4,2,4,2,3],
+  "Zebstrika":["Electric",null,4,6,4,5,4,7],
+  "Avalugg":["Ice",null,5,7,11,3,3,2],
+  "Clamperl":["Water",null,2,4,5,4,3,2],
+  "Rabsca":["Bug","Psychic",4,3,5,7,6,3],
+  "Quilava":["Fire",null,3,4,3,5,4,5],
+  "Slowpoke":["Water","Psychic",5,4,4,2,2,1],
+  "Slurpuff":["Fairy",null,5,5,5,5,4,4],
+  "Emolga":["Electric","Flying",3,4,3,4,3,6],
+  "Grubbin":["Bug",null,3,4,3,3,3,3],
+  "Arcanine":["Fire",null,5,6,5,6,5,5],
+  "Cranidos":["Rock",null,4,7,2,2,2,3],
+  "Steenee":["Grass",null,3,2,3,2,3,4],
+  "Infernape":["Fire","Fighting",4,6,4,6,4,6],
+  "Vanilluxe":["Ice",null,4,5,5,6,5,5],
+  "Hatterene":["Psychic","Fairy",3,5,5,8,6,2],
+  "Hariyama":["Fighting",null,8,7,3,2,3,3],
+  "Nuzleaf":["Grass","Dark",4,4,2,3,2,3],
+  "Doublade":["Steel","Ghost",3,6,9,3,3,2],
+  "Drednaw":["Water","Rock",5,7,5,3,4,4],
+  "Golbat":["Poison","Flying",4,5,4,4,4,5],
+  "Wormadam":["Bug","Grass",3,3,5,5,6,2],
+  "Tatsugiri":["Dragon","Water",4,3,3,7,5,5],
+  "Voltorb":["Electric",null,2,2,3,3,3,6],
+  "Dracovish":["Water","Dragon",5,5,6,4,5,4],
+  "Toxtricity":["Electric","Poison",4,6,4,7,4,4],
+  "Tirtouga":["Water","Rock",3,4,6,3,3,1],
+  "Geodude":["Rock","Ground",2,5,6,2,2,1],
+  "Fletchling":["Normal","Flying",3,3,2,2,2,4],
+  "Snover":["Grass","Ice",3,4,3,4,3,2],
+  "Pincurchin":["Electric",null,3,6,5,5,5,1],
+  "Whismur":["Normal",null,4,3,1,3,1,2],
+  "Wartortle":["Water",null,3,4,5,4,5,3],
+  "Granbull":["Fairy",null,5,7,4,3,3,3],
+  "Dwebble":["Bug","Rock",3,4,5,2,2,3],
+  "Fraxure":["Dragon",null,4,7,4,2,3,4],
+  "Araquanid":["Water","Bug",4,4,5,3,8,2],
+  "Cloyster":["Water","Ice",3,5,10,5,3,4],
+  "Koffing":["Poison",null,2,4,5,3,3,2],
+  "Banette":["Ghost",null,4,7,4,5,4,4],
+  "Munna":["Psychic",null,4,1,3,4,3,1],
+  "Yungoos":["Normal",null,3,4,2,2,2,3],
+  "Miltank":["Normal",null,5,5,6,2,4,6],
+  "Squirtle":["Water",null,3,3,4,3,4,2],
+  "Nacli":["Rock",null,3,3,4,2,2,1],
+  "Lileep":["Rock","Grass",4,2,4,3,5,1],
+  "Drifblim":["Ghost","Flying",9,5,3,5,3,5],
+  "Reuniclus":["Psychic",null,6,4,4,7,5,2],
+  "Spritzee":["Fairy",null,4,3,3,4,4,1],
+  "Carracosta":["Water","Rock",4,6,8,5,4,2],
+  "Walrein":["Ice","Water",6,5,5,5,5,4],
+  "Gabite":["Dragon","Ground",4,5,4,3,3,5],
+  "Minccino":["Normal",null,3,3,2,2,2,4],
+  "Thwackey":["Grass",null,4,5,4,3,3,5],
+  "Beartic":["Ice",null,5,7,5,4,5,3],
+  "Varoom":["Steel","Poison",3,4,4,2,3,3],
+  "Vigoroth":["Normal",null,5,5,5,3,3,5],
+  "Houndour":["Dark","Fire",3,3,2,5,3,4],
+  "Sizzlipede":["Fire","Bug",3,4,3,3,3,3],
+  "Leavanny":["Bug","Grass",4,6,5,4,5,5],
+  "Nidoran♀":["Poison",null,3,3,3,2,2,2],
+  "Liepard":["Dark",null,4,5,3,5,3,6],
+  "Ariados":["Bug","Poison",4,5,4,3,4,2],
+  "Marshtomp":["Water","Ground",4,5,4,3,4,3],
+  "Gigalith":["Rock",null,5,8,7,3,5,1],
+  "Florges":["Fairy",null,4,4,4,6,9,4],
+  "Meowstic":["Psychic",null,4,3,4,5,5,6],
+  "Deino":["Dark","Dragon",3,4,3,3,3,2],
+  "Snorunt":["Ice",null,3,3,3,3,3,3],
+  "Maushold":["Normal",null,4,4,4,4,4,6],
+  "Croconaw":["Water",null,4,5,5,3,4,3],
+  "Mienshao":["Fighting",null,4,7,3,5,3,6],
+  "Venusaur":["Grass","Poison",5,5,5,6,6,5],
+  "Palpitoad":["Water","Ground",4,4,3,4,3,4],
+  "Lechonk":["Normal",null,3,3,2,2,3,2],
+  "Steelix":["Steel","Ground",4,5,11,3,4,2],
+  "Inkay":["Dark","Psychic",3,3,3,2,3,3],
+  "Dedenne":["Electric","Fairy",4,3,3,5,4,6],
+  "Lumineon":["Water",null,4,4,4,4,5,5],
+  "Magnezone":["Electric","Steel",4,4,7,7,5,3],
+  "Gholdengo":["Steel","Ghost",5,3,5,8,5,5],
+  "Trumbeak":["Normal","Flying",3,5,3,2,3,4],
+  "Rockruff":["Rock",null,3,4,2,2,2,3],
+  "Raichu":["Electric",null,3,5,3,5,5,6],
+  "Cryogonal":["Ice",null,5,3,3,5,8,6],
+  "Phanpy":["Ground",null,5,3,3,2,2,2],
+  "Grapploct":["Fighting",null,5,7,5,4,5,2],
+  "Jolteon":["Electric",null,4,4,3,6,5,7],
+  "Gourgeist":["Ghost","Grass",4,5,7,3,4,5],
+  "Chandelure":["Ghost","Fire",3,3,5,8,5,5],
+  "Tinkatuff":["Fairy","Steel",4,3,3,3,5,4],
+  "Espurr":["Psychic",null,4,3,3,4,3,4],
+  "Wooloo":["Normal",null,2,2,3,2,3,3],
+  "Sigilyph":["Psychic","Flying",4,3,5,6,5,6],
+  "Grotle":["Grass",null,4,5,5,3,4,2],
+  "Garchomp":["Dragon","Ground",6,7,5,5,5,6],
+  "Hippopotas":["Ground",null,4,4,4,2,2,2],
+  "Crabominable":["Fighting","Ice",6,8,4,4,4,2],
+  "Rufflet":["Normal","Flying",4,5,3,2,3,3],
+  "Centiskorch":["Fire","Bug",6,7,4,5,5,4],
+  "Clobbopus":["Fighting",null,3,4,3,3,3,2],
+  "Tyrantrum":["Rock","Dragon",5,7,7,4,3,4],
+  "Grimer":["Poison",null,5,5,3,2,3,1],
+  "Dudunsparce":["Normal",null,7,6,5,5,4,3],
+  "Houndoom":["Dark","Fire",4,5,3,6,5,5],
+  "Skitty":["Normal",null,3,3,3,2,2,3],
+  "Gible":["Dragon","Ground",3,4,3,2,3,2],
+  "Volcarona":["Bug","Fire",5,3,4,8,6,6],
+  "Gumshoos":["Normal",null,5,6,3,3,3,3],
+  "Mudkip":["Water",null,3,4,3,3,3,2],
+  "Seadra":["Water",null,3,4,5,5,3,5],
+  "Slaking":["Normal",null,7,8,5,4,3,5],
+  "Salamence":["Dragon","Flying",5,8,5,6,5,6],
+  "Torracat":["Fire",null,4,5,3,5,3,5],
+  "Frigibax":["Dragon","Ice",4,4,3,2,3,3],
+  "Pidgeotto":["Normal","Flying",4,3,3,3,3,4],
+  "Bidoof":["Normal",null,3,3,2,2,2,2],
+  "Breloom":["Grass","Fighting",3,7,5,3,3,4],
+  "Servine":["Grass",null,3,3,4,3,4,5],
+  "Kakuna":["Bug","Poison",3,1,3,1,1,2],
+  "Joltik":["Bug","Electric",3,3,3,3,3,4],
+  "Leafeon":["Grass",null,4,6,7,3,4,5],
+  "Woobat":["Psychic","Flying",4,3,2,3,2,4],
+  "Primeape":["Fighting",null,4,6,3,3,4,5],
+  "Deerling":["Normal","Grass",3,3,3,2,3,4],
+  "Pumpkaboo":["Ghost","Grass",3,4,4,3,3,3],
+  "Fearow":["Normal","Flying",4,5,4,3,3,6],
+  "Eiscue":["Ice",null,4,5,6,4,5,3],
+  "Chimecho":["Psychic",null,4,3,5,5,5,4],
+  "Shellos":["Water",null,4,3,3,3,4,2],
+  "Dottler":["Bug","Psychic",3,2,5,3,5,2],
+  "Silicobra":["Ground",null,3,3,4,2,3,3],
+  "Surskit":["Bug","Water",2,2,2,3,3,4],
+  "Gorebyss":["Water",null,3,5,6,7,4,3],
+  "Cetitan":["Ice",null,10,6,4,3,3,4],
+  "Electabuzz":["Electric",null,4,5,3,5,5,6],
+  "Nidoqueen":["Poison","Ground",5,5,5,4,5,4],
+  "Sewaddle":["Bug","Grass",3,3,4,2,3,2],
+  "Sandaconda":["Ground",null,4,6,7,4,4,4],
+  "Glimmora":["Rock","Poison",5,3,5,7,5,5],
+  "Hypno":["Psychic",null,5,4,4,4,7,4],
+  "Luxio":["Electric",null,3,5,3,3,3,3],
+  "Klinklang":["Steel",null,3,6,7,4,5,5],
+  "Shuppet":["Ghost",null,3,4,2,4,2,3],
+  "Bisharp":["Dark","Steel",4,7,6,3,4,4],
+  "Froakie":["Water",null,2,3,2,4,3,4],
+  "Phantump":["Ghost","Grass",2,4,3,3,3,2],
+  "Clefairy":["Fairy",null,4,3,3,3,4,2],
+  "Flapple":["Grass","Dragon",4,6,5,5,3,4],
+  "Bastiodon":["Rock","Steel",3,3,10,3,8,2],
+  "Metagross":["Steel","Psychic",5,8,7,5,5,4],
+  "Crobat":["Poison","Flying",5,5,5,4,5,7],
+  "Passimian":["Fighting",null,6,7,5,2,3,5],
+  "Combusken":["Fire","Fighting",3,5,3,5,3,3],
+  "Arctozolt":["Electric","Ice",5,6,5,5,5,3],
+  "Luxray":["Electric",null,5,7,5,5,5,4],
+  "Poliwrath":["Water","Fighting",5,5,5,4,5,4],
+  "Butterfree":["Bug","Flying",3,3,3,5,5,4],
+  "Pignite":["Fire","Fighting",5,5,3,4,3,3],
+  "Wishiwashi":["Water",null,3,1,1,1,1,2],
+  "Sandslash":["Ground",null,4,6,6,3,3,4],
+  "Pidove":["Normal","Flying",3,3,3,2,2,2],
+  "Indeedee":["Psychic","Normal",3,4,3,6,5,5],
+  "Starmie":["Water","Psychic",3,4,5,6,5,7],
+  "Weepinbell":["Grass","Poison",4,5,3,5,3,3],
+  "Bramblin":["Grass","Ghost",2,4,2,3,2,3],
+  "Tyrunt":["Rock","Dragon",3,5,4,3,3,3],
+  "Furret":["Normal",null,5,4,4,3,3,5],
+  "Litleo":["Fire","Normal",4,3,3,4,3,4],
+  "Meowscarada":["Grass","Dark",4,6,4,5,4,7],
+  "Swalot":["Poison",null,6,4,5,4,5,3],
+  "Charmeleon":["Fire",null,3,4,3,5,4,5],
+  "Dragonair":["Dragon",null,3,5,4,4,4,4],
+  "Milotic":["Water",null,5,3,5,6,7,5],
+  "Bounsweet":["Grass",null,2,2,2,2,2,2],
+  "Grumpig":["Psychic",null,5,3,4,5,6,5],
+  "Tranquill":["Normal","Flying",4,4,4,3,2,4],
+  "Spoink":["Psychic",null,3,1,2,4,5,3],
+  "Abomasnow":["Grass","Ice",5,5,4,5,5,3],
+  "Skrelp":["Poison","Water",3,3,3,3,3,2],
+  "Spidops":["Bug",null,3,5,5,3,5,2],
+  "Drowzee":["Psychic",null,3,3,3,2,5,2],
+  "Ursaring":["Normal",null,5,7,4,4,4,3],
+  "Petilil":["Grass",null,3,2,3,4,3,2],
+  "Lotad":["Water","Grass",2,2,2,2,3,2],
+  "Lombre":["Water","Grass",3,3,3,3,4,3],
+  "Corvisquire":["Flying",null,4,4,3,2,3,4],
+  "Glameow":["Normal",null,3,3,2,2,2,5],
+  "Solosis":["Psychic",null,3,2,2,6,3,1],
+  "Seviper":["Poison",null,4,6,3,6,3,4],
+  "Bombirdier":["Flying","Dark",4,6,5,3,5,5],
+  "Palafin":["Water",null,6,4,4,3,4,6],
+  "Bronzong":["Steel","Psychic",4,5,7,5,7,2],
+  "Magmortar":["Fire",null,4,5,4,7,5,5],
+  "Pupitar":["Rock","Ground",4,5,4,4,4,3],
+  "Lurantis":["Grass",null,4,6,5,5,5,3],
+  "Larvitar":["Rock","Ground",3,4,3,3,3,2],
+  "Pawmi":["Electric",null,3,3,1,2,1,3],
+  "Cyclizar":["Dragon","Normal",4,5,4,5,4,7],
+  "Smeargle":["Normal",null,3,1,2,1,3,4],
+  "Cubchoo":["Ice",null,3,4,2,3,2,2]
+};
+const LEGENDARY_DEX = {
+  "Articuno":["Ice","Flying",5,5,6,5,7,5],
+  "Zapdos":["Electric","Flying",5,5,5,7,5,6],
+  "Moltres":["Fire","Flying",5,6,5,7,5,5],
+  "Mewtwo":["Psychic",null,6,6,5,9,5,7],
+  "Mew":["Psychic",null,6,6,6,6,6,6],
+  "Raikou":["Electric",null,5,5,4,7,6,7],
+  "Entei":["Fire",null,7,7,5,5,4,6],
+  "Suicune":["Water",null,6,4,7,5,7,5],
+  "Lugia":["Psychic","Flying",6,5,7,5,9,6],
+  "Ho-oh":["Fire","Flying",6,7,5,6,9,5],
+  "Celebi":["Psychic","Grass",6,6,6,6,6,6],
+  "Regirock":["Rock",null,5,6,11,3,6,3],
+  "Regice":["Ice",null,5,3,6,6,11,3],
+  "Registeel":["Steel",null,5,4,9,4,9,3],
+  "Latias":["Dragon","Psychic",5,5,5,6,7,6],
+  "Latios":["Dragon","Psychic",5,5,5,7,6,6],
+  "Kyogre":["Water",null,6,6,5,9,8,5],
+  "Groudon":["Ground",null,6,9,8,6,5,5],
+  "Rayquaza":["Dragon","Flying",6,9,5,9,5,5],
+  "Jirachi":["Steel","Psychic",6,6,6,6,6,6],
+  "Deoxys":["Psychic",null,3,9,3,9,3,9],
+  "Uxie":["Psychic",null,4,4,7,4,7,5],
+  "Mesprit":["Psychic",null,5,6,6,6,6,5],
+  "Azelf":["Psychic",null,4,7,4,7,4,7],
+  "Dialga":["Steel","Dragon",6,7,7,9,6,5],
+  "Palkia":["Water","Dragon",5,7,6,9,7,6],
+  "Heatran":["Fire","Steel",5,5,6,7,6,4],
+  "Regigigas":["Normal",null,6,9,6,5,6,6],
+  "Giratina":["Ghost","Dragon",9,6,7,6,7,5],
+  "Cresselia":["Psychic",null,7,4,6,4,7,5],
+  "Manaphy":["Water",null,6,6,6,6,6,6],
+  "Phione":["Water",null,5,5,5,5,5,5],
+  "Darkrai":["Dark",null,4,5,5,8,5,7],
+  "Shaymin":["Grass",null,6,6,6,6,6,6],
+  "Arceus":["Normal",null,7,7,7,7,7,7],
+  "Victini":["Psychic","Fire",6,6,6,6,6,6],
+  "Cobalion":["Steel","Fighting",5,5,7,5,4,6],
+  "Terrakion":["Rock","Fighting",5,7,5,4,5,6],
+  "Virizion":["Grass","Fighting",5,5,4,5,7,6],
+  "Tornadus":["Flying",null,5,7,4,7,5,6],
+  "Thundurus":["Electric","Flying",5,7,4,7,5,6],
+  "Reshiram":["Dragon","Fire",6,7,6,9,7,5],
+  "Zekrom":["Dragon","Electric",6,9,7,7,6,5],
+  "Landorus":["Ground","Flying",5,7,5,7,5,6],
+  "Enamorus":["Fairy","Flying",4,7,4,8,5,6],
+  "Kyurem":["Dragon","Ice",7,7,5,7,5,5],
+  "Keldeo":["Water","Fighting",5,4,5,7,5,6],
+  "Meloetta":["Normal","Psychic",6,4,4,7,7,5],
+  "Genesect":["Bug","Steel",4,7,5,7,5,6],
+  "Xerneas":["Fairy",null,7,7,5,7,6,6],
+  "Yveltal":["Dark","Flying",7,7,5,7,6,6],
+  "Zygarde":["Dragon","Ground",6,6,7,5,5,5],
+  "Diancie":["Rock","Fairy",3,6,9,6,9,3],
+  "Hoopa":["Psychic","Ghost",5,6,3,9,7,4],
+  "Volcanion":["Fire","Water",5,6,7,7,5,4],
+  "Type: Null":["Normal",null,5,5,5,5,5,3],
+  "Silvally":["Normal",null,5,5,5,5,5,5],
+  "Tapu Koko":["Electric","Fairy",4,7,5,5,4,7],
+  "Tapu Lele":["Psychic","Fairy",4,5,4,7,7,5],
+  "Tapu Bulu":["Grass","Fairy",4,7,7,5,5,4],
+  "Tapu Fini":["Water","Fairy",4,4,7,5,7,5],
+  "Cosmog":["Psychic",null,2,2,2,2,2,2],
+  "Cosmoem":["Psychic",null,2,2,7,2,7,2],
+  "Solgaleo":["Psychic","Steel",8,8,6,6,5,6],
+  "Lunala":["Psychic","Ghost",8,6,5,8,6,6],
+  "Nihilego":["Rock","Poison",6,3,3,7,7,6],
+  "Buzzwole":["Bug","Fighting",6,8,8,3,3,5],
+  "Pheromosa":["Bug","Fighting",4,8,2,8,2,9],
+  "Xurkitree":["Electric",null,5,5,4,10,4,5],
+  "Celesteela":["Steel","Flying",6,6,6,6,6,3],
+  "Kartana":["Grass","Steel",3,10,7,3,2,6],
+  "Guzzlord":["Dark","Dragon",13,6,3,6,3,2],
+  "Necrozma":["Psychic",null,6,6,6,7,5,5],
+  "Magearna":["Steel","Fairy",5,5,7,7,7,4],
+  "Marshadow":["Fighting","Ghost",5,7,5,5,5,7],
+  "Poipole":["Poison",null,4,4,4,4,4,4],
+  "Naganadel":["Poison","Dragon",4,4,4,7,4,7],
+  "Stakataka":["Rock","Steel",3,7,12,3,6,1],
+  "Blacephalon":["Fire","Ghost",3,7,3,9,5,6],
+  "Zeraora":["Electric",null,5,6,4,6,5,8],
+  "Meltan":["Steel",null,3,4,4,3,2,2],
+  "Melmetal":["Steel",null,8,8,8,5,4,2],
+  "Zacian":["Fairy",null,5,7,7,5,7,8],
+  "Zamazenta":["Fighting",null,5,7,7,5,7,8],
+  "Eternatus":["Poison","Dragon",8,5,5,8,5,7],
+  "Kubfu":["Fighting",null,3,5,3,3,3,4],
+  "Urshifu":["Fighting","Dark",6,7,6,4,3,6],
+  "Zarude":["Dark","Grass",6,7,6,4,5,6],
+  "Regieleki":["Electric",null,5,6,3,6,3,11],
+  "Regidrago":["Dragon",null,11,6,3,6,3,5],
+  "Glastrier":["Ice",null,6,8,7,4,6,2],
+  "Spectrier":["Ghost",null,6,4,3,8,5,7],
+  "Calyrex":["Psychic","Grass",6,5,5,5,5,5],
+  "Wo-Chien":["Dark","Grass",5,5,6,5,8,4],
+  "Chien-Pao":["Dark","Ice",5,7,5,5,4,8],
+  "Ting-Lu":["Dark","Ground",9,6,7,3,5,3],
+  "Chi-Yu":["Dark","Fire",3,5,5,8,7,6],
+  "Koraidon":["Fighting","Dragon",6,8,7,5,6,8],
+  "Miraidon":["Electric","Dragon",6,5,6,8,7,8],
+  "Okidogi":["Poison","Fighting",5,7,7,3,5,5],
+  "Munkidori":["Poison","Psychic",5,4,4,7,5,6],
+  "Fezandipiti":["Poison","Fairy",5,5,5,4,7,6],
+  "Ogerpon":["Grass",null,5,7,5,3,5,6],
+  "Terapagos":["Normal",null,5,4,5,4,5,3],
+  "Pecharunt":["Poison","Ghost",5,5,9,5,5,5],
+  "Great Tusk":["Ground","Fighting",7,7,7,3,3,5],
+  "Scream Tail":["Fairy","Psychic",7,4,6,4,7,6],
+  "Brute Bonnet":["Grass","Dark",6,7,6,5,6,3],
+  "Flutter Mane":["Ghost","Fairy",3,3,3,8,8,8],
+  "Slither Wing":["Bug","Fighting",5,8,5,5,6,5],
+  "Sandy Shocks":["Electric","Ground",5,5,6,7,5,6],
+  "Roaring Moon":["Dragon","Dark",6,8,4,3,6,7],
+  "Walking Wake":["Water","Dragon",6,5,5,7,5,6],
+  "Gouging Fire":["Fire","Dragon",6,7,7,4,5,5],
+  "Raging Bolt":["Electric","Dragon",7,4,5,8,5,4],
+  "Iron Treads":["Ground","Steel",5,6,7,4,4,6],
+  "Iron Bundle":["Ice","Water",3,5,7,7,3,8],
+  "Iron Hands":["Fighting","Electric",9,8,6,3,4,3],
+  "Iron Jugulis":["Dark","Flying",5,5,5,7,5,6],
+  "Iron Moth":["Fire","Poison",5,4,3,8,6,6],
+  "Iron Thorns":["Rock","Electric",6,8,6,4,5,4],
+  "Iron Valiant":["Fairy","Fighting",4,7,5,7,3,7],
+  "Iron Leaves":["Grass","Psychic",5,7,5,4,6,6],
+  "Iron Boulder":["Rock","Psychic",5,7,5,4,6,7],
+  "Iron Crown":["Steel","Psychic",5,4,6,7,6,6]
+};
+const SPRITE_SLUGS = {"Bulbasaur":"bulbasaur","Ivysaur":"ivysaur","Venusaur":"venusaur","Charmander":"charmander","Charmeleon":"charmeleon","Charizard":"charizard","Squirtle":"squirtle","Wartortle":"wartortle","Blastoise":"blastoise","Caterpie":"caterpie","Metapod":"metapod","Butterfree":"butterfree","Weedle":"weedle","Kakuna":"kakuna","Beedrill":"beedrill","Pidgey":"pidgey","Pidgeotto":"pidgeotto","Pidgeot":"pidgeot","Rattata":"rattata","Raticate":"raticate","Spearow":"spearow","Fearow":"fearow","Ekans":"ekans","Arbok":"arbok","Pikachu":"pikachu","Raichu":"raichu","Sandshrew":"sandshrew","Sandslash":"sandslash","Nidoran♀":"nidoran-f","Nidorina":"nidorina","Nidoqueen":"nidoqueen","Nidoran♂":"nidoran-m","Nidorino":"nidorino","Nidoking":"nidoking","Clefairy":"clefairy","Clefable":"clefable","Vulpix":"vulpix","Ninetales":"ninetales","Jigglypuff":"jigglypuff","Wigglytuff":"wigglytuff","Zubat":"zubat","Golbat":"golbat","Oddish":"oddish","Gloom":"gloom","Vileplume":"vileplume","Paras":"paras","Parasect":"parasect","Venonat":"venonat","Venomoth":"venomoth","Diglett":"diglett","Dugtrio":"dugtrio","Meowth":"meowth","Persian":"persian","Psyduck":"psyduck","Golduck":"golduck","Mankey":"mankey","Primeape":"primeape","Growlithe":"growlithe","Arcanine":"arcanine","Poliwag":"poliwag","Poliwhirl":"poliwhirl","Poliwrath":"poliwrath","Abra":"abra","Kadabra":"kadabra","Alakazam":"alakazam","Machop":"machop","Machoke":"machoke","Machamp":"machamp","Bellsprout":"bellsprout","Weepinbell":"weepinbell","Victreebel":"victreebel","Tentacool":"tentacool","Tentacruel":"tentacruel","Geodude":"geodude","Graveler":"graveler","Golem":"golem","Ponyta":"ponyta","Rapidash":"rapidash","Slowpoke":"slowpoke","Slowbro":"slowbro","Magnemite":"magnemite","Magneton":"magneton","Farfetch'd":"farfetchd","Doduo":"doduo","Dodrio":"dodrio","Seel":"seel","Dewgong":"dewgong","Grimer":"grimer","Muk":"muk","Shellder":"shellder","Cloyster":"cloyster","Gastly":"gastly","Haunter":"haunter","Gengar":"gengar","Onix":"onix","Drowzee":"drowzee","Hypno":"hypno","Krabby":"krabby","Kingler":"kingler","Voltorb":"voltorb","Electrode":"electrode","Exeggcute":"exeggcute","Exeggutor":"exeggutor","Cubone":"cubone","Marowak":"marowak","Hitmonlee":"hitmonlee","Hitmonchan":"hitmonchan","Lickitung":"lickitung","Koffing":"koffing","Weezing":"weezing","Rhyhorn":"rhyhorn","Rhydon":"rhydon","Chansey":"chansey","Tangela":"tangela","Kangaskhan":"kangaskhan","Horsea":"horsea","Seadra":"seadra","Goldeen":"goldeen","Seaking":"seaking","Staryu":"staryu","Starmie":"starmie","Mr. Mime":"mr-mime","Scyther":"scyther","Jynx":"jynx","Electabuzz":"electabuzz","Magmar":"magmar","Pinsir":"pinsir","Tauros":"tauros","Magikarp":"magikarp","Gyarados":"gyarados","Lapras":"lapras","Ditto":"ditto","Eevee":"eevee","Vaporeon":"vaporeon","Jolteon":"jolteon","Flareon":"flareon","Porygon":"porygon","Omanyte":"omanyte","Omastar":"omastar","Kabuto":"kabuto","Kabutops":"kabutops","Aerodactyl":"aerodactyl","Snorlax":"snorlax","Articuno":"articuno","Zapdos":"zapdos","Moltres":"moltres","Dratini":"dratini","Dragonair":"dragonair","Dragonite":"dragonite","Mewtwo":"mewtwo","Mew":"mew","Chikorita":"chikorita","Bayleef":"bayleef","Meganium":"meganium","Cyndaquil":"cyndaquil","Quilava":"quilava","Typhlosion":"typhlosion","Totodile":"totodile","Croconaw":"croconaw","Feraligatr":"feraligatr","Sentret":"sentret","Furret":"furret","Hoothoot":"hoothoot","Noctowl":"noctowl","Ledyba":"ledyba","Ledian":"ledian","Spinarak":"spinarak","Ariados":"ariados","Crobat":"crobat","Chinchou":"chinchou","Lanturn":"lanturn","Pichu":"pichu","Cleffa":"cleffa","Igglybuff":"igglybuff","Togepi":"togepi","Togetic":"togetic","Natu":"natu","Xatu":"xatu","Mareep":"mareep","Flaaffy":"flaaffy","Ampharos":"ampharos","Bellossom":"bellossom","Marill":"marill","Azumarill":"azumarill","Sudowoodo":"sudowoodo","Politoed":"politoed","Hoppip":"hoppip","Skiploom":"skiploom","Jumpluff":"jumpluff","Aipom":"aipom","Sunkern":"sunkern","Sunflora":"sunflora","Yanma":"yanma","Wooper":"wooper","Quagsire":"quagsire","Espeon":"espeon","Umbreon":"umbreon","Murkrow":"murkrow","Slowking":"slowking","Misdreavus":"misdreavus","Unown":"unown","Wobbuffet":"wobbuffet","Girafarig":"girafarig","Pineco":"pineco","Forretress":"forretress","Dunsparce":"dunsparce","Gligar":"gligar","Steelix":"steelix","Snubbull":"snubbull","Granbull":"granbull","Qwilfish":"qwilfish","Scizor":"scizor","Shuckle":"shuckle","Heracross":"heracross","Sneasel":"sneasel","Teddiursa":"teddiursa","Ursaring":"ursaring","Slugma":"slugma","Magcargo":"magcargo","Swinub":"swinub","Piloswine":"piloswine","Corsola":"corsola","Remoraid":"remoraid","Octillery":"octillery","Delibird":"delibird","Mantine":"mantine","Skarmory":"skarmory","Houndour":"houndour","Houndoom":"houndoom","Kingdra":"kingdra","Phanpy":"phanpy","Donphan":"donphan","Porygon2":"porygon2","Stantler":"stantler","Smeargle":"smeargle","Tyrogue":"tyrogue","Hitmontop":"hitmontop","Smoochum":"smoochum","Elekid":"elekid","Magby":"magby","Miltank":"miltank","Blissey":"blissey","Raikou":"raikou","Entei":"entei","Suicune":"suicune","Larvitar":"larvitar","Pupitar":"pupitar","Tyranitar":"tyranitar","Lugia":"lugia","Ho-oh":"ho-oh","Celebi":"celebi","Treecko":"treecko","Grovyle":"grovyle","Sceptile":"sceptile","Torchic":"torchic","Combusken":"combusken","Blaziken":"blaziken","Mudkip":"mudkip","Marshtomp":"marshtomp","Swampert":"swampert","Poochyena":"poochyena","Mightyena":"mightyena","Zigzagoon":"zigzagoon","Linoone":"linoone","Wurmple":"wurmple","Silcoon":"silcoon","Beautifly":"beautifly","Cascoon":"cascoon","Dustox":"dustox","Lotad":"lotad","Lombre":"lombre","Ludicolo":"ludicolo","Seedot":"seedot","Nuzleaf":"nuzleaf","Shiftry":"shiftry","Taillow":"taillow","Swellow":"swellow","Wingull":"wingull","Pelipper":"pelipper","Ralts":"ralts","Kirlia":"kirlia","Gardevoir":"gardevoir","Surskit":"surskit","Masquerain":"masquerain","Shroomish":"shroomish","Breloom":"breloom","Slakoth":"slakoth","Vigoroth":"vigoroth","Slaking":"slaking","Nincada":"nincada","Ninjask":"ninjask","Shedinja":"shedinja","Whismur":"whismur","Loudred":"loudred","Exploud":"exploud","Makuhita":"makuhita","Hariyama":"hariyama","Azurill":"azurill","Nosepass":"nosepass","Skitty":"skitty","Delcatty":"delcatty","Sableye":"sableye","Mawile":"mawile","Aron":"aron","Lairon":"lairon","Aggron":"aggron","Meditite":"meditite","Medicham":"medicham","Electrike":"electrike","Manectric":"manectric","Plusle":"plusle","Minun":"minun","Volbeat":"volbeat","Illumise":"illumise","Roselia":"roselia","Gulpin":"gulpin","Swalot":"swalot","Carvanha":"carvanha","Sharpedo":"sharpedo","Wailmer":"wailmer","Wailord":"wailord","Numel":"numel","Camerupt":"camerupt","Torkoal":"torkoal","Spoink":"spoink","Grumpig":"grumpig","Spinda":"spinda","Trapinch":"trapinch","Vibrava":"vibrava","Flygon":"flygon","Cacnea":"cacnea","Cacturne":"cacturne","Swablu":"swablu","Altaria":"altaria","Zangoose":"zangoose","Seviper":"seviper","Lunatone":"lunatone","Solrock":"solrock","Barboach":"barboach","Whiscash":"whiscash","Corphish":"corphish","Crawdaunt":"crawdaunt","Baltoy":"baltoy","Claydol":"claydol","Lileep":"lileep","Cradily":"cradily","Anorith":"anorith","Armaldo":"armaldo","Feebas":"feebas","Milotic":"milotic","Castform":"castform","Kecleon":"kecleon","Shuppet":"shuppet","Banette":"banette","Duskull":"duskull","Dusclops":"dusclops","Tropius":"tropius","Chimecho":"chimecho","Absol":"absol","Wynaut":"wynaut","Snorunt":"snorunt","Glalie":"glalie","Spheal":"spheal","Sealeo":"sealeo","Walrein":"walrein","Clamperl":"clamperl","Huntail":"huntail","Gorebyss":"gorebyss","Relicanth":"relicanth","Luvdisc":"luvdisc","Bagon":"bagon","Shelgon":"shelgon","Salamence":"salamence","Beldum":"beldum","Metang":"metang","Metagross":"metagross","Regirock":"regirock","Regice":"regice","Registeel":"registeel","Latias":"latias","Latios":"latios","Kyogre":"kyogre","Groudon":"groudon","Rayquaza":"rayquaza","Jirachi":"jirachi","Deoxys":"deoxys","Turtwig":"turtwig","Grotle":"grotle","Torterra":"torterra","Chimchar":"chimchar","Monferno":"monferno","Infernape":"infernape","Piplup":"piplup","Prinplup":"prinplup","Empoleon":"empoleon","Starly":"starly","Staravia":"staravia","Staraptor":"staraptor","Bidoof":"bidoof","Bibarel":"bibarel","Kricketot":"kricketot","Kricketune":"kricketune","Shinx":"shinx","Luxio":"luxio","Luxray":"luxray","Budew":"budew","Roserade":"roserade","Cranidos":"cranidos","Rampardos":"rampardos","Shieldon":"shieldon","Bastiodon":"bastiodon","Burmy":"burmy","Wormadam":"wormadam","Mothim":"mothim","Combee":"combee","Vespiquen":"vespiquen","Pachirisu":"pachirisu","Buizel":"buizel","Floatzel":"floatzel","Cherubi":"cherubi","Cherrim":"cherrim","Shellos":"shellos","Gastrodon":"gastrodon","Ambipom":"ambipom","Drifloon":"drifloon","Drifblim":"drifblim","Buneary":"buneary","Lopunny":"lopunny","Mismagius":"mismagius","Honchkrow":"honchkrow","Glameow":"glameow","Purugly":"purugly","Chingling":"chingling","Stunky":"stunky","Skuntank":"skuntank","Bronzor":"bronzor","Bronzong":"bronzong","Bonsly":"bonsly","Mime Jr.":"mime-jr","Happiny":"happiny","Chatot":"chatot","Spiritomb":"spiritomb","Gible":"gible","Gabite":"gabite","Garchomp":"garchomp","Munchlax":"munchlax","Riolu":"riolu","Lucario":"lucario","Hippopotas":"hippopotas","Hippowdon":"hippowdon","Skorupi":"skorupi","Drapion":"drapion","Croagunk":"croagunk","Toxicroak":"toxicroak","Carnivine":"carnivine","Finneon":"finneon","Lumineon":"lumineon","Mantyke":"mantyke","Snover":"snover","Abomasnow":"abomasnow","Weavile":"weavile","Magnezone":"magnezone","Lickilicky":"lickilicky","Rhyperior":"rhyperior","Tangrowth":"tangrowth","Electivire":"electivire","Magmortar":"magmortar","Togekiss":"togekiss","Yanmega":"yanmega","Leafeon":"leafeon","Glaceon":"glaceon","Gliscor":"gliscor","Mamoswine":"mamoswine","Porygon-Z":"porygon-z","Gallade":"gallade","Probopass":"probopass","Dusknoir":"dusknoir","Froslass":"froslass","Rotom":"rotom","Uxie":"uxie","Mesprit":"mesprit","Azelf":"azelf","Dialga":"dialga","Palkia":"palkia","Heatran":"heatran","Regigigas":"regigigas","Giratina":"giratina","Cresselia":"cresselia","Phione":"phione","Manaphy":"manaphy","Darkrai":"darkrai","Shaymin":"shaymin","Arceus":"arceus","Victini":"victini","Snivy":"snivy","Servine":"servine","Serperior":"serperior","Tepig":"tepig","Pignite":"pignite","Emboar":"emboar","Oshawott":"oshawott","Dewott":"dewott","Samurott":"samurott","Patrat":"patrat","Watchog":"watchog","Lillipup":"lillipup","Herdier":"herdier","Stoutland":"stoutland","Purrloin":"purrloin","Liepard":"liepard","Pansage":"pansage","Simisage":"simisage","Pansear":"pansear","Simisear":"simisear","Panpour":"panpour","Simipour":"simipour","Munna":"munna","Musharna":"musharna","Pidove":"pidove","Tranquill":"tranquill","Unfezant":"unfezant","Blitzle":"blitzle","Zebstrika":"zebstrika","Roggenrola":"roggenrola","Boldore":"boldore","Gigalith":"gigalith","Woobat":"woobat","Swoobat":"swoobat","Drilbur":"drilbur","Excadrill":"excadrill","Audino":"audino","Timburr":"timburr","Gurdurr":"gurdurr","Conkeldurr":"conkeldurr","Tympole":"tympole","Palpitoad":"palpitoad","Seismitoad":"seismitoad","Throh":"throh","Sawk":"sawk","Sewaddle":"sewaddle","Swadloon":"swadloon","Leavanny":"leavanny","Venipede":"venipede","Whirlipede":"whirlipede","Scolipede":"scolipede","Cottonee":"cottonee","Whimsicott":"whimsicott","Petilil":"petilil","Lilligant":"lilligant","Basculin":"basculin","Sandile":"sandile","Krokorok":"krokorok","Krookodile":"krookodile","Darumaka":"darumaka","Darmanitan":"darmanitan","Maractus":"maractus","Dwebble":"dwebble","Crustle":"crustle","Scraggy":"scraggy","Scrafty":"scrafty","Sigilyph":"sigilyph","Yamask":"yamask","Cofagrigus":"cofagrigus","Tirtouga":"tirtouga","Carracosta":"carracosta","Archen":"archen","Archeops":"archeops","Trubbish":"trubbish","Garbodor":"garbodor","Zorua":"zorua","Zoroark":"zoroark","Minccino":"minccino","Cinccino":"cinccino","Gothita":"gothita","Gothorita":"gothorita","Gothitelle":"gothitelle","Solosis":"solosis","Duosion":"duosion","Reuniclus":"reuniclus","Ducklett":"ducklett","Swanna":"swanna","Vanillite":"vanillite","Vanillish":"vanillish","Vanilluxe":"vanilluxe","Deerling":"deerling","Sawsbuck":"sawsbuck","Emolga":"emolga","Karrablast":"karrablast","Escavalier":"escavalier","Foongus":"foongus","Amoonguss":"amoonguss","Frillish":"frillish","Jellicent":"jellicent","Alomomola":"alomomola","Joltik":"joltik","Galvantula":"galvantula","Ferroseed":"ferroseed","Ferrothorn":"ferrothorn","Klink":"klink","Klang":"klang","Klinklang":"klinklang","Tynamo":"tynamo","Eelektrik":"eelektrik","Eelektross":"eelektross","Elgyem":"elgyem","Beheeyem":"beheeyem","Litwick":"litwick","Lampent":"lampent","Chandelure":"chandelure","Axew":"axew","Fraxure":"fraxure","Haxorus":"haxorus","Cubchoo":"cubchoo","Beartic":"beartic","Cryogonal":"cryogonal","Shelmet":"shelmet","Accelgor":"accelgor","Stunfisk":"stunfisk","Mienfoo":"mienfoo","Mienshao":"mienshao","Druddigon":"druddigon","Golett":"golett","Golurk":"golurk","Pawniard":"pawniard","Bisharp":"bisharp","Bouffalant":"bouffalant","Rufflet":"rufflet","Braviary":"braviary","Vullaby":"vullaby","Mandibuzz":"mandibuzz","Heatmor":"heatmor","Durant":"durant","Deino":"deino","Zweilous":"zweilous","Hydreigon":"hydreigon","Larvesta":"larvesta","Volcarona":"volcarona","Cobalion":"cobalion","Terrakion":"terrakion","Virizion":"virizion","Tornadus":"tornadus","Thundurus":"thundurus","Reshiram":"reshiram","Zekrom":"zekrom","Landorus":"landorus","Kyurem":"kyurem","Keldeo":"keldeo","Meloetta":"meloetta","Genesect":"genesect","Chespin":"chespin","Quilladin":"quilladin","Chesnaught":"chesnaught","Fennekin":"fennekin","Braixen":"braixen","Delphox":"delphox","Froakie":"froakie","Frogadier":"frogadier","Greninja":"greninja","Bunnelby":"bunnelby","Diggersby":"diggersby","Fletchling":"fletchling","Fletchinder":"fletchinder","Talonflame":"talonflame","Scatterbug":"scatterbug","Spewpa":"spewpa","Vivillon":"vivillon","Litleo":"litleo","Pyroar":"pyroar","Flabébé":"flabebe","Floette":"floette","Florges":"florges","Skiddo":"skiddo","Gogoat":"gogoat","Pancham":"pancham","Pangoro":"pangoro","Furfrou":"furfrou","Espurr":"espurr","Meowstic":"meowstic","Honedge":"honedge","Doublade":"doublade","Aegislash":"aegislash","Spritzee":"spritzee","Aromatisse":"aromatisse","Swirlix":"swirlix","Slurpuff":"slurpuff","Inkay":"inkay","Malamar":"malamar","Binacle":"binacle","Barbaracle":"barbaracle","Skrelp":"skrelp","Dragalge":"dragalge","Clauncher":"clauncher","Clawitzer":"clawitzer","Helioptile":"helioptile","Heliolisk":"heliolisk","Tyrunt":"tyrunt","Tyrantrum":"tyrantrum","Amaura":"amaura","Aurorus":"aurorus","Sylveon":"sylveon","Hawlucha":"hawlucha","Dedenne":"dedenne","Carbink":"carbink","Goomy":"goomy","Sliggoo":"sliggoo","Goodra":"goodra","Klefki":"klefki","Phantump":"phantump","Trevenant":"trevenant","Pumpkaboo":"pumpkaboo","Gourgeist":"gourgeist","Bergmite":"bergmite","Avalugg":"avalugg","Noibat":"noibat","Noivern":"noivern","Xerneas":"xerneas","Yveltal":"yveltal","Zygarde":"zygarde","Diancie":"diancie","Hoopa":"hoopa","Volcanion":"volcanion","Rowlet":"rowlet","Dartrix":"dartrix","Decidueye":"decidueye","Litten":"litten","Torracat":"torracat","Incineroar":"incineroar","Popplio":"popplio","Brionne":"brionne","Primarina":"primarina","Pikipek":"pikipek","Trumbeak":"trumbeak","Toucannon":"toucannon","Yungoos":"yungoos","Gumshoos":"gumshoos","Grubbin":"grubbin","Charjabug":"charjabug","Vikavolt":"vikavolt","Crabrawler":"crabrawler","Crabominable":"crabominable","Oricorio":"oricorio","Cutiefly":"cutiefly","Ribombee":"ribombee","Rockruff":"rockruff","Lycanroc":"lycanroc","Wishiwashi":"wishiwashi","Mareanie":"mareanie","Toxapex":"toxapex","Mudbray":"mudbray","Mudsdale":"mudsdale","Dewpider":"dewpider","Araquanid":"araquanid","Fomantis":"fomantis","Lurantis":"lurantis","Morelull":"morelull","Shiinotic":"shiinotic","Salandit":"salandit","Salazzle":"salazzle","Stufful":"stufful","Bewear":"bewear","Bounsweet":"bounsweet","Steenee":"steenee","Tsareena":"tsareena","Comfey":"comfey","Oranguru":"oranguru","Passimian":"passimian","Wimpod":"wimpod","Golisopod":"golisopod","Sandygast":"sandygast","Palossand":"palossand","Pyukumuku":"pyukumuku","Type: Null":"type-null","Silvally":"silvally","Minior":"minior","Komala":"komala","Turtonator":"turtonator","Togedemaru":"togedemaru","Mimikyu":"mimikyu","Bruxish":"bruxish","Drampa":"drampa","Dhelmise":"dhelmise","Jangmo-o":"jangmo-o","Hakamo-o":"hakamo-o","Kommo-o":"kommo-o","Tapu Koko":"tapu-koko","Tapu Lele":"tapu-lele","Tapu Bulu":"tapu-bulu","Tapu Fini":"tapu-fini","Cosmog":"cosmog","Cosmoem":"cosmoem","Solgaleo":"solgaleo","Lunala":"lunala","Nihilego":"nihilego","Buzzwole":"buzzwole","Pheromosa":"pheromosa","Xurkitree":"xurkitree","Celesteela":"celesteela","Kartana":"kartana","Guzzlord":"guzzlord","Necrozma":"necrozma","Magearna":"magearna","Marshadow":"marshadow","Poipole":"poipole","Naganadel":"naganadel","Stakataka":"stakataka","Blacephalon":"blacephalon","Zeraora":"zeraora","Meltan":"meltan","Melmetal":"melmetal","Grookey":"grookey","Thwackey":"thwackey","Rillaboom":"rillaboom","Scorbunny":"scorbunny","Raboot":"raboot","Cinderace":"cinderace","Sobble":"sobble","Drizzile":"drizzile","Inteleon":"inteleon","Skwovet":"skwovet","Greedent":"greedent","Rookidee":"rookidee","Corvisquire":"corvisquire","Corviknight":"corviknight","Blipbug":"blipbug","Dottler":"dottler","Orbeetle":"orbeetle","Nickit":"nickit","Thievul":"thievul","Gossifleur":"gossifleur","Eldegoss":"eldegoss","Wooloo":"wooloo","Dubwool":"dubwool","Chewtle":"chewtle","Drednaw":"drednaw","Yamper":"yamper","Boltund":"boltund","Rolycoly":"rolycoly","Carkol":"carkol","Coalossal":"coalossal","Applin":"applin","Flapple":"flapple","Appletun":"appletun","Silicobra":"silicobra","Sandaconda":"sandaconda","Cramorant":"cramorant","Arrokuda":"arrokuda","Barraskewda":"barraskewda","Toxel":"toxel","Toxtricity":"toxtricity","Sizzlipede":"sizzlipede","Centiskorch":"centiskorch","Clobbopus":"clobbopus","Grapploct":"grapploct","Sinistea":"sinistea","Polteageist":"polteageist","Hatenna":"hatenna","Hattrem":"hattrem","Hatterene":"hatterene","Impidimp":"impidimp","Morgrem":"morgrem","Grimmsnarl":"grimmsnarl","Obstagoon":"obstagoon","Perrserker":"perrserker","Cursola":"cursola","Sirfetch'd":"sirfetchd","Mr. Rime":"mr-rime","Runerigus":"runerigus","Milcery":"milcery","Alcremie":"alcremie","Falinks":"falinks","Pincurchin":"pincurchin","Snom":"snom","Frosmoth":"frosmoth","Stonjourner":"stonjourner","Eiscue":"eiscue","Indeedee":"indeedee","Morpeko":"morpeko","Cufant":"cufant","Copperajah":"copperajah","Dracozolt":"dracozolt","Arctozolt":"arctozolt","Dracovish":"dracovish","Arctovish":"arctovish","Duraludon":"duraludon","Dreepy":"dreepy","Drakloak":"drakloak","Dragapult":"dragapult","Zacian":"zacian","Zamazenta":"zamazenta","Eternatus":"eternatus","Kubfu":"kubfu","Urshifu":"urshifu","Zarude":"zarude","Regieleki":"regieleki","Regidrago":"regidrago","Glastrier":"glastrier","Spectrier":"spectrier","Calyrex":"calyrex","Wyrdeer":"wyrdeer","Kleavor":"kleavor","Ursaluna":"ursaluna","Basculegion":"basculegion","Sneasler":"sneasler","Overqwil":"overqwil","Enamorus":"enamorus","Sprigatito":"sprigatito","Floragato":"floragato","Meowscarada":"meowscarada","Fuecoco":"fuecoco","Crocalor":"crocalor","Skeledirge":"skeledirge","Quaxly":"quaxly","Quaxwell":"quaxwell","Quaquaval":"quaquaval","Lechonk":"lechonk","Oinkologne":"oinkologne","Tarountula":"tarountula","Spidops":"spidops","Nymble":"nymble","Lokix":"lokix","Pawmi":"pawmi","Pawmo":"pawmo","Pawmot":"pawmot","Tandemaus":"tandemaus","Maushold":"maushold","Fidough":"fidough","Dachsbun":"dachsbun","Smoliv":"smoliv","Dolliv":"dolliv","Arboliva":"arboliva","Squawkabilly":"squawkabilly","Nacli":"nacli","Naclstack":"naclstack","Garganacl":"garganacl","Charcadet":"charcadet","Armarouge":"armarouge","Ceruledge":"ceruledge","Tadbulb":"tadbulb","Bellibolt":"bellibolt","Wattrel":"wattrel","Kilowattrel":"kilowattrel","Maschiff":"maschiff","Mabosstiff":"mabosstiff","Shroodle":"shroodle","Grafaiai":"grafaiai","Bramblin":"bramblin","Brambleghast":"brambleghast","Toedscool":"toedscool","Toedscruel":"toedscruel","Klawf":"klawf","Capsakid":"capsakid","Scovillain":"scovillain","Rellor":"rellor","Rabsca":"rabsca","Flittle":"flittle","Espathra":"espathra","Tinkatink":"tinkatink","Tinkatuff":"tinkatuff","Tinkaton":"tinkaton","Wiglett":"wiglett","Wugtrio":"wugtrio","Bombirdier":"bombirdier","Finizen":"finizen","Palafin":"palafin","Varoom":"varoom","Revavroom":"revavroom","Cyclizar":"cyclizar","Orthworm":"orthworm","Glimmet":"glimmet","Glimmora":"glimmora","Greavard":"greavard","Houndstone":"houndstone","Flamigo":"flamigo","Cetoddle":"cetoddle","Cetitan":"cetitan","Veluza":"veluza","Dondozo":"dondozo","Tatsugiri":"tatsugiri","Annihilape":"annihilape","Clodsire":"clodsire","Farigiraf":"farigiraf","Dudunsparce":"dudunsparce","Kingambit":"kingambit","Great Tusk":"great-tusk","Scream Tail":"scream-tail","Brute Bonnet":"brute-bonnet","Flutter Mane":"flutter-mane","Slither Wing":"slither-wing","Sandy Shocks":"sandy-shocks","Iron Treads":"iron-treads","Iron Bundle":"iron-bundle","Iron Hands":"iron-hands","Iron Jugulis":"iron-jugulis","Iron Moth":"iron-moth","Iron Thorns":"iron-thorns","Frigibax":"frigibax","Arctibax":"arctibax","Baxcalibur":"baxcalibur","Gimmighoul":"gimmighoul","Gholdengo":"gholdengo","Wo-Chien":"wo-chien","Chien-Pao":"chien-pao","Ting-Lu":"ting-lu","Chi-Yu":"chi-yu","Roaring Moon":"roaring-moon","Iron Valiant":"iron-valiant","Koraidon":"koraidon","Miraidon":"miraidon","Walking Wake":"walking-wake","Iron Leaves":"iron-leaves","Dipplin":"dipplin","Poltchageist":"poltchageist","Sinistcha":"sinistcha","Okidogi":"okidogi","Munkidori":"munkidori","Fezandipiti":"fezandipiti","Ogerpon":"ogerpon","Archaludon":"archaludon","Hydrapple":"hydrapple","Gouging Fire":"gouging-fire","Raging Bolt":"raging-bolt","Iron Boulder":"iron-boulder","Iron Crown":"iron-crown","Terapagos":"terapagos","Pecharunt":"pecharunt"};
+</script>
+<script>
+/* ============ Species roster (National + Legendary/Mythical/UB/Paradox dex,
+   same die-face stat scale used throughout the game -- NOT raw mainline base
+   stats). Region-agnostic: this simulator isn't tied to any save file. ============ */
+const SPECIES_DATA = {};
+Object.keys(NATIONAL_DEX).forEach(n=>{
+  const a = NATIONAL_DEX[n];
+  SPECIES_DATA[n] = { t1:a[0], t2:a[1], base:a.slice(2), legendary:false };
+});
+Object.keys(LEGENDARY_DEX).forEach(n=>{
+  const a = LEGENDARY_DEX[n];
+  SPECIES_DATA[n] = { t1:a[0], t2:a[1], base:a.slice(2), legendary:true };
+});
+const SPECIES_LIST = Object.keys(SPECIES_DATA).sort();
+
+const STAT_NAMES = ['HP','Atk','Def','SpA','SpD','Spe'];
+const TEAM_EV_TOTAL = 12; // matches the game's Lv12 rule: level == sum of EVs
+
+const TYPE_CHART = {
+  Normal:   { Rock:0.5, Ghost:0, Steel:0.5 },
+  Fire:     { Fire:0.5, Water:0.5, Grass:2, Ice:2, Bug:2, Rock:0.5, Dragon:0.5, Steel:2 },
+  Water:    { Fire:2, Water:0.5, Grass:0.5, Ground:2, Rock:2, Dragon:0.5 },
+  Electric: { Water:2, Electric:0.5, Grass:0.5, Ground:0, Flying:2, Dragon:0.5 },
+  Grass:    { Fire:0.5, Water:2, Grass:0.5, Poison:0.5, Ground:2, Flying:0.5, Bug:0.5, Rock:2, Dragon:0.5, Steel:0.5 },
+  Ice:      { Fire:0.5, Water:0.5, Grass:2, Ice:0.5, Ground:2, Flying:2, Dragon:2, Steel:0.5 },
+  Fighting: { Normal:2, Ice:2, Poison:0.5, Flying:0.5, Psychic:0.5, Bug:0.5, Rock:2, Ghost:0, Dark:2, Steel:2, Fairy:0.5 },
+  Poison:   { Grass:2, Poison:0.5, Ground:0.5, Rock:0.5, Ghost:0.5, Steel:0, Fairy:2 },
+  Ground:   { Fire:2, Electric:2, Grass:0.5, Poison:2, Flying:0, Bug:0.5, Rock:2, Steel:2 },
+  Flying:   { Electric:0.5, Grass:2, Fighting:2, Bug:2, Rock:0.5, Steel:0.5 },
+  Psychic:  { Fighting:2, Poison:2, Psychic:0.5, Dark:0, Steel:0.5 },
+  Bug:      { Fire:0.5, Grass:2, Fighting:0.5, Poison:0.5, Flying:0.5, Psychic:2, Ghost:0.5, Dark:2, Steel:0.5, Fairy:0.5 },
+  Rock:     { Fire:2, Ice:2, Fighting:0.5, Ground:0.5, Flying:2, Bug:2, Steel:0.5 },
+  Ghost:    { Normal:0, Psychic:2, Ghost:2, Dark:0.5 },
+  Dragon:   { Dragon:2, Steel:0.5, Fairy:0 },
+  Dark:     { Fighting:0.5, Psychic:2, Ghost:2, Dark:0.5, Fairy:0.5 },
+  Steel:    { Fire:0.5, Water:0.5, Electric:0.5, Ice:2, Rock:2, Steel:0.5, Fairy:2 },
+  Fairy:    { Fire:0.5, Fighting:2, Poison:0.5, Dragon:2, Dark:2, Steel:0.5 },
+};
+const ALL_TYPES = Object.keys(TYPE_CHART);
+const TYPE_COLOR = {
+  dragon:'#7B4FE0', flying:'#8FA8DE', normal:'#B0A890', fighting:'#C1443C', dark:'#4A4038',
+  fire:'#E0713C', ghost:'#6E5A9E', psychic:'#E0637F', fairy:'#E8A0C4', grass:'#6C9A4B',
+  poison:'#9B59B6', bug:'#9AAE3A', electric:'#D9A441', steel:'#8C97A3', rock:'#B7A05A',
+  ground:'#C9A66B', ice:'#6FB8C2', water:'#4E86C6'
+};
+
+function spriteSlugify(name){
+  return name.toLowerCase()
+    .replace(/\u2640/g, '-f').replace(/\u2642/g, '-m')
+    .replace(/[.'\u2019:]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+function pokemonSpriteUrl(name){
+  if(!name) return null;
+  const slug = SPRITE_SLUGS[name] || spriteSlugify(name);
+  return 'https://img.pokemondb.net/sprites/scarlet-violet/icon/' + slug + '.png';
+}
+function spriteImgHtml(name, cssClass){
+  const url = pokemonSpriteUrl(name);
+  if(!url) return '';
+  return '<img class="'+(cssClass||'')+'" src="'+url+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">';
+}
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function sleep(ms){ return new Promise(res=>setTimeout(res, ms)); }
+function statTotal(arr){ return arr.reduce((a,b)=>a+b,0); }
+
+/* ============ Battle math -- identical rules to play.html's fight() engine:
+   dice-per-side from type effectiveness, STAB baked into every die face,
+   ties reroll, an unbreakable matchup (or an astronomically unlucky 300-round
+   streak) is settled by a coin flip rather than silently favoring one side. ============ */
+function effectiveness(atkType, defType1, defType2){
+  const row = TYPE_CHART[atkType] || {};
+  let m = (row[defType1] ?? 1);
+  if(defType2) m *= (row[defType2] ?? 1);
+  return m;
+}
+function diceConfig(mult){
+  if(mult >= 4) return {n:3, mode:'best', label:'4\u00d7 doubly super effective'};
+  if(mult === 2) return {n:2, mode:'best', label:'2\u00d7 super effective'};
+  if(mult === 1) return {n:1, mode:'single', label:'1\u00d7 normal'};
+  if(mult === 0.5) return {n:2, mode:'worst', label:'0.5\u00d7 not very effective'};
+  if(mult === 0.25) return {n:3, mode:'worst', label:'0.25\u00d7 doubly resisted'};
+  return {n:3, mode:'worst', label:'0\u00d7 immune'};
+}
+function rollSide(finalStats, cfg, stabBonus){
+  const picks = [];
+  let kept = null, keptIdx = 0;
+  for(let i=0;i<cfg.n;i++){
+    const idx = Math.floor(Math.random()*6);
+    const val = finalStats[idx];
+    picks.push(val + stabBonus);
+    if(kept===null || (cfg.mode==='worst' ? val<kept : val>kept)){
+      kept = val;
+      keptIdx = i;
+    }
+  }
+  return { picks, keptIdx, kept, final: kept + stabBonus };
+}
+function resultDistribution(finalStats, cfg, stabBonus){
+  const n = cfg.n;
+  const counts = new Map();
+  const total = Math.pow(6, n);
+  function rec(depth, kept){
+    if(depth === n){
+      const v = kept + stabBonus;
+      counts.set(v, (counts.get(v)||0) + 1);
+      return;
+    }
+    for(let i=0;i<6;i++){
+      const val = finalStats[i];
+      const nextKept = (kept === null) ? val
+        : (cfg.mode === 'worst' ? Math.min(kept, val) : Math.max(kept, val));
+      rec(depth+1, nextKept);
+    }
+  }
+  rec(0, null);
+  const dist = new Map();
+  for(const [v,c] of counts) dist.set(v, c/total);
+  return dist;
+}
+function crossOdds(distA, distB){
+  let winA=0, winB=0, tie=0;
+  for(const [a,pa] of distA){
+    for(const [b,pb] of distB){
+      const p = pa*pb;
+      if(a>b) winA += p;
+      else if(b>a) winB += p;
+      else tie += p;
+    }
+  }
+  const decided = winA + winB;
+  if(decided <= 1e-12) return {winA:0, winB:0, unbreakable:true};
+  return {winA: winA/decided, winB: winB/decided, unbreakable:false};
+}
+function stabBonusValue(){ return settings.strongerStab ? 1 : 0.5; }
+function winOdds(statsA, typesA, atkA, statsB, typesB, atkB){
+  const cfgA = diceConfig(effectiveness(atkA, typesB[0], typesB[1]));
+  const cfgB = diceConfig(effectiveness(atkB, typesA[0], typesA[1]));
+  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? stabBonusValue() : 0;
+  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? stabBonusValue() : 0;
+  return crossOdds(resultDistribution(statsA, cfgA, stabA), resultDistribution(statsB, cfgB, stabB));
+}
+async function tumble(el, durationMs, possibleValues, finalFace){
+  if(!el) return;
+  el.classList.add('rolling');
+  const steps = Math.max(1, Math.round(durationMs/85));
+  for(let i=0;i<steps-1;i++){
+    el.textContent = Math.floor(possibleValues[Math.floor(Math.random()*possibleValues.length)]);
+    await sleep(85);
+  }
+  el.textContent = Math.floor(finalFace);
+  el.classList.remove('rolling');
+  await sleep(85);
+}
+
+/* ============ Persisted state -- two teams + the STAB setting, all local to
+   this browser (not tied to any Adventure save slot). ============ */
+const STORE_KEY = 'pokemonDiceBattleSimV1';
+function loadStore(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if(raw && raw.teamA && raw.teamB) return raw;
+  } catch(e){}
+  return { teamA:[], teamB:[], strongerStab:false };
+}
+function saveStore(){
+  localStorage.setItem(STORE_KEY, JSON.stringify({ teamA: teams.A, teamB: teams.B, strongerStab: settings.strongerStab }));
+}
+const initialStore = loadStore();
+const teams = { A: initialStore.teamA, B: initialStore.teamB };
+const settings = { strongerStab: !!initialStore.strongerStab };
+
+/* ============ Transient UI state ============ */
+let editor = null;   // { side, index (existing slot, or teams[side].length for new), species, ev:[6], atk }
+let speciesQuery = '';
+let importSide = null; // 'A' | 'B' while the paste-import box is open
+let importDraft = '';  // textarea contents, preserved across a re-render (e.g. after a partial import)
+let importErrors = []; // species that failed to parse on the last Import click
+let battle = null;   // null while building teams; battle object once a match starts
+let rollingBattle = null;
+
+function finalStatsOf(mon){
+  const sd = SPECIES_DATA[mon.name];
+  return sd.base.map((b,i)=>b+mon.ev[i]);
+}
+
+/* ============ Team-builder text import -- parses exactly the format already
+   produced by play.html's "50-Turn Team Builder" export (teamBuilderMonExportText),
+   so a team built during a real adventure can be pasted straight in. ============ */
+function parseImportText(text){
+  const blocks = text.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
+  const mons = [];
+  const errors = [];
+  blocks.forEach(block=>{
+    const lines = block.split('\n').map(l=>l.trim()).filter(Boolean);
+    const head = lines[0] || '';
+    const m = head.match(/^(.+?)\s+Lv\s*(\d+)$/i);
+    if(!m){ errors.push('Could not read a name/level line: "'+head+'"'); return; }
+    const name = m[1].trim();
+    const sd = SPECIES_DATA[name];
+    if(!sd){ errors.push(name+': not a recognized species'); return; }
+    const atkLine = lines.find(l=>/^Attack:/i.test(l));
+    const atk = atkLine ? atkLine.replace(/^Attack:\s*/i,'').trim() : null;
+    if(!atk || !TYPE_CHART[atk]){ errors.push(name+': missing or unrecognized Attack type'); return; }
+    const statLine = lines.find(l=>/^HP\s/i.test(l));
+    if(!statLine){ errors.push(name+': missing stat line'); return; }
+    const nums = statLine.match(/-?\d+/g);
+    if(!nums || nums.length < 6){ errors.push(name+': could not read all 6 stats'); return; }
+    const finalStats = nums.slice(0,6).map(Number);
+    const ev = finalStats.map((v,i)=>v - sd.base[i]);
+    if(ev.some(v=>v<0)){ errors.push(name+': stats are lower than its base stats'); return; }
+    if(statTotal(ev) !== TEAM_EV_TOTAL){ errors.push(name+': EV total is '+statTotal(ev)+', expected '+TEAM_EV_TOTAL); return; }
+    mons.push({ name, ev, atk });
+  });
+  return { mons: mons.slice(0,6), errors };
+}
+
+/* ============ Rendering ============ */
+function typePillHtml(type){
+  if(!type) return '';
+  const c = TYPE_COLOR[type.toLowerCase()] || '#888';
+  return '<span class="type-pill" style="background:'+c+';">'+type+'</span>';
+}
+function trainerStylePill(type, extraClass){
+  if(!type) return '';
+  const c = TYPE_COLOR[type.toLowerCase()] || '#888';
+  return '<span class="trainer-type-pill'+(extraClass?' '+extraClass:'')+'" style="background:'+c+';">'+type+'</span>';
+}
+function trainerTypeBlockHtml(t1, t2, atk){
+  return '<div class="trainer-type-block">' +
+    '<span class="trainer-type-label">Type</span>' +
+    '<span class="trainer-mon-types">'+trainerStylePill(t1)+trainerStylePill(t2)+'</span>' +
+    '<span class="trainer-atk-paren">(<span class="trainer-type-label">Atk</span> '+trainerStylePill(atk, 'trainer-atk-pill')+')</span>' +
+  '</div>';
+}
+function statRowHtml(statsArr){
+  return '<div class="stat-row">' + STAT_NAMES.map((label,i)=>
+    '<span class="stat-chip">'+label+' <b>'+statsArr[i]+'</b></span>'
+  ).join('') + '<span class="stat-chip">Total <b>'+statTotal(statsArr)+'</b></span></div>';
+}
+function monCardHtml(mon, actionHtml, faintedBadge){
+  const sd = SPECIES_DATA[mon.name];
+  const finalStats = finalStatsOf(mon);
+  return '<div class="mon-detail-card">' +
+    spriteImgHtml(mon.name, 'sprite-lg') +
+    '<div class="mon-detail-name">'+esc(mon.name)+' Lv '+TEAM_EV_TOTAL+(faintedBadge?' -- Fainted':'')+'</div>' +
+    trainerTypeBlockHtml(sd.t1, sd.t2, mon.atk) +
+    statRowHtml(finalStats) +
+    (actionHtml || '') +
+  '</div>';
+}
+
+function teamSlotHtml(side, index){
+  const mon = teams[side][index];
+  if(!mon){
+    return '<div class="team-slot team-slot-empty" data-action="openEditor" data-side="'+side+'" data-index="'+index+'">+ Add Pok\u00e9mon</div>';
+  }
+  const sd = SPECIES_DATA[mon.name];
+  const finalStats = finalStatsOf(mon);
+  return '<div class="team-slot">' +
+    spriteImgHtml(mon.name, 'team-slot-sprite') +
+    '<div class="team-slot-main">' +
+      '<div class="team-slot-name">'+esc(mon.name)+'</div>' +
+      '<div class="team-slot-meta">'+[sd.t1,sd.t2].filter(Boolean).join(' / ')+' \u2014 Atk '+esc(mon.atk)+' \u2014 Total '+statTotal(finalStats)+'</div>' +
+    '</div>' +
+    '<div class="team-slot-actions">' +
+      '<button type="button" class="btn" data-action="openEditor" data-side="'+side+'" data-index="'+index+'">Edit</button>' +
+      '<button type="button" class="btn btn-danger" data-action="removeMon" data-side="'+side+'" data-index="'+index+'">Remove</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function editorHtml(){
+  const e = editor;
+  const side = e.side;
+  const title = (teams[side][e.index] ? 'Edit' : 'Add') + ' Pok\u00e9mon -- Player ' + (side==='A'?'1':'2');
+  let body;
+  if(!e.species){
+    const q = speciesQuery.trim().toLowerCase();
+    const matches = (q ? SPECIES_LIST.filter(n=>n.toLowerCase().indexOf(q)!==-1) : SPECIES_LIST).slice(0, 60);
+    body =
+      '<div class="field"><input type="text" id="speciesSearchInput" class="dex-search" placeholder="Search species..." value="'+esc(speciesQuery)+'"></div>' +
+      '<div class="species-search-list">' +
+        (matches.length ? matches.map(n=>{
+          const sd = SPECIES_DATA[n];
+          return '<div class="species-search-item" data-action="selectSpecies" data-name="'+esc(n)+'">' +
+            spriteImgHtml(n) + '<span>'+esc(n)+(sd.legendary?' \u2605':'')+'</span>' +
+          '</div>';
+        }).join('') : '<div class="empty-note">No matches</div>') +
+      '</div>';
+  } else {
+    const sd = SPECIES_DATA[e.species];
+    const finalStats = sd.base.map((b,i)=>b+e.ev[i]);
+    const remaining = TEAM_EV_TOTAL - statTotal(e.ev);
+    const atkOptions = ALL_TYPES.map(t=>'<option value="'+t+'"'+(t===e.atk?' selected':'')+'>'+t+'</option>').join('');
+    body =
+      '<div class="mon-detail-card" style="padding-right:120px;">' +
+        spriteImgHtml(e.species, 'sprite-lg') +
+        '<div class="mon-detail-name">'+esc(e.species)+'</div>' +
+        '<div class="trainer-type-block"><span class="trainer-type-label">Type</span><span class="trainer-mon-types">'+trainerStylePill(sd.t1)+trainerStylePill(sd.t2)+'</span></div>' +
+        '<button type="button" class="btn" style="margin-top:6px;" data-action="clearSpecies">Change Species</button>' +
+      '</div>' +
+      '<div class="field-label" style="margin-top:14px;">Attack Type</div>' +
+      '<select class="atk-select" id="atkSelect" data-action="setAtk">'+atkOptions+'</select>' +
+      '<div class="field-label" style="margin-top:14px;">Effort Values ('+TEAM_EV_TOTAL+' points total, matches Level '+TEAM_EV_TOTAL+')</div>' +
+      STAT_NAMES.map((label,i)=>
+        '<div class="ev-row">' +
+          '<span class="ev-row-label">'+label+'</span>' +
+          '<span class="ev-row-base">base '+sd.base[i]+'</span>' +
+          '<span class="ev-stepper">' +
+            '<button type="button" class="ev-stepper-btn" data-action="evStep" data-i="'+i+'" data-delta="-1"'+(e.ev[i]<=0?' disabled':'')+'>\u2212</button>' +
+            '<span class="ev-row-val">'+e.ev[i]+'</span>' +
+            '<button type="button" class="ev-stepper-btn" data-action="evStep" data-i="'+i+'" data-delta="1"'+(remaining<=0?' disabled':'')+'>+</button>' +
+          '</span>' +
+          '<span class="ev-row-final">= '+finalStats[i]+'</span>' +
+        '</div>'
+      ).join('') +
+      '<div class="ev-remaining'+(remaining===0?' done':'')+'">'+(remaining===0 ? 'All '+TEAM_EV_TOTAL+' points assigned.' : remaining+' point'+(remaining===1?'':'s')+' left to assign')+'</div>' +
+      '<div class="choice-grid" style="margin-top:10px;">' +
+        '<button type="button" class="btn btn-primary" data-action="saveMon"'+(remaining!==0?' disabled':'')+'>Save</button>' +
+        '<button type="button" class="btn" data-action="closeEditor">Cancel</button>' +
+      '</div>';
+  }
+  return '<div class="card">' +
+    '<div class="card-title">'+title+'</div>' +
+    body +
+    (e.species ? '' : '<div class="choice-grid" style="margin-top:10px;"><button type="button" class="btn" data-action="closeEditor">Cancel</button></div>') +
+  '</div>';
+}
+
+function importHtml(side){
+  const warnHtml = importErrors.length
+    ? '<div class="parse-warn">Skipped:<br>'+importErrors.map(esc).join('<br>')+'</div>'
+    : '';
+  return '<div class="card">' +
+    '<div class="card-title">Paste Team -- Player '+(side==='A'?'1':'2')+'</div>' +
+    '<div class="card-sub">Paste the export text from the Adventure\'s 50-Turn Team Builder</div>' +
+    '<textarea id="importTextArea" class="import-box" placeholder="Paste team export text here...">'+esc(importDraft)+'</textarea>' +
+    '<div class="choice-grid" style="margin-top:10px;">' +
+      '<button type="button" class="btn btn-primary" data-action="applyImport" data-side="'+side+'">Import</button>' +
+      '<button type="button" class="btn" data-action="closeImport">Cancel</button>' +
+    '</div>' +
+    warnHtml +
+  '</div>';
+}
+
+function teamColumnHtml(side){
+  const label = side==='A' ? 'Player 1' : 'Player 2';
+  const slots = [];
+  for(let i=0;i<6;i++) slots.push(teamSlotHtml(side, i));
+  return '<div class="battlesim-col">' +
+    '<div class="battlesim-col-title">'+label+'\'s Team ('+teams[side].length+'/6)</div>' +
+    slots.join('') +
+    '<div class="choice-grid" style="margin-top:4px;">' +
+      '<button type="button" class="btn" data-action="openImport" data-side="'+side+'">Paste Team</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function builderScreenHtml(){
+  if(editor) return editorHtml();
+  if(importSide) return importHtml(importSide);
+  const bothReady = teams.A.length>0 && teams.B.length>0;
+  return '<div class="card">' +
+      '<div class="card-title">Battle Simulator</div>' +
+      '<div class="card-sub">Build two teams, then battle them pass-and-play on this screen</div>' +
+      '<div class="card-flavor">Every Pok\u00e9mon is fixed at Level '+TEAM_EV_TOTAL+' -- assign its '+TEAM_EV_TOTAL+' Effort Values and pick its attack type. Any of the '+SPECIES_LIST.length+' species in the dex is available, regardless of region.</div>' +
+      '<div class="save-slot-card" data-action="toggleStab" style="cursor:pointer; border-color:'+(settings.strongerStab?'var(--gold)':'var(--line)')+'; border-width:'+(settings.strongerStab?'2px':'1px')+';">' +
+        '<div class="save-slot-title">Stronger STAB <span style="float:right;">'+(settings.strongerStab?'ON':'OFF')+'</span></div>' +
+        '<div class="save-slot-meta">Off = matching-type bonus is +0.5 (a tiebreaker only). On = full +1, same as the Adventure\'s Settings screen.</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="battlesim-columns">' + teamColumnHtml('A') + teamColumnHtml('B') + '</div>' +
+    '<div class="card" style="text-align:center;">' +
+      '<button type="button" class="btn btn-primary" data-action="startBattle"'+(bothReady?'':' disabled')+' style="font-size:15px; padding:12px 20px;">Start Battle</button>' +
+      (bothReady ? '' : '<div class="empty-note">Both players need at least 1 Pok\u00e9mon.</div>') +
+    '</div>';
+}
+
+/* ============ Battle screen ============ */
+function startBattle(){
+  battle = {
+    mons: {
+      A: teams.A.map(m=>({ name:m.name, ev:m.ev.slice(), atk:m.atk, fainted:false })),
+      B: teams.B.map(m=>({ name:m.name, ev:m.ev.slice(), atk:m.atk, fainted:false })),
+    },
+    activeIdx: { A: null, B: null },
+    picking: 'A',
+    log: [],
+    over: null,
+  };
+  render();
+}
+function aliveMons(side){
+  return battle.mons[side].map((m,i)=>({m,i})).filter(x=>!x.m.fainted);
+}
+function pickLeadScreenHtml(){
+  const side = battle.picking;
+  const label = side==='A' ? 'Player 1' : 'Player 2';
+  const otherLabel = side==='A' ? 'Player 2' : 'Player 1';
+  const alive = aliveMons(side);
+  const cards = alive.map(({m,i})=>
+    monCardHtml(m, '<div class="choice-grid" style="margin-top:8px;"><button type="button" class="btn btn-primary" data-action="pickLead" data-side="'+side+'" data-index="'+i+'">Send Out '+esc(m.name)+'</button></div>')
+  ).join('');
+  return '<div class="card">' +
+    '<div class="card-title">'+label+', choose your Pok\u00e9mon</div>' +
+    '<div class="card-sub">Pass the device to '+label+' -- '+otherLabel+' shouldn\'t look</div>' +
+    cards +
+  '</div>';
+}
+function battleOverScreenHtml(){
+  const winnerLabel = battle.over==='A' ? 'Player 1' : 'Player 2';
+  return '<div class="card">' +
+    '<div class="card-title">'+winnerLabel+' wins!</div>' +
+    '<div class="log-box">' + battle.log.map(l=>'<div class="log-line">'+esc(l)+'</div>').join('') + '</div>' +
+    '<div class="choice-grid" style="margin-top:12px;">' +
+      '<button type="button" class="btn btn-primary" data-action="rematch">Rematch (Same Teams)</button>' +
+      '<button type="button" class="btn" data-action="editTeams">Edit Teams</button>' +
+    '</div>' +
+  '</div>';
+}
+function battleFightScreenHtml(){
+  const monA = battle.mons.A[battle.activeIdx.A];
+  const monB = battle.mons.B[battle.activeIdx.B];
+  const sdA = SPECIES_DATA[monA.name], sdB = SPECIES_DATA[monB.name];
+  const statsA = finalStatsOf(monA), statsB = finalStatsOf(monB);
+  const odds = rollingBattle ? null : winOdds(statsA, [sdA.t1,sdA.t2], monA.atk, statsB, [sdB.t1,sdB.t2], monB.atk);
+  const cfgA = diceConfig(effectiveness(monA.atk, sdB.t1, sdB.t2));
+  const cfgB = diceConfig(effectiveness(monB.atk, sdA.t1, sdA.t2));
+
+  const rosterRow = (side)=> '<div class="e4-team-row">' + battle.mons[side].map((m,i)=>
+    '<span class="e4-team-chip'+(i===battle.activeIdx[side]?' current':'')+'"'+(m.fainted?' style="opacity:0.4; text-decoration:line-through;"':'')+'>'+spriteImgHtml(m.name,'sprite-sm')+esc(m.name)+'</span>'
+  ).join('') + '</div>';
+
+  let diceHtml = '';
+  if(rollingBattle){
+    const diceCol = (prefix, n)=>{
+      let out = '<div class="dice-group">';
+      for(let i=0;i<n;i++) out += '<div class="die" id="'+prefix+i+'">--</div>';
+      return out + '</div>';
+    };
+    diceHtml = '<div class="dice-stage">' +
+      '<div class="dice-side"><div class="dice-group-label">Player 1</div>'+diceCol('simDieA', cfgA.n)+'</div>' +
+      '<div class="vs-label">vs</div>' +
+      '<div class="dice-side"><div class="dice-group-label">Player 2</div>'+diceCol('simDieB', cfgB.n)+'</div>' +
+    '</div>';
+  }
+
+  const oddsLine = odds ? '<div class="odds-line">' +
+    (odds.unbreakable ? 'This matchup ties every roll -- a coin flip will decide it.' :
+      esc(monA.name)+' '+Math.round(odds.winA*100)+'% vs '+Math.round(odds.winB*100)+'% '+esc(monB.name))
+    + '</div>' : '';
+
+  return '<div class="card">' +
+      '<div class="card-title">Battle</div>' +
+      '<div class="field-label">Player 1</div>' + rosterRow('A') +
+      '<div class="field-label">Player 2</div>' + rosterRow('B') +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="vs-row">' +
+        '<div class="vs-mon">' + monCardHtml(monA) + '</div>' +
+        '<div class="vs-mon">' + monCardHtml(monB) + '</div>' +
+      '</div>' +
+      oddsLine +
+      diceHtml +
+      '<div class="log-box">' + battle.log.slice(-8).map(l=>'<div class="log-line">'+esc(l)+'</div>').join('') + '</div>' +
+      '<div class="choice-grid" style="margin-top:12px; justify-content:center;">' +
+        '<button type="button" class="btn btn-primary" data-action="fightExchange"'+(rollingBattle?' disabled':'')+' style="font-size:15px; padding:12px 20px;">Fight!</button>' +
+        '<button type="button" class="btn" data-action="editTeams">Forfeit / Edit Teams</button>' +
+      '</div>' +
+    '</div>';
+}
+function battleScreenHtml(){
+  if(battle.over) return battleOverScreenHtml();
+  if(battle.picking) return pickLeadScreenHtml();
+  return battleFightScreenHtml();
+}
+
+async function fightExchange(){
+  if(rollingBattle || !battle || battle.picking || battle.over) return;
+  const side1 = 'A', side2 = 'B';
+  const monA = battle.mons.A[battle.activeIdx.A];
+  const monB = battle.mons.B[battle.activeIdx.B];
+  const sdA = SPECIES_DATA[monA.name], sdB = SPECIES_DATA[monB.name];
+  const statsA = finalStatsOf(monA), statsB = finalStatsOf(monB);
+  const typesA = [sdA.t1, sdA.t2], typesB = [sdB.t1, sdB.t2];
+  const atkA = monA.atk, atkB = monB.atk;
+  const cfgA = diceConfig(effectiveness(atkA, typesB[0], typesB[1]));
+  const cfgB = diceConfig(effectiveness(atkB, typesA[0], typesA[1]));
+  const stabA = (atkA===typesA[0] || atkA===typesA[1]) ? stabBonusValue() : 0;
+  const stabB = (atkB===typesB[0] || atkB===typesB[1]) ? stabBonusValue() : 0;
+  const displayStatsA = stabA ? statsA.map(v=>v+stabA) : statsA;
+  const displayStatsB = stabB ? statsB.map(v=>v+stabB) : statsB;
+  const preOdds = winOdds(statsA, typesA, atkA, statsB, typesB, atkB);
+
+  let rA, rB, roundNum = 0, animate = true;
+  do {
+    roundNum++;
+    rA = rollSide(statsA, cfgA, stabA);
+    rB = rollSide(statsB, cfgB, stabB);
+    if(animate){
+      rollingBattle = { nA: cfgA.n, nB: cfgB.n };
+      render();
+      await Promise.all([
+        ...rA.picks.map((face,i)=>tumble(document.getElementById('simDieA'+i), 600, displayStatsA, face)),
+        ...rB.picks.map((face,i)=>tumble(document.getElementById('simDieB'+i), 600, displayStatsB, face)),
+      ]);
+      const dieA = document.getElementById('simDieA'+rA.keptIdx);
+      const dieB = document.getElementById('simDieB'+rB.keptIdx);
+      if(dieA) dieA.classList.add('die-kept');
+      if(dieB) dieB.classList.add('die-kept');
+      await sleep(600);
+      if(roundNum >= 8) animate = false;
+    }
+  } while(rA.final === rB.final && !preOdds.unbreakable && roundNum < 300);
+  rollingBattle = null;
+
+  const coinFlipped = rA.final === rB.final;
+  if(coinFlipped){
+    battle.log.push(monA.name+' and '+monB.name+' are perfectly matched -- every roll ties, so this exchange was decided by a coin flip.');
+  }
+  const winnerIsA = coinFlipped ? Math.random() < 0.5 : (rA.final > rB.final);
+  battle.log.push(monA.name+' ('+Math.floor(rA.final)+') vs '+monB.name+' ('+Math.floor(rB.final)+') -- '+(winnerIsA?monA.name:monB.name)+' wins the exchange!');
+
+  const loserSide = winnerIsA ? 'B' : 'A';
+  const loserMon = winnerIsA ? monB : monA;
+  loserMon.fainted = true;
+  battle.log.push(loserMon.name+' is knocked out!');
+
+  const loserAlive = aliveMons(loserSide);
+  if(!loserAlive.length){
+    battle.over = winnerIsA ? 'A' : 'B';
+  } else {
+    battle.activeIdx[loserSide] = null;
+    battle.picking = loserSide;
+  }
+  render();
+}
+
+/* ============ Event delegation ============ */
+function render(){
+  document.getElementById('app').innerHTML = battle ? battleScreenHtml() : builderScreenHtml();
+  const searchInput = document.getElementById('speciesSearchInput');
+  if(searchInput){
+    searchInput.focus();
+    const v = searchInput.value;
+    searchInput.setSelectionRange(v.length, v.length);
+  }
+}
+
+function openEditor(side, index){
+  const existing = teams[side][index];
+  editor = existing
+    ? { side, index, species: existing.name, ev: existing.ev.slice(), atk: existing.atk }
+    : { side, index, species: null, ev: [0,0,0,0,0,0], atk: null };
+  speciesQuery = '';
+  render();
+}
+
+document.addEventListener('click', (ev)=>{
+  const el = ev.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+  const side = el.dataset.side;
+  const index = el.dataset.index !== undefined ? parseInt(el.dataset.index,10) : null;
+
+  if(action==='openEditor'){ openEditor(side, index); return; }
+  if(action==='closeEditor'){ editor = null; render(); return; }
+  if(action==='clearSpecies'){ editor.species = null; editor.ev=[0,0,0,0,0,0]; editor.atk = null; speciesQuery=''; render(); return; }
+  if(action==='selectSpecies'){
+    const name = el.dataset.name;
+    const sd = SPECIES_DATA[name];
+    editor.species = name;
+    editor.ev = [0,0,0,0,0,0];
+    editor.atk = sd.t1;
+    render();
+    return;
+  }
+  if(action==='evStep'){
+    const i = parseInt(el.dataset.i,10);
+    const delta = parseInt(el.dataset.delta,10);
+    const remaining = TEAM_EV_TOTAL - statTotal(editor.ev);
+    if(delta>0 && remaining<=0) return;
+    const next = editor.ev[i] + delta;
+    if(next < 0) return;
+    editor.ev[i] = next;
+    render();
+    return;
+  }
+  if(action==='saveMon'){
+    const total = statTotal(editor.ev);
+    if(total !== TEAM_EV_TOTAL) return;
+    const mon = { name: editor.species, ev: editor.ev.slice(), atk: editor.atk };
+    teams[editor.side][editor.index] = mon;
+    saveStore();
+    editor = null;
+    render();
+    return;
+  }
+  if(action==='removeMon'){
+    teams[side].splice(index, 1);
+    saveStore();
+    render();
+    return;
+  }
+  if(action==='toggleStab'){
+    settings.strongerStab = !settings.strongerStab;
+    saveStore();
+    render();
+    return;
+  }
+  if(action==='openImport'){ importSide = side; importDraft = ''; importErrors = []; render(); return; }
+  if(action==='closeImport'){ importSide = null; importDraft = ''; importErrors = []; render(); return; }
+  if(action==='applyImport'){
+    const ta = document.getElementById('importTextArea');
+    const text = ta ? ta.value : '';
+    const { mons, errors } = parseImportText(text);
+    if(mons.length){
+      teams[side] = mons;
+      saveStore();
+    }
+    importErrors = errors;
+    if(errors.length){
+      // Keep the box open (with the pasted text preserved) so the skipped entries are visible,
+      // instead of closing immediately and discarding the warning on the very next render.
+      importDraft = text;
+      render();
+      return;
+    }
+    importSide = null;
+    importDraft = '';
+    render();
+    return;
+  }
+  if(action==='startBattle'){ startBattle(); return; }
+  if(action==='pickLead'){
+    battle.activeIdx[side] = index;
+    if(battle.activeIdx.A !== null && battle.activeIdx.B !== null){
+      battle.picking = null;
+    } else {
+      battle.picking = side==='A' ? 'B' : 'A';
+    }
+    render();
+    return;
+  }
+  if(action==='fightExchange'){ fightExchange(); return; }
+  if(action==='editTeams'){ battle = null; render(); return; }
+  if(action==='rematch'){
+    battle.mons.A.forEach(m=>m.fainted=false);
+    battle.mons.B.forEach(m=>m.fainted=false);
+    battle.activeIdx = { A:null, B:null };
+    battle.picking = 'A';
+    battle.log = [];
+    battle.over = null;
+    render();
+    return;
+  }
+});
+document.addEventListener('input', (ev)=>{
+  if(ev.target.id === 'speciesSearchInput'){
+    speciesQuery = ev.target.value;
+    render();
+  }
+});
+document.addEventListener('change', (ev)=>{
+  if(ev.target.id === 'atkSelect'){
+    editor.atk = ev.target.value;
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
