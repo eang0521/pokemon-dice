@@ -1952,6 +1952,13 @@ let speciesQuery = '';
 let importSide = null; // 'A' | 'B' while the paste-import box is open
 let importDraft = '';  // textarea contents, preserved across a re-render (e.g. after a partial import)
 let importErrors = []; // species that failed to parse on the last Import click
+// An imported Pokemon over the 12-EV cap can't just be rejected -- it has to be resolved
+// by removing points, one Pokemon at a time, before the import completes.
+let trimQueue = [];     // remaining over-cap entries still waiting after trimCurrent, in arrival order
+let trimTotal = 0;      // how many entries needed trimming in this import, for the "X of Y" label
+let trimSide = null;    // 'A' | 'B' -- which team the trimmed entries join once the queue empties
+let trimAccepted = [];  // already-valid + already-confirmed-trimmed mons, merged into teams[trimSide] at the end
+let trimCurrent = null; // mutable working copy of the entry currently being trimmed: {name, ev, atk}
 let battle = null;   // null while building teams; battle object once a match starts
 let rollingBattle = null;
 
@@ -1963,9 +1970,14 @@ function finalStatsOf(mon){
 /* ============ Team-builder text import -- parses exactly the format already
    produced by play.html's "50-Turn Team Builder" export (teamBuilderMonExportText),
    so a team built during a real adventure can be pasted straight in. ============ */
+// Returns entries in 3 buckets: mons (EV total already <= 12, ready to add directly),
+// needsTrim (EV total over 12 -- e.g. a real Adventure Pokemon well past Level 12 --
+// which the caller must walk through an interactive trim-down before adding), and
+// errors (genuinely unparseable/invalid entries, skipped entirely).
 function parseImportText(text){
   const blocks = text.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
   const mons = [];
+  const needsTrim = [];
   const errors = [];
   blocks.forEach(block=>{
     const lines = block.split('\n').map(l=>l.trim()).filter(Boolean);
@@ -1985,10 +1997,10 @@ function parseImportText(text){
     const finalStats = nums.slice(0,6).map(Number);
     const ev = finalStats.map((v,i)=>v - sd.base[i]);
     if(ev.some(v=>v<0)){ errors.push(name+': stats are lower than its base stats'); return; }
-    if(statTotal(ev) !== TEAM_EV_TOTAL){ errors.push(name+': EV total is '+statTotal(ev)+', expected '+TEAM_EV_TOTAL); return; }
-    mons.push({ name, ev, atk });
+    if(statTotal(ev) > TEAM_EV_TOTAL){ needsTrim.push({ name, ev, atk }); }
+    else { mons.push({ name, ev, atk }); }
   });
-  return { mons: mons.slice(0,6), errors };
+  return { mons, needsTrim, errors };
 }
 
 /* ============ Rendering ============ */
@@ -2019,7 +2031,7 @@ function monCardHtml(mon, actionHtml, faintedBadge){
   const finalStats = finalStatsOf(mon);
   return '<div class="mon-detail-card">' +
     spriteImgHtml(mon.name, 'sprite-lg') +
-    '<div class="mon-detail-name">'+esc(mon.name)+' Lv '+TEAM_EV_TOTAL+(faintedBadge?' -- Fainted':'')+'</div>' +
+    '<div class="mon-detail-name">'+esc(mon.name)+' Lv '+statTotal(mon.ev)+(faintedBadge?' -- Fainted':'')+'</div>' +
     trainerTypeBlockHtml(sd.t1, sd.t2, mon.atk) +
     statRowHtml(finalStats) +
     (actionHtml || '') +
@@ -2037,7 +2049,7 @@ function teamSlotHtml(side, index){
     spriteImgHtml(mon.name, 'team-slot-sprite') +
     '<div class="team-slot-main">' +
       '<div class="team-slot-name">'+esc(mon.name)+'</div>' +
-      '<div class="team-slot-meta">'+[sd.t1,sd.t2].filter(Boolean).join(' / ')+' \u2014 Atk '+esc(mon.atk)+' \u2014 Total '+statTotal(finalStats)+'</div>' +
+      '<div class="team-slot-meta">Lv '+statTotal(mon.ev)+' \u2014 '+[sd.t1,sd.t2].filter(Boolean).join(' / ')+' \u2014 Atk '+esc(mon.atk)+' \u2014 Total '+statTotal(finalStats)+'</div>' +
     '</div>' +
     '<div class="team-slot-actions">' +
       '<button type="button" class="btn" data-action="openEditor" data-side="'+side+'" data-index="'+index+'">Edit</button>' +
@@ -2078,7 +2090,7 @@ function editorHtml(){
       '</div>' +
       '<div class="field-label" style="margin-top:14px;">Attack Type</div>' +
       '<select class="atk-select" id="atkSelect" data-action="setAtk">'+atkOptions+'</select>' +
-      '<div class="field-label" style="margin-top:14px;">Effort Values ('+TEAM_EV_TOTAL+' points total, matches Level '+TEAM_EV_TOTAL+')</div>' +
+      '<div class="field-label" style="margin-top:14px;">Effort Values (up to '+TEAM_EV_TOTAL+' points -- Level is however many are spent, currently Lv '+statTotal(e.ev)+')</div>' +
       STAT_NAMES.map((label,i)=>
         '<div class="ev-row">' +
           '<span class="ev-row-label">'+label+'</span>' +
@@ -2091,9 +2103,9 @@ function editorHtml(){
           '<span class="ev-row-final">= '+finalStats[i]+'</span>' +
         '</div>'
       ).join('') +
-      '<div class="ev-remaining'+(remaining===0?' done':'')+'">'+(remaining===0 ? 'All '+TEAM_EV_TOTAL+' points assigned.' : remaining+' point'+(remaining===1?'':'s')+' left to assign')+'</div>' +
+      '<div class="ev-remaining'+(remaining===0?' done':'')+'">'+(remaining===0 ? 'All '+TEAM_EV_TOTAL+' points assigned.' : remaining+' point'+(remaining===1?'':'s')+' left to assign (optional -- fewer than '+TEAM_EV_TOTAL+' is fine).')+'</div>' +
       '<div class="choice-grid" style="margin-top:10px;">' +
-        '<button type="button" class="btn btn-primary" data-action="saveMon"'+(remaining!==0?' disabled':'')+'>Save</button>' +
+        '<button type="button" class="btn btn-primary" data-action="saveMon"'+(remaining<0?' disabled':'')+'>Save</button>' +
         '<button type="button" class="btn" data-action="closeEditor">Cancel</button>' +
       '</div>';
   }
@@ -2120,6 +2132,46 @@ function importHtml(side){
   '</div>';
 }
 
+// One entry at a time from an import that had one or more Pokemon over the 12-EV cap --
+// decrement-only steppers (the point is removing EVs, not reallocating them) until the
+// total is back to 12 or under, then Continue moves on to the next one in the queue.
+function trimScreenHtml(){
+  const t = trimCurrent;
+  const sd = SPECIES_DATA[t.name];
+  const finalStats = sd.base.map((b,i)=>b+t.ev[i]);
+  const total = statTotal(t.ev);
+  const overBy = total - TEAM_EV_TOTAL;
+  const doneCount = trimTotal - trimQueue.length - 1;
+  return '<div class="card">' +
+    '<div class="card-title">Trim Effort Values -- Player '+(trimSide==='A'?'1':'2')+'</div>' +
+    '<div class="card-sub">Pok\u00e9mon '+(doneCount+1)+' of '+trimTotal+' is over the '+TEAM_EV_TOTAL+'-EV cap -- remove points until it fits</div>' +
+    '<div class="mon-detail-card" style="padding-right:120px;">' +
+      spriteImgHtml(t.name, 'sprite-lg') +
+      '<div class="mon-detail-name">'+esc(t.name)+'</div>' +
+      '<div class="trainer-type-block"><span class="trainer-type-label">Type</span><span class="trainer-mon-types">'+trainerStylePill(sd.t1)+trainerStylePill(sd.t2)+'</span></div>' +
+    '</div>' +
+    STAT_NAMES.map((label,i)=>
+      '<div class="ev-row">' +
+        '<span class="ev-row-label">'+label+'</span>' +
+        '<span class="ev-row-base">base '+sd.base[i]+'</span>' +
+        '<span class="ev-stepper">' +
+          '<button type="button" class="ev-stepper-btn" data-action="trimEvStep" data-i="'+i+'"'+(t.ev[i]<=0?' disabled':'')+'>\u2212</button>' +
+          '<span class="ev-row-val">'+t.ev[i]+'</span>' +
+        '</span>' +
+        '<span class="ev-row-final">= '+finalStats[i]+'</span>' +
+      '</div>'
+    ).join('') +
+    '<div class="ev-remaining'+(total<=TEAM_EV_TOTAL?' done':'')+'">'+
+      (total<=TEAM_EV_TOTAL
+        ? 'Total '+total+' -- ready to continue.'
+        : total+' points assigned -- remove '+overBy+' more point'+(overBy===1?'':'s')+' to reach '+TEAM_EV_TOTAL+'.') +
+    '</div>' +
+    '<div class="choice-grid" style="margin-top:10px;">' +
+      '<button type="button" class="btn btn-primary" data-action="confirmTrim"'+(total>TEAM_EV_TOTAL?' disabled':'')+'>Continue</button>' +
+      '<button type="button" class="btn btn-danger" data-action="cancelTrimImport">Cancel Import</button>' +
+    '</div>' +
+  '</div>';
+}
 function teamColumnHtml(side){
   const label = side==='A' ? 'Player 1' : 'Player 2';
   const slots = [];
@@ -2134,13 +2186,14 @@ function teamColumnHtml(side){
 }
 
 function builderScreenHtml(){
+  if(trimCurrent) return trimScreenHtml();
   if(editor) return editorHtml();
   if(importSide) return importHtml(importSide);
   const bothReady = teams.A.length>0 && teams.B.length>0;
   return '<div class="card">' +
       '<div class="card-title">Battle Simulator</div>' +
       '<div class="card-sub">Build two teams, then battle them pass-and-play on this screen</div>' +
-      '<div class="card-flavor">Every Pok\u00e9mon is fixed at Level '+TEAM_EV_TOTAL+' -- assign its '+TEAM_EV_TOTAL+' Effort Values and pick its attack type. Any of the '+SPECIES_LIST.length+' species in the dex is available, regardless of region.</div>' +
+      '<div class="card-flavor">Every Pok\u00e9mon can have up to '+TEAM_EV_TOTAL+' Effort Values (fewer is fine -- its Level is simply how many EV points it has) and any attack type. Any of the '+SPECIES_LIST.length+' species in the dex is available, regardless of region.</div>' +
       '<div class="save-slot-card" data-action="toggleStab" style="cursor:pointer; border-color:'+(settings.strongerStab?'var(--gold)':'var(--line)')+'; border-width:'+(settings.strongerStab?'2px':'1px')+';">' +
         '<div class="save-slot-title">Stronger STAB <span style="float:right;">'+(settings.strongerStab?'ON':'OFF')+'</span></div>' +
         '<div class="save-slot-meta">Off = matching-type bonus is +0.5 (a tiebreaker only). On = full +1, same as the Adventure\'s Settings screen.</div>' +
@@ -2365,7 +2418,7 @@ document.addEventListener('click', (ev)=>{
   }
   if(action==='saveMon'){
     const total = statTotal(editor.ev);
-    if(total !== TEAM_EV_TOTAL) return;
+    if(total > TEAM_EV_TOTAL) return;
     const mon = { name: editor.species, ev: editor.ev.slice(), atk: editor.atk };
     teams[editor.side][editor.index] = mon;
     saveStore();
@@ -2390,12 +2443,29 @@ document.addEventListener('click', (ev)=>{
   if(action==='applyImport'){
     const ta = document.getElementById('importTextArea');
     const text = ta ? ta.value : '';
-    const { mons, errors } = parseImportText(text);
-    if(mons.length){
-      teams[side] = mons;
+    const { mons, needsTrim, errors } = parseImportText(text);
+    importErrors = errors;
+    const accepted = mons.slice(0, 6);
+    const trimSlots = Math.max(0, 6 - accepted.length);
+    const queue = needsTrim.slice(0, trimSlots);
+    if(queue.length){
+      // At least one imported Pokemon is over the 12-EV cap (e.g. a real Adventure
+      // Pokemon well past Level 12) -- route to the trim flow instead of the team
+      // screen; teams[side] isn't touched until every over-cap entry is resolved.
+      trimSide = side;
+      trimAccepted = accepted;
+      trimTotal = queue.length;
+      trimCurrent = { name: queue[0].name, ev: queue[0].ev.slice(), atk: queue[0].atk };
+      trimQueue = queue.slice(1);
+      importSide = null;
+      importDraft = '';
+      render();
+      return;
+    }
+    if(accepted.length){
+      teams[side] = accepted;
       saveStore();
     }
-    importErrors = errors;
     if(errors.length){
       // Keep the box open (with the pasted text preserved) so the skipped entries are visible,
       // instead of closing immediately and discarding the warning on the very next render.
@@ -2405,6 +2475,38 @@ document.addEventListener('click', (ev)=>{
     }
     importSide = null;
     importDraft = '';
+    render();
+    return;
+  }
+  if(action==='trimEvStep'){
+    const i = parseInt(el.dataset.i,10);
+    if(trimCurrent.ev[i] > 0) trimCurrent.ev[i] -= 1;
+    render();
+    return;
+  }
+  if(action==='confirmTrim'){
+    if(statTotal(trimCurrent.ev) > TEAM_EV_TOTAL) return;
+    trimAccepted.push({ name: trimCurrent.name, ev: trimCurrent.ev.slice(), atk: trimCurrent.atk });
+    if(trimQueue.length){
+      const next = trimQueue.shift();
+      trimCurrent = { name: next.name, ev: next.ev.slice(), atk: next.atk };
+    } else {
+      teams[trimSide] = trimAccepted.slice(0, 6);
+      saveStore();
+      trimCurrent = null;
+      trimSide = null;
+      trimAccepted = [];
+      trimTotal = 0;
+    }
+    render();
+    return;
+  }
+  if(action==='cancelTrimImport'){
+    trimCurrent = null;
+    trimQueue = [];
+    trimSide = null;
+    trimAccepted = [];
+    trimTotal = 0;
     render();
     return;
   }

@@ -756,6 +756,21 @@
   .ban-bar-count{ margin-left:auto; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--sage); }
   .ban-bar-btn{ width:100%; }
   .ban-region-select{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; padding:2px 5px; border:1.5px solid var(--ink); border-radius:4px; background:var(--paper); color:var(--ink); }
+  .team-standing-sprites{ display:flex; gap:3px; flex:1; flex-wrap:wrap; }
+  .team-result-record{ float:right; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:400; }
+  /* 50% bigger than the Elimination Bracket's .bracket-sprite (20px) -- a dedicated
+     class so that page's own sprites aren't affected -- and the row needs a little
+     extra vertical padding since 6 of these can wrap onto a second line. */
+  .team-standing-sprite{ width:30px; height:30px; object-fit:contain; flex-shrink:0; }
+  .team-standing-row{ padding:9px 0; }
+  .team-member-name{ width:105px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* Fixed-width columns so true types, attack type, and each stat line up across every
+     row -- otherwise a mono-type Pokemon (1 pill) or a short type/attack name shifts
+     everything after it compared to a dual-type or long-named row. */
+  .team-member-types{ width:135px; flex-shrink:0; display:flex; gap:3px; flex-wrap:nowrap; }
+  .team-member-atk-wrap{ width:112px; flex-shrink:0; }
+  .team-member-stats{ font-family:'IBM Plex Mono', monospace; font-size:11px; white-space:nowrap; flex-shrink:0; }
+  .team-member-stat{ display:inline-block; width:20px; text-align:right; }
   .progress-bar-track{ background:var(--paper); border:1.5px solid var(--ink); border-radius:5px; height:16px; overflow:hidden; margin-top:8px; }
   .progress-bar-fill{ background:var(--gold); height:100%; transition:width .15s ease; }
 </style>
@@ -1859,6 +1874,18 @@ const MEGA_ROUND_DEFS = [
   { label:'Round 3', robinCount:10, cutoff:10 },
   { label:'Championship', robinCount:1, cutoff:null },
 ];
+// Long Team Round Robin only -- a wider opening round (200 robins, top 50 advance)
+// prepended in front of the exact same 4-round chain MEGA_ROUND_DEFS uses, each
+// subsequent round's robinCount recomputed so the funnel still converges cleanly:
+// 200x100 top50 -> 10,000 -> 100x100 top40 -> 4,000 -> 40x100 top25 -> 1,000 ->
+// 10x100 top10 -> 100 -> 1x100 Championship.
+const TEAM_MEGA_ROUND_DEFS = [
+  { label:'Round 1', robinCount:200, cutoff:50 },
+  { label:'Round 2', robinCount:100, cutoff:40 },
+  { label:'Round 3', robinCount:40, cutoff:25 },
+  { label:'Round 4', robinCount:10, cutoff:10 },
+  { label:'Championship', robinCount:1, cutoff:null },
+];
 
 const TYPE_CHART = {
   Normal:   { Rock:0.5, Ghost:0, Steel:0.5 },
@@ -2087,6 +2114,28 @@ let megaRR = initialMegaStore.megaRR;
 let megaSelection = initialMegaStore.megaSelection || { round:0, robin:0 };
 let megaProgress = null; // { label, done, total } while a generation is in progress
 
+// Long Team Round Robin -- same shape/size concern as Long Round Robin above (each
+// entrant is now 6x the data), so it also gets its own storage key.
+const TEAM_MEGA_STORE_KEY = 'pokemonDiceTeamMegaRoundRobinV1';
+function loadTeamMegaStore(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(TEAM_MEGA_STORE_KEY) || 'null');
+    if(raw) return raw;
+  } catch(e){}
+  return { teamMegaRR:null, teamMegaSelection:{round:0, robin:0} };
+}
+function saveTeamMegaStore(){
+  try {
+    localStorage.setItem(TEAM_MEGA_STORE_KEY, JSON.stringify({ teamMegaRR, teamMegaSelection }));
+  } catch(e){
+    // Quota exceeded or similar -- keep the result in memory for this session even if it can't persist.
+  }
+}
+const initialTeamMegaStore = loadTeamMegaStore();
+let teamMegaRR = initialTeamMegaStore.teamMegaRR;
+let teamMegaSelection = initialTeamMegaStore.teamMegaSelection || { round:0, robin:0 };
+let teamMegaProgress = null; // { label, done, total } while a generation is in progress
+
 /* ============ Transient UI state ============ */
 let animatingMatch = null; // { r, m, nA, nB } while one match's dice are animating
 let standingsCollapsed = false; // shared toggle for the standings table (Round Robin + Long Round Robin)
@@ -2277,6 +2326,99 @@ async function generateMegaRoundRobin(){
 function megaChampion(){
   const champRound = megaRR.rounds[megaRR.rounds.length-1];
   return rankGroup(champRound.robins[0].entrants, champRound.robins[0].stats)[0].e;
+}
+
+/* ============ Long Team Round Robin -- the exact same 100/40/10/1 funnel as Long
+   Round Robin, but every entrant is now a TEAM of 6 unique (within that team --
+   repeats across different teams are still fine) Pokemon. A match between two teams
+   is a fixed-order gauntlet: each team's lineup order is set once when it's generated
+   and never reshuffled (including across rounds if it advances) -- position 0 leads,
+   and a side's next position only comes in once its current one faints. ============ */
+const TEAM_SIZE = 6;
+function generateUniqueTeam(sourceList){
+  const pool = sourceList.slice();
+  const n = Math.min(TEAM_SIZE, pool.length);
+  for(let i=0;i<n;i++){
+    const j = i + Math.floor(Math.random()*(pool.length-i));
+    [pool[i],pool[j]] = [pool[j],pool[i]];
+  }
+  return { members: pool.slice(0, n).map(generateEntrant) };
+}
+function simulateTeamMatch(teamA, teamB){
+  const aMembers = teamA.members, bMembers = teamB.members;
+  let ai = 0, bi = 0;
+  while(ai < aMembers.length && bi < bMembers.length){
+    const res = simulateOneExchange(aMembers[ai], bMembers[bi]);
+    if(res.winnerIsA) bi++; else ai++;
+  }
+  return { winnerIsA: bi >= bMembers.length, aLosses: ai, bLosses: bi };
+}
+function simulateTeamRoundRobinGroup(teams){
+  const stats = teams.map(()=>({ wins:0, losses:0, diff:0 }));
+  for(let i=0;i<teams.length;i++){
+    for(let j=i+1;j<teams.length;j++){
+      const res = simulateTeamMatch(teams[i], teams[j]);
+      const margin = res.bLosses - res.aLosses; // KOs dealt minus KOs taken, from i's side
+      if(res.winnerIsA){ stats[i].wins++; stats[j].losses++; }
+      else { stats[j].wins++; stats[i].losses++; }
+      stats[i].diff += margin;
+      stats[j].diff -= margin;
+    }
+  }
+  return stats;
+}
+// Teams don't have a single name to tiebreak on the way rankGroup does, so ties fall
+// back to array index -- deterministic, and an exact wins+diff tie between two teams
+// is rare enough that the tiebreak's "fairness" doesn't really matter.
+function rankTeamGroup(teams, stats){
+  return teams.map((team,i)=>({ team, i, wins:stats[i].wins, losses:stats[i].losses, diff:stats[i].diff }))
+    .sort((a,b)=> b.wins-a.wins || b.diff-a.diff || a.i-b.i);
+}
+async function generateTeamMegaRoundRobin(){
+  const totalRobins = TEAM_MEGA_ROUND_DEFS.reduce((a,d)=>a+d.robinCount, 0);
+  teamMegaProgress = { label:'Generating '+(TEAM_MEGA_ROUND_DEFS[0].robinCount*MEGA_ROBIN_SIZE)+' teams...', done:0, total:totalRobins };
+  render();
+  await sleep(0);
+
+  const sourceList = eligibleSpeciesList();
+  let pool = [];
+  const round1Count = TEAM_MEGA_ROUND_DEFS[0].robinCount * MEGA_ROBIN_SIZE;
+  for(let i=0;i<round1Count;i++) pool.push(generateUniqueTeam(sourceList));
+
+  const rounds = [];
+  let doneRobins = 0;
+  for(let ri=0; ri<TEAM_MEGA_ROUND_DEFS.length; ri++){
+    const def = TEAM_MEGA_ROUND_DEFS[ri];
+    const robins = [];
+    for(let g=0; g<def.robinCount; g++){
+      const groupTeams = pool.slice(g*MEGA_ROBIN_SIZE, (g+1)*MEGA_ROBIN_SIZE);
+      const stats = simulateTeamRoundRobinGroup(groupTeams);
+      robins.push({ teams:groupTeams, stats });
+      doneRobins++;
+      if(doneRobins % 4 === 0 || g===def.robinCount-1){
+        teamMegaProgress = { label:'Simulating '+def.label+' (round robin '+(g+1)+' of '+def.robinCount+')...', done:doneRobins, total:totalRobins };
+        render();
+        await sleep(0);
+      }
+    }
+    rounds.push({ label:def.label, cutoff:def.cutoff, robins });
+    if(def.cutoff !== null){
+      let advancing = [];
+      robins.forEach(rb=>{
+        rankTeamGroup(rb.teams, rb.stats).slice(0, def.cutoff).forEach(x=>advancing.push(x.team));
+      });
+      pool = shuffleArray(advancing);
+    }
+  }
+  teamMegaRR = { rounds };
+  teamMegaSelection = { round:0, robin:0 };
+  teamMegaProgress = null;
+  saveTeamMegaStore();
+  render();
+}
+function teamMegaChampion(){
+  const champRound = teamMegaRR.rounds[teamMegaRR.rounds.length-1];
+  return rankTeamGroup(champRound.robins[0].teams, champRound.robins[0].stats)[0].team;
 }
 
 /* ============ Match resolution ============ */
@@ -2502,13 +2644,16 @@ function megaGeneratorScreenHtml(){
     '</div>' +
   '</div>';
 }
-function megaProgressHtml(){
-  const pct = megaProgress.total ? Math.round(100*megaProgress.done/megaProgress.total) : 0;
+// Shared by Long Round Robin and Long Team Round Robin -- both are async, chunked
+// generations (up to ~750,000 individual dice exchanges) that need to stay responsive
+// and show progress rather than freezing the tab for several seconds.
+function progressScreenHtml(progress){
+  const pct = progress.total ? Math.round(100*progress.done/progress.total) : 0;
   return '<div class="card">' +
     '<div class="card-title">Generating...</div>' +
-    '<div class="card-sub">'+esc(megaProgress.label)+'</div>' +
+    '<div class="card-sub">'+esc(progress.label)+'</div>' +
     '<div class="progress-bar-track"><div class="progress-bar-fill" style="width:'+pct+'%;"></div></div>' +
-    '<div class="card-sub" style="margin-top:6px; margin-bottom:0;">'+megaProgress.done+' / '+megaProgress.total+' round robins ('+pct+'%)</div>' +
+    '<div class="card-sub" style="margin-top:6px; margin-bottom:0;">'+progress.done+' / '+progress.total+' round robins ('+pct+'%)</div>' +
   '</div>';
 }
 function megaResultsScreenHtml(){
@@ -2533,6 +2678,93 @@ function megaResultsScreenHtml(){
   const ranked = rankGroup(robin.entrants, robin.stats);
 
   return championHtml + pickerHtml + rrResultsBlockHtml(ranked, round.cutoff);
+}
+function teamMegaGeneratorScreenHtml(){
+  return '<div class="card">' +
+    '<div class="card-title">Long Team Round Robin</div>' +
+    '<div class="card-sub">Teams of '+TEAM_SIZE+' randomly generated Pok\u00e9mon, funneled down over '+TEAM_MEGA_ROUND_DEFS.length+' rounds</div>' +
+    '<div class="card-flavor">' +
+      'Same funnel as Long Round Robin, but every entrant is now a team of '+TEAM_SIZE+' unique Pok\u00e9mon (no repeats within a team -- repeats across different teams are still fine). ' +
+      'A match between two teams is a fixed-order gauntlet: each team\'s lineup order is set once and never changes -- position 1 fights position 1, the winner stays in against the loser\'s next position, until one team is fully KO\'d. ' +
+      'Round 1: 200 round robins of 100 teams each -- top 50 from each advance. ' +
+      'Round 2: those 10,000 reshuffle into 100 round robins of 100 -- top 40 from each advance. ' +
+      'Round 3: those 4,000 reshuffle into 40 round robins of 100 -- top 25 from each advance. ' +
+      'Round 4: those 1,000 reshuffle into 10 round robins of 100 -- top 10 from each advance. ' +
+      'Championship: the final 100 teams play one round robin to crown the strongest team.' +
+    '</div>' +
+  '</div>';
+}
+function teamMemberRowHtml(m){
+  const sd = SPECIES_DATA[m.name];
+  const finalStats = finalStatsOf(m);
+  const statsHtml = finalStats.map(v=>'<span class="team-member-stat">'+v+'</span>').join('');
+  return '<div class="rr-standing-row">' +
+    spriteImgHtml(m.name,'sprite-sm') +
+    '<span class="team-member-name">'+esc(m.name)+'</span>' +
+    '<span class="team-member-types">'+trainerStylePill(sd.t1)+trainerStylePill(sd.t2)+'</span>' +
+    '<span class="team-member-atk-wrap trainer-atk-paren">(<span class="trainer-type-label">Atk</span> '+trainerStylePill(m.atk,'trainer-atk-pill')+')</span>' +
+    '<span class="team-member-stats">'+statsHtml+' ('+statTotal(finalStats)+')</span>' +
+  '</div>';
+}
+function teamRosterHtml(team){
+  return team.members.map(teamMemberRowHtml).join('');
+}
+function teamStandingRowHtml(r, rank, cutoff){
+  const spritesHtml = r.team.members.map(m=>spriteImgHtml(m.name,'team-standing-sprite')).join('');
+  return '<div class="rr-standing-row team-standing-row'+(cutoff!=null && rank===cutoff ? ' rr-cutoff-row' : '')+'">' +
+    '<span class="rr-rank-badge">#'+rank+'</span>' +
+    '<span class="team-standing-sprites">'+spritesHtml+'</span>' +
+    '<span>'+r.wins+'-'+r.losses+'</span>' +
+    '<span style="width:52px; text-align:right;">'+(r.diff>=0?'+':'')+r.diff+'</span>' +
+  '</div>';
+}
+function teamResultCardHtml(r, rank){
+  return '<div class="card">' +
+    '<div class="card-title">#'+rank+' Team' +
+      '<span class="team-result-record">'+r.wins+'-'+r.losses+' ('+(r.diff>=0?'+':'')+r.diff+')</span>' +
+    '</div>' +
+    teamRosterHtml(r.team) +
+  '</div>';
+}
+// Parallels rrResultsBlockHtml, but each row/card is a team (fixed lineup order, KO
+// differential instead of a single exchange's point differential) rather than one mon.
+function teamRrResultsBlockHtml(ranked, cutoff){
+  const arrow = standingsCollapsed ? '\u25b6' : '\u25bc';
+  const standingsHtml = '<div class="card">' +
+    '<div class="card-title rr-standings-toggle" data-action="toggleStandings"><span>'+arrow+' Standings</span></div>' +
+    (standingsCollapsed ? '' :
+      '<div class="card-sub">Ranked by wins, tiebroken by KO differential'+(cutoff!=null?' -- top '+cutoff+' advance':'')+'</div>' +
+      ranked.map((r,i)=>teamStandingRowHtml(r, i+1, cutoff)).join('')
+    ) +
+  '</div>';
+  return standingsHtml +
+    '<div class="card"><div class="card-title">Full Results</div>' +
+      '<div class="card-sub">Every team\'s fixed lineup order and full stats</div>' +
+    '</div>' +
+    ranked.map((r,i)=>teamResultCardHtml(r, i+1)).join('');
+}
+function teamMegaResultsScreenHtml(){
+  const champ = teamMegaChampion();
+  const championHtml = '<div class="card champion-banner">' +
+    '<div class="champion-title">\uD83C\uDFC6 Overall Champion Team</div>' +
+    teamRosterHtml(champ) +
+  '</div>';
+
+  const roundOptions = teamMegaRR.rounds.map((rd,i)=>'<option value="'+i+'"'+(i===teamMegaSelection.round?' selected':'')+'>'+rd.label+'</option>').join('');
+  const robinCount = teamMegaRR.rounds[teamMegaSelection.round].robins.length;
+  const robinOptions = Array.from({length:robinCount}, (_,i)=>'<option value="'+i+'"'+(i===teamMegaSelection.robin?' selected':'')+'>Round Robin #'+(i+1)+'</option>').join('');
+  const pickerHtml = '<div class="card">' +
+    '<div class="field-label">Round</div>' +
+    '<select class="mega-select" id="teamMegaRoundSelect">'+roundOptions+'</select>' +
+    '<div class="field-label" style="margin-top:10px;">Round Robin</div>' +
+    '<select class="mega-select" id="teamMegaRobinSelect">'+robinOptions+'</select>' +
+  '</div>';
+
+  const round = teamMegaRR.rounds[teamMegaSelection.round];
+  const robin = round.robins[teamMegaSelection.robin];
+  const ranked = rankTeamGroup(robin.teams, robin.stats);
+
+  return championHtml + pickerHtml + teamRrResultsBlockHtml(ranked, round.cutoff);
 }
 function championBannerHtml(){
   const e = tourney.entrants[tourney.championIdx];
@@ -2608,6 +2840,7 @@ function render(){
     '<button type="button" class="tab-btn'+(activeMode==='elimination'?' active':'')+'" data-action="setMode" data-mode="elimination">Elimination Bracket</button>' +
     '<button type="button" class="tab-btn'+(activeMode==='roundrobin'?' active':'')+'" data-action="setMode" data-mode="roundrobin">Round Robin</button>' +
     '<button type="button" class="tab-btn'+(activeMode==='megarr'?' active':'')+'" data-action="setMode" data-mode="megarr">Long Round Robin</button>' +
+    '<button type="button" class="tab-btn'+(activeMode==='teammegarr'?' active':'')+'" data-action="setMode" data-mode="teammegarr">Long Team Round Robin</button>' +
   '</div>';
   let barHtml = '';
   let bodyHtml;
@@ -2616,7 +2849,10 @@ function render(){
     bodyHtml = roundRobin ? roundRobinResultsHtml() : roundRobinGeneratorScreenHtml();
   } else if(activeMode==='megarr'){
     barHtml = megaProgress ? '' : settingsSectionHtml(true, 'generateMegaRR', 'Simulate New Long Round Robin');
-    bodyHtml = megaProgress ? megaProgressHtml() : (megaRR ? megaResultsScreenHtml() : megaGeneratorScreenHtml());
+    bodyHtml = megaProgress ? progressScreenHtml(megaProgress) : (megaRR ? megaResultsScreenHtml() : megaGeneratorScreenHtml());
+  } else if(activeMode==='teammegarr'){
+    barHtml = teamMegaProgress ? '' : settingsSectionHtml(true, 'generateTeamMegaRR', 'Simulate New Long Team Round Robin');
+    bodyHtml = teamMegaProgress ? progressScreenHtml(teamMegaProgress) : (teamMegaRR ? teamMegaResultsScreenHtml() : teamMegaGeneratorScreenHtml());
   } else {
     barHtml = settingsSectionHtml(false, null, null);
     bodyHtml = tourney ? bracketScreenHtml() : generatorScreenHtml();
@@ -2678,6 +2914,11 @@ document.addEventListener('click', (ev)=>{
     generateMegaRoundRobin();
     return;
   }
+  if(action==='generateTeamMegaRR'){
+    if(teamMegaRR && !confirm('Start a new Long Team Round Robin? This discards the current results and takes a while to simulate.')) return;
+    generateTeamMegaRoundRobin();
+    return;
+  }
   if(action==='toggleStandings'){
     standingsCollapsed = !standingsCollapsed;
     render();
@@ -2697,6 +2938,15 @@ document.addEventListener('change', (ev)=>{
   } else if(ev.target.id === 'banRegionSelect'){
     settings.regionFilter = ev.target.value || null;
     saveStore();
+    render();
+  } else if(ev.target.id === 'teamMegaRoundSelect'){
+    teamMegaSelection.round = parseInt(ev.target.value, 10);
+    teamMegaSelection.robin = 0;
+    saveTeamMegaStore();
+    render();
+  } else if(ev.target.id === 'teamMegaRobinSelect'){
+    teamMegaSelection.robin = parseInt(ev.target.value, 10);
+    saveTeamMegaStore();
     render();
   }
 });
