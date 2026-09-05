@@ -1868,24 +1868,46 @@ const ROUND_ROBIN_MATCH_COUNT = ROUND_ROBIN_SIZE * (ROUND_ROBIN_SIZE-1) / 2;
 // robins, still 100 entrants each, until a single 100-entrant Championship robin
 // crowns the strongest Pokemon.
 const MEGA_ROBIN_SIZE = 100;
-const MEGA_ROUND_DEFS = [
-  { label:'Round 1', robinCount:100, cutoff:40 },
-  { label:'Round 2', robinCount:40, cutoff:25 },
-  { label:'Round 3', robinCount:10, cutoff:10 },
-  { label:'Championship', robinCount:1, cutoff:null },
-];
-// Long Team Round Robin only -- a wider opening round (200 robins, top 50 advance)
-// prepended in front of the exact same 4-round chain MEGA_ROUND_DEFS uses, each
-// subsequent round's robinCount recomputed so the funnel still converges cleanly:
-// 200x100 top50 -> 10,000 -> 100x100 top40 -> 4,000 -> 40x100 top25 -> 1,000 ->
-// 10x100 top10 -> 100 -> 1x100 Championship.
-const TEAM_MEGA_ROUND_DEFS = [
-  { label:'Round 1', robinCount:200, cutoff:50 },
-  { label:'Round 2', robinCount:100, cutoff:40 },
-  { label:'Round 3', robinCount:40, cutoff:25 },
-  { label:'Round 4', robinCount:10, cutoff:10 },
-  { label:'Championship', robinCount:1, cutoff:null },
-];
+// User-configurable (Settings section, megarr/teammegarr modes) -- how many round
+// robins each round has, NOT counting the final Championship round, which is always
+// exactly 1 robin and gets appended automatically (see buildFunnelDefs). Each round's
+// cutoff is no longer a fixed number: it's derived at generation time from how many
+// robins the NEXT round needs (see advanceFunnelRound) so any robin-count sequence the
+// user types in works, not just ones that happen to divide evenly.
+const DEFAULT_ROUND_ROBIN_COUNTS = [100, 40, 10];
+const DEFAULT_TEAM_ROUND_ROBIN_COUNTS = [200, 100, 40, 10];
+// Builds the full per-round def list (label + robinCount only -- cutoff is computed
+// later, once each round's actual results are in) from a robin-count sequence, always
+// appending a final 1-robin Championship round.
+function buildFunnelDefs(robinCounts){
+  const full = robinCounts.concat([1]);
+  return full.map((robinCount, i) => ({
+    label: (i === full.length-1) ? 'Championship' : ('Round '+(i+1)),
+    robinCount,
+  }));
+}
+// Advances one funnel round: nextRobinCount robins of MEGA_ROBIN_SIZE are needed next,
+// so an equal baseCount = floor(needed/thisRobinCount) advances automatically from
+// every one of this round's robins, and any remaining "wildcard" slots go to whichever
+// leftover teams (rank > baseCount, pooled across every robin in this round) have the
+// best record, tiebroken by point/KO differential -- not just one wildcard per robin.
+function advanceFunnelRound(rankedPerRobin, nextRobinCount, extractPayload){
+  const needed = nextRobinCount * MEGA_ROBIN_SIZE;
+  const thisRobinCount = rankedPerRobin.length;
+  const baseCount = Math.min(MEGA_ROBIN_SIZE, Math.floor(needed / thisRobinCount));
+  const wildcardCount = needed - baseCount*thisRobinCount;
+  const advancing = [];
+  const leftover = [];
+  rankedPerRobin.forEach(ranked=>{
+    ranked.slice(0, baseCount).forEach(x=>advancing.push(extractPayload(x)));
+    leftover.push(...ranked.slice(baseCount));
+  });
+  if(wildcardCount > 0){
+    leftover.sort((a,b)=> b.wins-a.wins || b.diff-a.diff);
+    leftover.slice(0, wildcardCount).forEach(x=>advancing.push(extractPayload(x)));
+  }
+  return { advancing, baseCount, wildcardCount };
+}
 
 const TYPE_CHART = {
   Normal:   { Rock:0.5, Ghost:0, Steel:0.5 },
@@ -1995,26 +2017,47 @@ function rollSide(finalStats, cfg, stabBonus){
   }
   return { picks, keptIdx, kept, final: kept + stabBonus };
 }
+// Exact order-statistics closed form, not brute-force enumeration: for n IID draws
+// uniform over the 6 stat values, P(max <= v) = (k/6)^n where k = count of stats <= v
+// (symmetric for min) -- same math as literally enumerating all 6^n outcomes (verified
+// against that version on 20,000 random cases), just O(6 log 6) instead of O(6^n).
+// Matters because winOdds now gets called far more per match (Long Team Round Robin's
+// best-odds replacement pick), not just once per exchange for a live odds display.
 function resultDistribution(finalStats, cfg, stabBonus){
   const n = cfg.n;
-  const counts = new Map();
-  const total = Math.pow(6, n);
-  function rec(depth, kept){
-    if(depth === n){
-      const v = kept + stabBonus;
-      counts.set(v, (counts.get(v)||0) + 1);
-      return;
+  const dist = new Map();
+  if(n === 1){
+    finalStats.forEach(v=>{
+      const face = v + stabBonus;
+      dist.set(face, (dist.get(face)||0) + 1/6);
+    });
+    return dist;
+  }
+  const sorted = finalStats.slice().sort((a,b)=>a-b);
+  if(cfg.mode === 'best'){
+    let prevCum = 0, i = 0;
+    while(i < 6){
+      let j = i;
+      while(j < 6 && sorted[j] === sorted[i]) j++;
+      const cum = Math.pow(j/6, n); // P(max <= sorted[i]) -- j = count of values <= sorted[i]
+      const face = sorted[i] + stabBonus;
+      dist.set(face, (dist.get(face)||0) + (cum - prevCum));
+      prevCum = cum;
+      i = j;
     }
-    for(let i=0;i<6;i++){
-      const val = finalStats[i];
-      const nextKept = (kept === null) ? val
-        : (cfg.mode === 'worst' ? Math.min(kept, val) : Math.max(kept, val));
-      rec(depth+1, nextKept);
+  } else { // 'worst'
+    let prevCum = 0, i = 5;
+    while(i >= 0){
+      let j = i;
+      while(j >= 0 && sorted[j] === sorted[i]) j--;
+      const countGE = 6 - (j+1); // indices j+1..5, all >= sorted[i]
+      const cum = Math.pow(countGE/6, n); // P(min >= sorted[i])
+      const face = sorted[i] + stabBonus;
+      dist.set(face, (dist.get(face)||0) + (cum - prevCum));
+      prevCum = cum;
+      i = j;
     }
   }
-  rec(0, null);
-  const dist = new Map();
-  for(const [v,c] of counts) dist.set(v, c/total);
   return dist;
 }
 function crossOdds(distA, distB){
@@ -2059,7 +2102,7 @@ function loadStore(){
     const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if(raw) return raw;
   } catch(e){}
-  return { tourney:null, roundRobin:null, activeMode:'elimination', strongerStab:false, randomAttackTypes:false, bannedCategories:null, regionFilter:null };
+  return { tourney:null, roundRobin:null, activeMode:'elimination', strongerStab:false, randomAttackTypes:false, bannedCategories:null, regionFilter:null, roundRobinCounts:null, teamRoundRobinCounts:null, teamBestOddsReplacement:false, teamTopNBracket:0 };
 }
 function saveStore(){
   localStorage.setItem(STORE_KEY, JSON.stringify({
@@ -2068,7 +2111,26 @@ function saveStore(){
     randomAttackTypes: settings.randomAttackTypes,
     bannedCategories: settings.bannedCategories,
     regionFilter: settings.regionFilter,
+    roundRobinCounts: settings.roundRobinCounts,
+    teamRoundRobinCounts: settings.teamRoundRobinCounts,
+    teamBestOddsReplacement: settings.teamBestOddsReplacement,
+    teamTopNBracket: settings.teamTopNBracket,
   }));
+}
+// Validates a robin-count sequence: must be a non-empty array of positive integers,
+// each no larger than the one before it (a round can never send MORE robins' worth of
+// teams forward than it started with). Falls back to fallback if anything's off --
+// guards against both corrupted localStorage and bad user input in the Settings box.
+function parseRoundCountsInput(text){
+  return text.split(/[,s]+/).map(s=>s.trim()).filter(Boolean).map(Number);
+}
+function sanitizeRoundCounts(arr, fallback){
+  if(!Array.isArray(arr) || arr.length === 0) return fallback.slice();
+  for(let i=0;i<arr.length;i++){
+    if(!Number.isInteger(arr[i]) || arr[i] < 1) return fallback.slice();
+    if(i > 0 && arr[i] > arr[i-1]) return fallback.slice();
+  }
+  return arr.slice();
 }
 const initialStore = loadStore();
 let tourney = initialStore.tourney;
@@ -2085,6 +2147,17 @@ const settings = {
   bannedCategories: Object.assign({ restricted:false, legendary:false, mythical:false, ultrabeast:false, paradox:false }, initialStore.bannedCategories || {}),
   // null = all regions; otherwise a key into REGIONAL_DEX_SPECIES ('calli'/'hoenn'/'neokanto').
   regionFilter: initialStore.regionFilter || null,
+  // Long Round Robin / Long Team Round Robin only -- see buildFunnelDefs/advanceFunnelRound.
+  roundRobinCounts: sanitizeRoundCounts(initialStore.roundRobinCounts, DEFAULT_ROUND_ROBIN_COUNTS),
+  teamRoundRobinCounts: sanitizeRoundCounts(initialStore.teamRoundRobinCounts, DEFAULT_TEAM_ROUND_ROBIN_COUNTS),
+  // Long Team Round Robin only -- off (default) sends in the next teammate in lineup
+  // order, same as every other mode; on, exact win-odds decide who's sent in, which
+  // is far more expensive to compute at this scale (see pickBestReplacementIndex).
+  teamBestOddsReplacement: !!initialStore.teamBestOddsReplacement,
+  // Long Team Round Robin only -- 0 = off. N >= 2 runs a seeded single-elimination
+  // bracket among the top N teams from the Championship round robin (see buildTeamBracket)
+  // to decide the final champion, instead of just taking the round robin's #1 team.
+  teamTopNBracket: (Number.isInteger(initialStore.teamTopNBracket) && initialStore.teamTopNBracket >= 2) ? initialStore.teamTopNBracket : 0,
 };
 const GLOBAL_SETTING_DEFS = [
   { key:'strongerStab', label:'Stronger STAB', desc:'Off = matching-type bonus is +0.5 (a tiebreaker only). On = full +1.' },
@@ -2140,6 +2213,7 @@ let teamMegaProgress = null; // { label, done, total } while a generation is in 
 let animatingMatch = null; // { r, m, nA, nB } while one match's dice are animating
 let standingsCollapsed = false; // shared toggle for the standings table (Round Robin + Long Round Robin)
 let settingsCollapsed = false; // shared toggle for the Settings section (all 3 modes)
+let teamMegaView = 'roundrobin'; // 'roundrobin' | 'bracket' -- which view teamMegaRR results shows (only relevant when a Top-N bracket was generated)
 
 function finalStatsOf(mon){
   return SPECIES_DATA[mon.name].base.map((b,i)=>b+mon.ev[i]);
@@ -2282,20 +2356,21 @@ function shuffleArray(arr){
   return arr;
 }
 async function generateMegaRoundRobin(){
-  const totalRobins = MEGA_ROUND_DEFS.reduce((a,d)=>a+d.robinCount, 0);
-  megaProgress = { label:'Generating '+(MEGA_ROUND_DEFS[0].robinCount*MEGA_ROBIN_SIZE)+' entrants...', done:0, total:totalRobins };
+  const defs = buildFunnelDefs(settings.roundRobinCounts);
+  const totalRobins = defs.reduce((a,d)=>a+d.robinCount, 0);
+  megaProgress = { label:'Generating '+(defs[0].robinCount*MEGA_ROBIN_SIZE)+' entrants...', done:0, total:totalRobins };
   render();
   await sleep(0);
 
   const sourceList = eligibleSpeciesList();
   let pool = [];
-  const round1Count = MEGA_ROUND_DEFS[0].robinCount * MEGA_ROBIN_SIZE;
+  const round1Count = defs[0].robinCount * MEGA_ROBIN_SIZE;
   for(let i=0;i<round1Count;i++) pool.push(randomEntrantWithRepeats(sourceList));
 
   const rounds = [];
   let doneRobins = 0;
-  for(let ri=0; ri<MEGA_ROUND_DEFS.length; ri++){
-    const def = MEGA_ROUND_DEFS[ri];
+  for(let ri=0; ri<defs.length; ri++){
+    const def = defs[ri];
     const robins = [];
     for(let g=0; g<def.robinCount; g++){
       const groupEntrants = pool.slice(g*MEGA_ROBIN_SIZE, (g+1)*MEGA_ROBIN_SIZE);
@@ -2308,14 +2383,15 @@ async function generateMegaRoundRobin(){
         await sleep(0);
       }
     }
-    rounds.push({ label:def.label, cutoff:def.cutoff, robins });
-    if(def.cutoff !== null){
-      let advancing = [];
-      robins.forEach(rb=>{
-        rankGroup(rb.entrants, rb.stats).slice(0, def.cutoff).forEach(x=>advancing.push(x.e));
-      });
-      pool = shuffleArray(advancing);
+    const isLast = (ri === defs.length-1);
+    let cutoff = null;
+    if(!isLast){
+      const rankedPerRobin = robins.map(rb=>rankGroup(rb.entrants, rb.stats));
+      const advanced = advanceFunnelRound(rankedPerRobin, defs[ri+1].robinCount, x=>x.e);
+      pool = shuffleArray(advanced.advancing);
+      cutoff = { base:advanced.baseCount, wildcard:advanced.wildcardCount };
     }
+    rounds.push({ label:def.label, cutoff, robins });
   }
   megaRR = { rounds };
   megaSelection = { round:0, robin:0 };
@@ -2344,14 +2420,56 @@ function generateUniqueTeam(sourceList){
   }
   return { members: pool.slice(0, n).map(generateEntrant) };
 }
-function simulateTeamMatch(teamA, teamB){
-  const aMembers = teamA.members, bMembers = teamB.members;
-  let ai = 0, bi = 0;
-  while(ai < aMembers.length && bi < bMembers.length){
-    const res = simulateOneExchange(aMembers[ai], bMembers[bi]);
-    if(res.winnerIsA) bi++; else ai++;
+// Among candidates (one side's still-alive members), picks whichever gives that
+// side the best exact win probability against opponent (the other side's current
+// active member, unchanged since it just won the last exchange) -- a real odds
+// comparison via winOdds, not just the next name in the list.
+function pickBestReplacementIndex(candidates, opponent, forSide){
+  const sdOpp = SPECIES_DATA[opponent.name];
+  const statsOpp = finalStatsOf(opponent);
+  const typesOpp = [sdOpp.t1, sdOpp.t2];
+  let bestIdx = 0, bestOdds = -1;
+  for(let i=0;i<candidates.length;i++){
+    const cand = candidates[i];
+    const sdCand = SPECIES_DATA[cand.name];
+    const statsCand = finalStatsOf(cand);
+    const typesCand = [sdCand.t1, sdCand.t2];
+    const odds = forSide==='A'
+      ? winOdds(statsCand, typesCand, cand.atk, statsOpp, typesOpp, opponent.atk)
+      : winOdds(statsOpp, typesOpp, opponent.atk, statsCand, typesCand, cand.atk);
+    const myOdds = forSide==='A' ? odds.winA : odds.winB;
+    if(myOdds > bestOdds){ bestOdds = myOdds; bestIdx = i; }
   }
-  return { winnerIsA: bi >= bMembers.length, aLosses: ai, bLosses: bi };
+  return bestIdx;
+}
+// Position 0 leads for both sides (no opponent is known yet to react to); after that,
+// whichever side just lost an exchange sends in whichever of its remaining members has
+// the best odds against the opponent's (still active) current member, not simply the
+// next one in its own lineup.
+function simulateTeamMatch(teamA, teamB){
+  const aRemaining = teamA.members.slice();
+  const bRemaining = teamB.members.slice();
+  let aActive = aRemaining.shift();
+  let bActive = bRemaining.shift();
+  let aLosses = 0, bLosses = 0;
+  // Off (default): the next teammate in lineup order, same mechanic every other mode
+  // uses. On: exact win-odds decide the replacement -- correct, but far more expensive
+  // at bulk scale (see pickBestReplacementIndex's winOdds calls), hence opt-in.
+  const useBestOdds = settings.teamBestOddsReplacement;
+  while(true){
+    const res = simulateOneExchange(aActive, bActive);
+    if(res.winnerIsA){
+      bLosses++;
+      if(bRemaining.length === 0) return { winnerIsA:true, aLosses, bLosses };
+      const idx = useBestOdds ? pickBestReplacementIndex(bRemaining, aActive, 'B') : 0;
+      bActive = bRemaining.splice(idx, 1)[0];
+    } else {
+      aLosses++;
+      if(aRemaining.length === 0) return { winnerIsA:false, aLosses, bLosses };
+      const idx = useBestOdds ? pickBestReplacementIndex(aRemaining, bActive, 'A') : 0;
+      aActive = aRemaining.splice(idx, 1)[0];
+    }
+  }
 }
 function simulateTeamRoundRobinGroup(teams){
   const stats = teams.map(()=>({ wins:0, losses:0, diff:0 }));
@@ -2374,21 +2492,89 @@ function rankTeamGroup(teams, stats){
   return teams.map((team,i)=>({ team, i, wins:stats[i].wins, losses:stats[i].losses, diff:stats[i].diff }))
     .sort((a,b)=> b.wins-a.wins || b.diff-a.diff || a.i-b.i);
 }
+// Optional Top-N Bracket -- after the Championship round robin, the top N teams
+// (seeded by their round-robin record, tiebroken by KO differential) play a standard
+// seeded single-elimination bracket to decide the final champion. N need not be a
+// power of 2: the bracket is padded up to the next power of 2 with byes, and byes go
+// to the highest seeds first via the standard recursive seeding order (1v(size),
+// 2v(size-1), ... ), so a bye can only ever land opposite a real team in round 1 --
+// never two byes paired together -- and seeds that got a bye still have to play each
+// other from round 2 onward like everyone else.
+function nextPowerOfTwo(n){
+  let p = 1;
+  while(p < n) p *= 2;
+  return p;
+}
+function standardSeedOrder(size){
+  if(size === 1) return [1];
+  const prev = standardSeedOrder(size/2);
+  const result = [];
+  prev.forEach(s => { result.push(s); result.push(size+1-s); });
+  return result;
+}
+function bracketRoundLabel(slotsCount){
+  if(slotsCount === 2) return 'Final';
+  if(slotsCount === 4) return 'Semifinals';
+  if(slotsCount === 8) return 'Quarterfinals';
+  return 'Round of '+slotsCount;
+}
+// rankedTop: rankTeamGroup's output for the Championship robin, already sorted best-
+// first. Builds the seed list and resolves the ENTIRE bracket immediately (no
+// interactivity -- this mode has never had a per-match click-to-simulate step, so the
+// bracket is generated fully resolved like every other part of this funnel).
+function buildTeamBracket(rankedTop, n){
+  const seeds = rankedTop.slice(0, n).map((r,i)=>(
+    { seed:i+1, team:r.team, wins:r.wins, losses:r.losses, diff:r.diff }
+  ));
+  const seedByNumber = {};
+  seeds.forEach(s => { seedByNumber[s.seed] = s; });
+  const size = nextPowerOfTwo(n);
+  const order = standardSeedOrder(size);
+
+  const rounds = [];
+  let currentSlots = order.map(seedNum => seedNum <= n ? seedByNumber[seedNum] : null);
+  while(currentSlots.length > 1){
+    const label = bracketRoundLabel(currentSlots.length);
+    const matches = [];
+    const nextSlots = [];
+    for(let i=0;i<currentSlots.length;i+=2){
+      const a = currentSlots[i], b = currentSlots[i+1];
+      if(a && !b){
+        matches.push({ aSeed:a.seed, bSeed:null, winnerSeed:a.seed, isBye:true, log:['Seed '+a.seed+' advances on a bye.'] });
+        nextSlots.push(a);
+      } else if(b && !a){
+        matches.push({ aSeed:null, bSeed:b.seed, winnerSeed:b.seed, isBye:true, log:['Seed '+b.seed+' advances on a bye.'] });
+        nextSlots.push(b);
+      } else {
+        const res = simulateTeamMatch(a.team, b.team);
+        const winner = res.winnerIsA ? a : b;
+        matches.push({ aSeed:a.seed, bSeed:b.seed, winnerSeed:winner.seed, isBye:false, log:[
+          'Seed '+a.seed+' ('+(TEAM_SIZE-res.aLosses)+' left) vs Seed '+b.seed+' ('+(TEAM_SIZE-res.bLosses)+' left) -- Seed '+winner.seed+' wins!'
+        ]});
+        nextSlots.push(winner);
+      }
+    }
+    rounds.push({ label, matches });
+    currentSlots = nextSlots;
+  }
+  return { seeds, size, rounds, championSeed: currentSlots[0] ? currentSlots[0].seed : null };
+}
 async function generateTeamMegaRoundRobin(){
-  const totalRobins = TEAM_MEGA_ROUND_DEFS.reduce((a,d)=>a+d.robinCount, 0);
-  teamMegaProgress = { label:'Generating '+(TEAM_MEGA_ROUND_DEFS[0].robinCount*MEGA_ROBIN_SIZE)+' teams...', done:0, total:totalRobins };
+  const defs = buildFunnelDefs(settings.teamRoundRobinCounts);
+  const totalRobins = defs.reduce((a,d)=>a+d.robinCount, 0);
+  teamMegaProgress = { label:'Generating '+(defs[0].robinCount*MEGA_ROBIN_SIZE)+' teams...', done:0, total:totalRobins };
   render();
   await sleep(0);
 
   const sourceList = eligibleSpeciesList();
   let pool = [];
-  const round1Count = TEAM_MEGA_ROUND_DEFS[0].robinCount * MEGA_ROBIN_SIZE;
+  const round1Count = defs[0].robinCount * MEGA_ROBIN_SIZE;
   for(let i=0;i<round1Count;i++) pool.push(generateUniqueTeam(sourceList));
 
   const rounds = [];
   let doneRobins = 0;
-  for(let ri=0; ri<TEAM_MEGA_ROUND_DEFS.length; ri++){
-    const def = TEAM_MEGA_ROUND_DEFS[ri];
+  for(let ri=0; ri<defs.length; ri++){
+    const def = defs[ri];
     const robins = [];
     for(let g=0; g<def.robinCount; g++){
       const groupTeams = pool.slice(g*MEGA_ROBIN_SIZE, (g+1)*MEGA_ROBIN_SIZE);
@@ -2401,22 +2587,35 @@ async function generateTeamMegaRoundRobin(){
         await sleep(0);
       }
     }
-    rounds.push({ label:def.label, cutoff:def.cutoff, robins });
-    if(def.cutoff !== null){
-      let advancing = [];
-      robins.forEach(rb=>{
-        rankTeamGroup(rb.teams, rb.stats).slice(0, def.cutoff).forEach(x=>advancing.push(x.team));
-      });
-      pool = shuffleArray(advancing);
+    const isLast = (ri === defs.length-1);
+    let cutoff = null;
+    if(!isLast){
+      const rankedPerRobin = robins.map(rb=>rankTeamGroup(rb.teams, rb.stats));
+      const advanced = advanceFunnelRound(rankedPerRobin, defs[ri+1].robinCount, x=>x.team);
+      pool = shuffleArray(advanced.advancing);
+      cutoff = { base:advanced.baseCount, wildcard:advanced.wildcardCount };
     }
+    rounds.push({ label:def.label, cutoff, robins });
   }
-  teamMegaRR = { rounds };
+  let bracket = null;
+  if(settings.teamTopNBracket >= 2){
+    const champRound = rounds[rounds.length-1];
+    const ranked = rankTeamGroup(champRound.robins[0].teams, champRound.robins[0].stats);
+    bracket = buildTeamBracket(ranked, Math.min(settings.teamTopNBracket, ranked.length));
+  }
+  teamMegaRR = { rounds, bracket };
   teamMegaSelection = { round:0, robin:0 };
+  teamMegaView = 'roundrobin';
   teamMegaProgress = null;
   saveTeamMegaStore();
   render();
 }
 function teamMegaChampion(){
+  if(teamMegaRR.bracket){
+    const seedByNumber = {};
+    teamMegaRR.bracket.seeds.forEach(s=>{ seedByNumber[s.seed] = s; });
+    return seedByNumber[teamMegaRR.bracket.championSeed].team;
+  }
   const champRound = teamMegaRR.rounds[teamMegaRR.rounds.length-1];
   return rankTeamGroup(champRound.robins[0].teams, champRound.robins[0].stats)[0].team;
 }
@@ -2532,10 +2731,22 @@ function generatorScreenHtml(){
 // or generation identically); the region/category-ban rows only ever apply to the two
 // Round Robin modes (Elimination Bracket always draws from the full roster), so
 // includeFilters gates those two rows off for that tab.
-function settingsSectionHtml(includeFilters, action, buttonLabel){
+// Robins/round input for a funnel mode -- a plain comma-separated text field rather
+// than a dynamic add/remove-round UI, since the round COUNT itself is just "however
+// many numbers you type" (the Championship round is always appended automatically at 1).
+function roundCountsRowHtml(settingsKey, inputId){
+  const value = settings[settingsKey].join(',');
+  return '<div class="ban-bar-row">' +
+    '<span class="ban-bar-label">Robins/Round</span>' +
+    '<input type="text" class="ban-region-select" id="'+inputId+'" value="'+esc(value)+'" style="width:150px;" placeholder="e.g. 200,100,40,10">' +
+    '<span class="ban-bar-count">Championship (1) always last</span>' +
+  '</div>';
+}
+function settingsSectionHtml(mode, action, buttonLabel){
   const arrow = settingsCollapsed ? '\u25b6' : '\u25bc';
   let body = '';
   if(!settingsCollapsed){
+    const includeFilters = (mode !== 'elimination');
     if(includeFilters){
       const regionOptions = '<option value=""'+(settings.regionFilter?'':' selected')+'>All Regions</option>' +
         Object.keys(REGION_LABELS).map(key=>
@@ -2557,6 +2768,20 @@ function settingsSectionHtml(includeFilters, action, buttonLabel){
           banCheckboxes +
           '<span class="ban-bar-count">'+eligibleCount+'/'+SPECIES_LIST.length+' eligible</span>' +
         '</div>';
+    }
+    if(mode === 'megarr'){
+      body += roundCountsRowHtml('roundRobinCounts', 'megaRoundCountsInput');
+    }
+    if(mode === 'teammegarr'){
+      body += roundCountsRowHtml('teamRoundRobinCounts', 'teamMegaRoundCountsInput');
+      body += '<div class="ban-bar-row">' +
+        '<label class="ban-check-item" title="Off: send in the next teammate in lineup order (fast, the default everywhere). On: exact win-odds decide who\'s sent in when a Pokemon faints -- correct, but noticeably slower to generate at bulk scale.">' +
+          '<input type="checkbox" data-action="toggleGlobalSetting" data-key="teamBestOddsReplacement"'+(settings.teamBestOddsReplacement?' checked':'')+'>' +
+          '<span>Best-Odds Replacement</span>' +
+        '</label>' +
+        '<span class="ban-bar-label">Top-N Bracket</span>' +
+        '<input type="number" class="ban-region-select" id="teamTopNInput" min="0" max="100" step="1" value="'+(settings.teamTopNBracket||0)+'" style="width:60px;" title="0 = off. N (2-100) runs a seeded single-elimination bracket among the top N Championship robin teams, with byes as needed, to decide the final champion.">' +
+      '</div>';
     }
     const globalCheckboxes = GLOBAL_SETTING_DEFS.map(def=>{
       const on = !!settings[def.key];
@@ -2596,9 +2821,19 @@ function rrEntrantCardHtml(r, rank){
     '</div>' +
   '</div>';
 }
+// cutoff is null (no cutoff -- standalone Round Robin or the Championship round) or
+// { base, wildcard }: base guaranteed advancers from every robin in this round, plus
+// wildcard extra slots that went to the best leftover records across every robin
+// (see advanceFunnelRound) -- the divider marks the guaranteed line specifically.
+function cutoffDescription(cutoff){
+  if(cutoff == null) return '';
+  return cutoff.wildcard > 0
+    ? ' -- top '+cutoff.base+' from each advance, plus '+cutoff.wildcard+' wildcard'+(cutoff.wildcard===1?'':'s')
+    : ' -- top '+cutoff.base+' advance';
+}
 function rrStandingRowHtml(r, rank, cutoff){
   const sd = SPECIES_DATA[r.e.name];
-  return '<div class="rr-standing-row'+(cutoff!=null && rank===cutoff ? ' rr-cutoff-row' : '')+'">' +
+  return '<div class="rr-standing-row'+(cutoff!=null && rank===cutoff.base ? ' rr-cutoff-row' : '')+'">' +
     '<span class="rr-rank-badge">#'+rank+'</span>' +
     spriteImgHtml(r.e.name,'sprite-sm') +
     '<span style="flex:1;">'+esc(r.e.name)+'</span>' +
@@ -2619,7 +2854,7 @@ function rrResultsBlockHtml(ranked, cutoff){
       '<span>'+arrow+' Standings</span>' +
     '</div>' +
     (standingsCollapsed ? '' :
-      '<div class="card-sub">Ranked by wins, tiebroken by point differential'+(cutoff!=null?' -- top '+cutoff+' advance':'')+'</div>' +
+      '<div class="card-sub">Ranked by wins, tiebroken by point differential'+cutoffDescription(cutoff)+'</div>' +
       ranked.map((r,i)=>rrStandingRowHtml(r, i+1, cutoff)).join('')
     ) +
   '</div>';
@@ -2632,15 +2867,42 @@ function rrResultsBlockHtml(ranked, cutoff){
 function roundRobinResultsHtml(){
   return rrResultsBlockHtml(rankedRoundRobin(), null);
 }
+// Describes the CURRENT robin-count setting round by round (using the same
+// baseCount/wildcard math advanceFunnelRound actually applies at generation time),
+// so the generator screen's text always matches whatever the user has configured
+// instead of a hardcoded default.
+function funnelDescriptionHtml(robinCounts, thing, thingPlural){
+  const full = robinCounts.concat([1]);
+  const parts = [];
+  for(let i=0;i<full.length;i++){
+    const count = full[i];
+    const isLast = (i === full.length-1);
+    if(isLast){
+      parts.push('Championship: the final '+MEGA_ROBIN_SIZE+' '+thingPlural+' play one round robin to crown the strongest '+thing+'.');
+      continue;
+    }
+    const nextCount = full[i+1];
+    const needed = nextCount*MEGA_ROBIN_SIZE;
+    const base = Math.min(MEGA_ROBIN_SIZE, Math.floor(needed/count));
+    const wildcard = needed - base*count;
+    const roundLabel = (i===0) ? 'Round 1' : ('Round '+(i+1));
+    const intro = (i===0)
+      ? (roundLabel+': '+count+' round robins of '+MEGA_ROBIN_SIZE+' '+thingPlural+' each')
+      : (roundLabel+': those '+(count*MEGA_ROBIN_SIZE).toLocaleString()+' reshuffle into '+count+' round robins of '+MEGA_ROBIN_SIZE);
+    const advanceText = wildcard>0
+      ? (' -- top '+base+' from each advance, plus '+wildcard+' wildcard'+(wildcard===1?'':'s')+'.')
+      : (' -- top '+base+' from each advance.');
+    parts.push(intro+advanceText);
+  }
+  return parts.join(' ');
+}
 function megaGeneratorScreenHtml(){
+  const totalEntrants = settings.roundRobinCounts[0]*MEGA_ROBIN_SIZE;
   return '<div class="card">' +
     '<div class="card-title">Long Round Robin</div>' +
-    '<div class="card-sub">10,000 randomly generated Pok\u00e9mon, funneled down over 4 rounds</div>' +
-    '<div class="card-flavor">' +
-      'Round 1: 100 round robins of 100 Pok\u00e9mon each (repeats allowed -- even within the same round robin) -- top 40 from each advance. ' +
-      'Round 2: those 4,000 reshuffle into 40 round robins of 100 -- top 25 from each advance. ' +
-      'Round 3: those 1,000 reshuffle into 10 round robins of 100 -- top 10 from each advance. ' +
-      'Championship: the final 100 play one round robin to crown the strongest Pok\u00e9mon.' +
+    '<div class="card-sub">'+totalEntrants.toLocaleString()+' randomly generated Pok\u00e9mon, funneled down over '+(settings.roundRobinCounts.length+1)+' rounds</div>' +
+    '<div class="card-flavor">Repeats allowed, even within the same round robin. ' +
+      funnelDescriptionHtml(settings.roundRobinCounts, 'Pok\u00e9mon', 'Pok\u00e9mon') +
     '</div>' +
   '</div>';
 }
@@ -2680,17 +2942,14 @@ function megaResultsScreenHtml(){
   return championHtml + pickerHtml + rrResultsBlockHtml(ranked, round.cutoff);
 }
 function teamMegaGeneratorScreenHtml(){
+  const totalTeams = settings.teamRoundRobinCounts[0]*MEGA_ROBIN_SIZE;
   return '<div class="card">' +
     '<div class="card-title">Long Team Round Robin</div>' +
-    '<div class="card-sub">Teams of '+TEAM_SIZE+' randomly generated Pok\u00e9mon, funneled down over '+TEAM_MEGA_ROUND_DEFS.length+' rounds</div>' +
+    '<div class="card-sub">Teams of '+TEAM_SIZE+' randomly generated Pok\u00e9mon ('+totalTeams.toLocaleString()+' teams to start), funneled down over '+(settings.teamRoundRobinCounts.length+1)+' rounds</div>' +
     '<div class="card-flavor">' +
       'Same funnel as Long Round Robin, but every entrant is now a team of '+TEAM_SIZE+' unique Pok\u00e9mon (no repeats within a team -- repeats across different teams are still fine). ' +
-      'A match between two teams is a fixed-order gauntlet: each team\'s lineup order is set once and never changes -- position 1 fights position 1, the winner stays in against the loser\'s next position, until one team is fully KO\'d. ' +
-      'Round 1: 200 round robins of 100 teams each -- top 50 from each advance. ' +
-      'Round 2: those 10,000 reshuffle into 100 round robins of 100 -- top 40 from each advance. ' +
-      'Round 3: those 4,000 reshuffle into 40 round robins of 100 -- top 25 from each advance. ' +
-      'Round 4: those 1,000 reshuffle into 10 round robins of 100 -- top 10 from each advance. ' +
-      'Championship: the final 100 teams play one round robin to crown the strongest team.' +
+      'A match between two teams is a gauntlet: position 1 fights position 1, the winner stays in against the loser\'s next teammate, until one team is fully KO\'d -- either the next one in lineup order, or (if Best-Odds Replacement is on) whichever remaining teammate has the best odds against the current opponent. ' +
+      funnelDescriptionHtml(settings.teamRoundRobinCounts, 'team', 'teams') +
     '</div>' +
   '</div>';
 }
@@ -2711,7 +2970,7 @@ function teamRosterHtml(team){
 }
 function teamStandingRowHtml(r, rank, cutoff){
   const spritesHtml = r.team.members.map(m=>spriteImgHtml(m.name,'team-standing-sprite')).join('');
-  return '<div class="rr-standing-row team-standing-row'+(cutoff!=null && rank===cutoff ? ' rr-cutoff-row' : '')+'">' +
+  return '<div class="rr-standing-row team-standing-row'+(cutoff!=null && rank===cutoff.base ? ' rr-cutoff-row' : '')+'">' +
     '<span class="rr-rank-badge">#'+rank+'</span>' +
     '<span class="team-standing-sprites">'+spritesHtml+'</span>' +
     '<span>'+r.wins+'-'+r.losses+'</span>' +
@@ -2733,7 +2992,7 @@ function teamRrResultsBlockHtml(ranked, cutoff){
   const standingsHtml = '<div class="card">' +
     '<div class="card-title rr-standings-toggle" data-action="toggleStandings"><span>'+arrow+' Standings</span></div>' +
     (standingsCollapsed ? '' :
-      '<div class="card-sub">Ranked by wins, tiebroken by KO differential'+(cutoff!=null?' -- top '+cutoff+' advance':'')+'</div>' +
+      '<div class="card-sub">Ranked by wins, tiebroken by KO differential'+cutoffDescription(cutoff)+'</div>' +
       ranked.map((r,i)=>teamStandingRowHtml(r, i+1, cutoff)).join('')
     ) +
   '</div>';
@@ -2743,12 +3002,68 @@ function teamRrResultsBlockHtml(ranked, cutoff){
     '</div>' +
     ranked.map((r,i)=>teamResultCardHtml(r, i+1)).join('');
 }
+// One bracket slot -- a seed number + its lead member's sprite, or "Bye" for the
+// (at most one, only ever in round 1) empty side of a bye match.
+function teamBracketSlotHtml(seedInfo, isWinner){
+  if(!seedInfo) return '<div class="bracket-slot bracket-slot-tbd">Bye</div>';
+  return '<div class="bracket-slot'+(isWinner?' bracket-slot-winner':' bracket-slot-loser')+'">' +
+    spriteImgHtml(seedInfo.team.members[0].name,'bracket-sprite') + '<span>Seed '+seedInfo.seed+'</span>' +
+  '</div>';
+}
+function teamBracketMatchHtml(match, seedByNumber){
+  const aInfo = match.aSeed!=null ? seedByNumber[match.aSeed] : null;
+  const bInfo = match.bSeed!=null ? seedByNumber[match.bSeed] : null;
+  return '<div class="bracket-match">' +
+    teamBracketSlotHtml(aInfo, match.winnerSeed===match.aSeed) +
+    '<span class="bracket-vs">vs</span>' +
+    teamBracketSlotHtml(bInfo, match.winnerSeed===match.bSeed) +
+    (match.isBye ? '' : '<div class="bracket-log">'+esc(match.log[0])+'</div>') +
+  '</div>';
+}
+// The completed Top-N seeded bracket: the tree (with seed numbers, byes, and results)
+// plus a "Seeds" list below with every seed's full team roster.
+function teamBracketScreenHtml(){
+  const b = teamMegaRR.bracket;
+  const seedByNumber = {};
+  b.seeds.forEach(s=>{ seedByNumber[s.seed] = s; });
+
+  const roundsHtml = b.rounds.map(round=>
+    '<div class="bracket-round">' +
+      '<div class="bracket-round-header"><span>'+round.label+'</span></div>' +
+      '<div class="bracket-round-matches">' + round.matches.map(m=>teamBracketMatchHtml(m, seedByNumber)).join('') + '</div>' +
+    '</div>'
+  ).join('');
+
+  const seedsHtml = '<div class="card"><div class="card-title">Seeds</div>' +
+      '<div class="card-sub">Top '+b.seeds.length+' from the Championship round robin, seeded by record then differential ('+b.size+'-slot bracket, '+(b.size-b.seeds.length)+' bye'+((b.size-b.seeds.length)===1?'':'s')+')</div>' +
+    '</div>' +
+    b.seeds.map(s=>
+      '<div class="card"><div class="card-title">Seed '+s.seed+'<span class="team-result-record">'+s.wins+'-'+s.losses+' ('+(s.diff>=0?'+':'')+s.diff+')</span></div>' +
+        teamRosterHtml(s.team) +
+      '</div>'
+    ).join('');
+
+  return '<div class="card"><div class="card-title">Bracket</div><div class="bracket-scroll">'+roundsHtml+'</div></div>' +
+    seedsHtml;
+}
 function teamMegaResultsScreenHtml(){
   const champ = teamMegaChampion();
   const championHtml = '<div class="card champion-banner">' +
     '<div class="champion-title">\uD83C\uDFC6 Overall Champion Team</div>' +
     teamRosterHtml(champ) +
   '</div>';
+
+  const hasBracket = !!teamMegaRR.bracket;
+  const viewToggleHtml = hasBracket
+    ? '<div class="tab-row" style="margin-bottom:10px;">' +
+        '<button type="button" class="tab-btn'+(teamMegaView==='roundrobin'?' active':'')+'" data-action="setTeamMegaView" data-view="roundrobin">Round Robin Results</button>' +
+        '<button type="button" class="tab-btn'+(teamMegaView==='bracket'?' active':'')+'" data-action="setTeamMegaView" data-view="bracket">Championship Bracket</button>' +
+      '</div>'
+    : '';
+
+  if(hasBracket && teamMegaView==='bracket'){
+    return championHtml + viewToggleHtml + teamBracketScreenHtml();
+  }
 
   const roundOptions = teamMegaRR.rounds.map((rd,i)=>'<option value="'+i+'"'+(i===teamMegaSelection.round?' selected':'')+'>'+rd.label+'</option>').join('');
   const robinCount = teamMegaRR.rounds[teamMegaSelection.round].robins.length;
@@ -2764,7 +3079,7 @@ function teamMegaResultsScreenHtml(){
   const robin = round.robins[teamMegaSelection.robin];
   const ranked = rankTeamGroup(robin.teams, robin.stats);
 
-  return championHtml + pickerHtml + teamRrResultsBlockHtml(ranked, round.cutoff);
+  return championHtml + viewToggleHtml + pickerHtml + teamRrResultsBlockHtml(ranked, round.cutoff);
 }
 function championBannerHtml(){
   const e = tourney.entrants[tourney.championIdx];
@@ -2845,16 +3160,16 @@ function render(){
   let barHtml = '';
   let bodyHtml;
   if(activeMode==='roundrobin'){
-    barHtml = settingsSectionHtml(true, 'generateRoundRobin', 'Simulate New Round Robin');
+    barHtml = settingsSectionHtml('roundrobin', 'generateRoundRobin', 'Simulate New Round Robin');
     bodyHtml = roundRobin ? roundRobinResultsHtml() : roundRobinGeneratorScreenHtml();
   } else if(activeMode==='megarr'){
-    barHtml = megaProgress ? '' : settingsSectionHtml(true, 'generateMegaRR', 'Simulate New Long Round Robin');
+    barHtml = megaProgress ? '' : settingsSectionHtml('megarr', 'generateMegaRR', 'Simulate New Long Round Robin');
     bodyHtml = megaProgress ? progressScreenHtml(megaProgress) : (megaRR ? megaResultsScreenHtml() : megaGeneratorScreenHtml());
   } else if(activeMode==='teammegarr'){
-    barHtml = teamMegaProgress ? '' : settingsSectionHtml(true, 'generateTeamMegaRR', 'Simulate New Long Team Round Robin');
+    barHtml = teamMegaProgress ? '' : settingsSectionHtml('teammegarr', 'generateTeamMegaRR', 'Simulate New Long Team Round Robin');
     bodyHtml = teamMegaProgress ? progressScreenHtml(teamMegaProgress) : (teamMegaRR ? teamMegaResultsScreenHtml() : teamMegaGeneratorScreenHtml());
   } else {
-    barHtml = settingsSectionHtml(false, null, null);
+    barHtml = settingsSectionHtml('elimination', null, null);
     bodyHtml = tourney ? bracketScreenHtml() : generatorScreenHtml();
   }
   document.getElementById('app').innerHTML = tabsHtml + barHtml + bodyHtml;
@@ -2875,6 +3190,11 @@ document.addEventListener('click', (ev)=>{
   }
   if(action==='toggleSettingsSection'){
     settingsCollapsed = !settingsCollapsed;
+    render();
+    return;
+  }
+  if(action==='setTeamMegaView'){
+    teamMegaView = el.dataset.view;
     render();
     return;
   }
@@ -2947,6 +3267,19 @@ document.addEventListener('change', (ev)=>{
   } else if(ev.target.id === 'teamMegaRobinSelect'){
     teamMegaSelection.robin = parseInt(ev.target.value, 10);
     saveTeamMegaStore();
+    render();
+  } else if(ev.target.id === 'megaRoundCountsInput'){
+    settings.roundRobinCounts = sanitizeRoundCounts(parseRoundCountsInput(ev.target.value), settings.roundRobinCounts);
+    saveStore();
+    render();
+  } else if(ev.target.id === 'teamMegaRoundCountsInput'){
+    settings.teamRoundRobinCounts = sanitizeRoundCounts(parseRoundCountsInput(ev.target.value), settings.teamRoundRobinCounts);
+    saveStore();
+    render();
+  } else if(ev.target.id === 'teamTopNInput'){
+    const n = parseInt(ev.target.value, 10);
+    settings.teamTopNBracket = (Number.isInteger(n) && n >= 2 && n <= 100) ? n : 0;
+    saveStore();
     render();
   }
 });
