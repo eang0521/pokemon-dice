@@ -1,4 +1,4 @@
-# Pokémon Dice
+# Pokémon Roll & Roam
 
 A dice-driven Pokémon region toolkit with a full regional dex, gym leaders, Elite Four, trainer classes, evolution rules on a 1–20 level scale, and an interactive HTML tool for rolling wild encounters, trainer battles, gym leader teams, and browsing the region map and Pokédex.
 

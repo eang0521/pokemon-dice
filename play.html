@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pok&eacute;mon Adventure -- Play</title>
+<title>Pok&eacute;mon Roll &amp; Roam -- Play</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -726,7 +726,7 @@
 <body>
 <div class="sheet">
   <div class="masthead">
-    <span class="brand" id="brandLabel">Pok&eacute;mon Adventure</span>
+    <span class="brand" id="brandLabel">Pok&eacute;mon Roll &amp; Roam</span>
     <span style="display:flex; gap:8px;">
       <a class="nav-link" href="index.html">&larr; Home</a>
       <a class="nav-link" href="field-guide.html">Field Guide</a>
@@ -6661,7 +6661,7 @@ function renderHomeScreen(){
     cards = '<div class="save-slot-card save-slot-empty"><div class="save-slot-meta">No adventures yet -- start one below.</div></div>';
   }
   return '<div class="card">' +
-    '<div class="card-title">Pok&eacute;mon Adventure</div>' +
+    '<div class="card-title">Pok&eacute;mon Roll &amp; Roam</div>' +
     '<div class="card-sub">Your saved adventures</div>' +
     '<div class="choice-grid" style="margin-bottom:10px;"><button type="button" class="btn" data-action="showHowToPlay">How to Play</button></div>' +
     cards +
@@ -6796,12 +6796,12 @@ function renderRegionPickScreen(){
 }
 
 // Page <title> + masthead brand -- region-neutral on the home/region-pick
-// screens, "{Region} Adventure" once a specific region is actually active.
+// screens, "{Region} Roll & Roam" once a specific region is actually active.
 function updateRegionBranding(regionKey, explicitLabel){
   const label = explicitLabel || (regionKey && REGIONS[regionKey] ? REGIONS[regionKey].label : null);
-  document.title = (label ? label + ' Adventure' : 'Pokémon Adventure') + ' -- Play';
+  document.title = (label ? label + ' Roll & Roam' : 'Pokémon Roll & Roam') + ' -- Play';
   const brandEl = document.getElementById('brandLabel');
-  if(brandEl) brandEl.textContent = label ? label + ' Adventure' : 'Pokémon Adventure';
+  if(brandEl) brandEl.textContent = label ? label + ' Roll & Roam' : 'Pokémon Roll & Roam';
 }
 
 function goHome(){
