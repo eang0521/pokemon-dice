@@ -1203,6 +1203,7 @@ function loadGameStateFromSlot(slot){
       if(typeof s.championDefeated !== 'boolean') s.championDefeated = false;
       if(typeof s.teamBuilderExported !== 'boolean') s.teamBuilderExported = false;
       if(!Array.isArray(s.championshipTeam)) s.championshipTeam = null;
+      if(typeof s.lastPlayedAt !== 'number') s.lastPlayedAt = 0; // older saves predate this timestamp
       return s;
     }
   } catch(e){}
@@ -1213,7 +1214,10 @@ function loadGameState(){
     { started:false, region:null, starterSpecies:null, currentNodeId:null, defeatedGymLeaders:[], turnCount:0, eliteFourProgress:null, eliteFourTeamIds:[], challengeModes:{levelCap:false}, championDefeated:false, teamBuilderExported:false, championshipTeam:null };
 }
 function saveGameState(){
-  try { localStorage.setItem(gameKey(), JSON.stringify(gameState)); }
+  try {
+    gameState.lastPlayedAt = Date.now();
+    localStorage.setItem(gameKey(), JSON.stringify(gameState));
+  }
   catch(e){ console.error('Could not save game state', e); }
 }
 let gameState = null; // no active slot until the player picks one on the home screen
@@ -6625,9 +6629,10 @@ function saveSlotTeamHtml(slot){
   return '<div class="save-slot-team">' + top.map(m=>spriteImgHtml(m.name, '')).join('') + '</div>';
 }
 function renderHomeScreen(){
-  const slots = listSaveSlots();
-  let cards = slots.map(slot=>{
-    const gs = loadGameStateFromSlot(slot);
+  const slots = listSaveSlots()
+    .map(slot=>({ slot, gs: loadGameStateFromSlot(slot) }))
+    .sort((a,b)=>(b.gs.lastPlayedAt||0)-(a.gs.lastPlayedAt||0));
+  let cards = slots.map(({slot, gs})=>{
     const regionLabel = regionLabelFor(gs);
     const locName = nodeDisplayNameInRegion(gs.region, gs.currentNodeId, slot);
     const badges = (gs.defeatedGymLeaders||[]).length;
@@ -6658,14 +6663,14 @@ function renderHomeScreen(){
       '</div>';
   }).join('');
   if(!cards){
-    cards = '<div class="save-slot-card save-slot-empty"><div class="save-slot-meta">No adventures yet -- start one below.</div></div>';
+    cards = '<div class="save-slot-card save-slot-empty"><div class="save-slot-meta">No adventures yet -- start one above.</div></div>';
   }
   return '<div class="card">' +
     '<div class="card-title">Pok&eacute;mon Roll &amp; Roam</div>' +
     '<div class="card-sub">Your saved adventures</div>' +
     '<div class="choice-grid" style="margin-bottom:10px;"><button type="button" class="btn" data-action="showHowToPlay">How to Play</button></div>' +
+    '<div class="choice-grid" style="margin-bottom:10px;"><button type="button" class="btn btn-primary" data-action="createNewAdventure">Start New Adventure</button></div>' +
     cards +
-    '<div class="choice-grid" style="margin-top:10px;"><button type="button" class="btn btn-primary" data-action="createNewAdventure">Start New Adventure</button></div>' +
   '</div>';
 }
 
