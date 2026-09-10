@@ -1736,7 +1736,9 @@ function buildGameMap(){
 // occupy. `dice` is the basic form's own die-face stat block (HP/Atk/Def/
 // SpA/SpD/Spe), same convention as STARTERS_BY_REGION's species use via
 // DATA.dice.
-const STARTER_LINE_POOL = [
+// let, not const: temporarily swapped for AMFAP_STARTER_LINE_POOL during an
+// AMFAP-seeded custom region's generation/render (see withAmfapDex below).
+let STARTER_LINE_POOL = [
   { basic:'Bulbasaur', stage1:'Ivysaur', stage2:'Venusaur', lvl1:5, lvl2:9, t1:'Grass', t2:'Poison', dice:[3,3,3,4,4,3] },
   { basic:'Charmander', stage1:'Charmeleon', stage2:'Charizard', lvl1:5, lvl2:10, t1:'Fire', t2:null, dice:[2,3,2,3,3,4] },
   { basic:'Squirtle', stage1:'Wartortle', stage2:'Blastoise', lvl1:5, lvl2:10, t1:'Water', t2:null, dice:[3,3,4,3,4,2] },
@@ -1825,7 +1827,8 @@ function pickRandomStarterLines(){
 // species additionally excluded here (they stay hand-placed, not randomly tabled; see
 // LEGENDARY_MYTHICAL_EXCLUDED below for the full list). Species -> [type1, type2 or
 // null, HP, Atk, Def, SpA, SpD, Spe] (die-face stats, same convention as STARTER_LINE_POOL).
-const NATIONAL_DEX = {
+// let, not const: temporarily swapped for AMFAP_NATIONAL_DEX (see withAmfapDex).
+let NATIONAL_DEX = {
   "Gothita":["Psychic",null,3,2,3,3,4,3],
   "Taillow":["Normal","Flying",2,3,2,2,2,5],
   "Drizzile":["Water",null,4,3,3,5,3,5],
@@ -2703,7 +2706,8 @@ const NATIONAL_DEX = {
 // list of [name, stage] pairs -- stage 0 = basic, 1 = first evolution, 2 = second (matches
 // the +0/+3/+7 sort bonus in sortAndFillTable()). Species not appearing in any family here
 // (and not in NATIONAL_DEX) are Legendary/Mythical and excluded from random dex population.
-const EVOLUTION_FAMILIES = [
+// let, not const: temporarily swapped for AMFAP_EVOLUTION_FAMILIES (see withAmfapDex).
+let EVOLUTION_FAMILIES = [
   [["Bulbasaur",0],["Ivysaur",1],["Venusaur",2]],
   [["Charmander",0],["Charmeleon",1],["Charizard",2]],
   [["Squirtle",0],["Wartortle",1],["Blastoise",2]],
@@ -3137,7 +3141,8 @@ const EVOLUTION_FAMILIES = [
 // Solgaleo/Lunala, Urshifu, Silvally, Melmetal, Naganadel) are omitted here --
 // only their catchable base form (Cosmog/Kubfu/Type: Null/Meltan/Poipole) is a
 // placeable candidate; the player evolves it normally from there.
-const LEGENDARY_DEX = {
+// let, not const: temporarily swapped for AMFAP_LEGENDARY_DEX (see withAmfapDex).
+let LEGENDARY_DEX = {
   "Articuno":["Ice","Flying",5,5,6,5,7,5],
   "Zapdos":["Electric","Flying",5,5,5,7,5,6],
   "Moltres":["Fire","Flying",5,6,5,7,5,5],
@@ -3269,7 +3274,8 @@ const LEGENDARY_DEX = {
 // canonical duos/trios/quads first, then every remaining species solo. Used by
 // placeLegendariesInDungeons() to fill the reserved 12-slot of every standalone
 // (non-town-attached) dungeon at the start of region generation.
-const LEGENDARY_GROUPS = [
+// let, not const: temporarily swapped for AMFAP_LEGENDARY_GROUPS (see withAmfapDex).
+let LEGENDARY_GROUPS = [
   ["Articuno","Zapdos","Moltres"],
   ["Raikou","Entei","Suicune"],
   ["Regirock","Regice","Registeel"],
@@ -4419,7 +4425,8 @@ function assignGymTowns(region, gyms){
 // so trainer/gym/wild resolution knows when the evolved form becomes
 // eligible) is computed at region-generation time via the doc's own buffer
 // rule -- see synthesizeEvolutionData() below.
-const NATIONAL_EVOLUTION_DATA = {
+// let, not const: temporarily swapped for AMFAP_NATIONAL_EVOLUTION_DATA (see withAmfapDex).
+let NATIONAL_EVOLUTION_DATA = {
   "Bulbasaur": [{into:"Ivysaur", method:"Level 5"}],
   "Ivysaur": [{into:"Venusaur", method:"Level 9"}],
   "Charmander": [{into:"Charmeleon", method:"Level 5"}],
@@ -5440,6 +5447,646 @@ function buildPlayableCustomRegionData(region){
   return { data, label };
 }
 
+// ---- AMFAP data (generated from Pokemon_Roster.xlsx) ----
+const AMFAP_STARTER_LINE_POOL = [
+  { basic:"Lindorn", stage1:"Yveldran", stage2:"Thorndrake", lvl1:5, lvl2:10, t1:"Grass", t2:"Dragon", dice:[4,4,3,3,2,3] },
+  { basic:"Emerhen", stage1:"Embercrow", stage2:"Emberstrix", lvl1:5, lvl2:10, t1:"Fire", t2:null, dice:[3,4,2,4,3,3] },
+  { basic:"Jelicot", stage1:"Javelcrest", stage2:"Jugercoat", lvl1:5, lvl2:10, t1:"Water", t2:null, dice:[4,3,3,3,3,3] },
+];
+
+const AMFAP_NATIONAL_DEX = {
+  "Oddikin":["Normal",null,3,2,2,2,3,1],
+  "Longleg":["Normal",null,5,5,5,3,4,3],
+  "Hallolisk":["Ghost",null,2,4,3,5,5,3],
+  "Ethefen":["Poison",null,3,4,2,2,4,3],
+  "Hazefang":["Poison",null,5,6,3,2,6,5],
+  "Espefrox":["Psychic",null,3,2,2,4,3,3],
+  "Telefrax":["Psychic","Rock",4,4,3,6,3,5],
+  "Lividirth":["Ghost",null,1,3,3,4,3,2],
+  "Crysfaunt":["Ghost",null,3,5,4,6,4,3],
+  "Coaltrix":["Dark","Fairy",3,2,2,4,2,6],
+  "Coventrix":["Dark","Fairy",5,3,4,4,4,9],
+  "Jorageist":["Ghost",null,3,5,3,4,4,4],
+  "Ripkick":["Fighting",null,4,5,6,2,3,3],
+  "Rowdrex":["Fighting",null,7,6,8,2,3,4],
+  "Noverin":["Normal","Psychic",3,2,4,6,4,4],
+  "Neusravar":["Normal","Psychic",3,4,5,7,5,4],
+  "Aquahen":["Water",null,4,3,4,5,5,3],
+  "Aquavastrider":["Water","Normal",5,4,6,6,7,5],
+  "Coralanth":["Water","Dragon",5,5,4,4,5,4],
+  "Kalucid":["Psychic",null,3,3,4,6,4,4],
+  "Aphyrid":["Bug",null,4,4,5,4,4,5],
+  "Merscry":["Water","Psychic",3,2,2,4,3,3],
+  "Aquacrys":["Water","Psychic",5,3,3,7,4,4],
+  "Bralkin":["Dark","Fighting",4,7,5,3,3,4],
+  "Ashenston":["Rock",null,4,6,8,3,6,2],
+  "Jayestorm":["Ice",null,3,4,4,3,4,5],
+  "Gobjinx":["Normal","Poison",4,6,5,4,5,2],
+  "Basaltlon":["Rock",null,4,5,6,3,6,1],
+  "Brachmind":["Psychic",null,2,1,3,5,3,3],
+  "Brighmind":["Psychic","Fire",3,3,4,8,4,4],
+  "Ivoroot":["Grass",null,1,3,3,4,4,2],
+  "Vinetross":["Grass","Ground",3,6,7,8,5,3],
+  "Hemlpod":["Grass","Poison",4,4,4,5,5,2],
+  "Molluk":["Normal",null,4,3,2,2,1,1],
+  "Amblelope":["Normal",null,6,5,4,3,3,3],
+  "Gloamat":["Dark",null,2,4,2,3,2,2],
+  "Noctara":["Dark","Psychic",4,5,2,4,3,4],
+  "Astralay":["Dark","Psychic",5,7,2,6,4,5],
+  "Jaeshroud":["Ice","Psychic",3,3,3,5,5,4],
+  "Glisteryn":["Water","Psychic",4,3,4,6,4,4],
+  "Jarrow":["Flying",null,3,4,2,3,1,5],
+  "Jetoraven":["Flying",null,4,6,4,5,2,7],
+  "Lachrur":["Grass",null,3,2,3,3,4,2],
+  "Loamdeer":["Grass","Normal",4,3,4,5,7,3],
+  "Jabdorn":["Fighting",null,6,7,5,2,5,4],
+  "Nibmurl":["Fighting",null,4,4,3,2,3,1],
+  "Nectomaul":["Fighting","Poison",6,5,4,3,5,1],
+  "Noxsomaster":["Fighting","Poison",8,6,6,4,6,2],
+  "Loomwurm":["Poison",null,3,3,2,2,5,3],
+  "Lurkwyrm":["Poison","Dragon",4,5,3,3,6,3],
+  "Lividwyrm":["Poison","Dragon",5,7,4,5,6,4],
+  "Yolkmir":["Water",null,3,3,3,3,3,4],
+  "Squamere":["Water","Flying",5,4,5,4,3,6],
+  "Jorox":["Poison",null,3,3,4,3,4,3],
+  "Jugadirge":["Poison","Ground",4,5,5,5,7,4],
+  "Jaedust":["Dark","Poison",4,5,4,4,3,4],
+  "Aquagil":["Water",null,3,3,3,3,2,3],
+  "Abyssgale":["Water",null,5,4,5,4,4,4],
+  "Sapheed":["Grass",null,2,0,3,1,4,3],
+  "Seedsharrow":["Grass",null,3,1,5,4,5,5],
+  "Kryspin":["Ice",null,3,3,3,4,4,3],
+  "Krypnox":["Ice","Dark",3,4,5,5,6,3],
+  "Jausbrisk":["Ice",null,4,4,4,5,3,3],
+  "Broibin":["Normal","Flying",4,4,2,3,3,4],
+  "Broadmswing":["Normal","Flying",6,5,3,4,4,6],
+  "Rufflar":["Bug",null,2,3,4,2,2,2],
+  "Grubfort":["Bug","Rock",4,7,8,5,4,5],
+  "Ursteel":["Steel",null,3,3,5,4,4,2],
+  "Jamweld":["Steel",null,4,4,7,4,5,3],
+  "Eerwisp":["Ghost",null,3,3,3,4,3,2],
+  "Echoswraith":["Ghost",null,5,6,4,5,5,5],
+  "Unarspike":["Bug","Electric",2,3,3,3,3,4],
+  "Starstung":["Bug","Electric",4,5,3,4,5,5],
+  "Nubmole":["Ground",null,2,3,3,2,3,2],
+  "Nomadmound":["Ground",null,4,4,5,3,5,3],
+  "Novaburn":["Fire","Poison",3,4,4,4,3,4],
+  "Noxablaze":["Fire","Poison",4,5,6,5,5,5],
+  "Bramlin":["Normal",null,5,4,4,2,3,4],
+  "Blizbomb":["Normal","Ice",6,6,6,2,3,5],
+  "Barajelly":["Bug",null,3,2,2,2,2,2],
+  "Buzzjet":["Bug","Flying",6,6,4,4,5,6],
+  "Nurkle":["Grass",null,3,3,3,3,4,2],
+  "Nettleknock":["Grass","Fighting",5,6,4,5,7,2],
+  "Mirachollow":["Ice",null,4,4,3,5,5,4],
+  "Roadmblit":["Normal",null,4,3,3,3,4,4],
+  "Roadmwing":["Normal","Flying",5,3,5,4,5,5],
+  "Hemspark":["Fire",null,2,4,2,4,3,2],
+  "Heatpyre":["Fire",null,4,6,2,7,4,3],
+  "Duskara":["Psychic",null,2,3,2,5,2,3],
+  "Dremhex":["Psychic",null,3,4,3,8,4,4],
+  "Corrus":["Normal",null,6,5,4,3,4,4],
+  "Charmbell":["Fairy",null,4,2,6,5,5,4],
+  "Muaodrift":["Ground",null,6,6,5,3,3,3],
+  "Murkpool":["Water",null,5,3,3,3,4,4],
+  "Mistphant":["Water","Ghost",7,4,4,4,4,6],
+  "Palpip":["Normal",null,5,4,4,2,3,5],
+  "Jellow":["Fairy",null,5,1,6,6,7,4],
+  "Aquilet":["Water","Flying",3,3,3,3,2,3],
+  "Kelplume":["Water","Flying",5,5,5,4,4,5],
+  "Kroaywing":["Dark","Flying",4,5,3,4,2,5],
+  "Nocyl":["Dark",null,3,3,2,2,1,3],
+  "Abyslure":["Dark","Ghost",5,5,5,4,2,6],
+  "Amaseed":["Grass","Fairy",3,3,3,4,6,3],
+  "Corsage":["Grass","Fairy",6,4,4,5,7,4],
+  "Nerisol":["Water",null,5,4,4,4,4,4],
+  "Jaglet":["Rock",null,3,3,5,3,3,0],
+  "Jabrick":["Rock","Fighting",5,3,7,4,3,0],
+  "Jawesmauler":["Rock","Fighting",7,5,8,5,4,1],
+  "Jasamound":["Rock",null,3,3,5,2,3,1],
+  "Jademurk":["Rock","Poison",4,4,6,2,5,1],
+  "Jaggmire":["Rock","Poison",5,6,10,3,5,1],
+  "Amblemoth":["Grass","Bug",4,4,3,5,3,3],
+  "Drifgil":["Water",null,3,3,3,6,4,2],
+  "Undinar":["Water","Grass",4,4,3,7,5,2],
+  "Aqualaria":["Water","Grass",5,5,4,9,5,3],
+  "Ivorgale":["Dragon",null,4,3,3,3,3,2],
+  "Levinorn":["Dragon","Electric",4,4,3,6,3,4],
+  "Eldrake":["Dragon","Electric",6,5,4,7,5,6],
+  "Tinark":["Bug","Steel",3,3,3,3,3,2],
+  "Tinhale":["Bug","Steel",3,4,4,5,5,2],
+  "Thornarmor":["Bug","Steel",4,6,7,5,7,3],
+  "Jungrub":["Bug",null,2,4,3,2,1,4],
+  "Jadenymph":["Bug","Water",2,5,5,2,2,6],
+  "Jadwasp":["Bug","Water",3,7,7,3,3,9],
+  "Nimglow":["Electric",null,2,2,4,3,2,2],
+  "Incantor":["Electric","Fire",3,2,4,4,4,4],
+  "Fulgarox":["Electric","Fire",4,4,4,7,6,7],
+  "Noogle":["Psychic",null,2,2,2,3,2,3],
+  "Enchantra":["Psychic","Fairy",3,3,3,4,3,4],
+  "Beldaura":["Psychic","Fairy",5,4,3,5,6,5],
+  "Rillhorn":["Water",null,4,3,3,5,4,3],
+  "Deltasilt":["Water","Ground",6,5,5,6,6,4],
+  "Everhush":["Grass",null,2,2,3,4,3,4],
+  "Petalsprout":["Grass",null,4,2,5,5,4,6],
+  "Draskin":["Dragon",null,2,4,4,3,3,2],
+  "Duneslash":["Dragon","Fighting",4,4,5,4,4,3],
+  "Dreadslash":["Dragon","Fighting",6,7,6,5,4,4],
+  "Mystcriss":["Electric","Fairy",2,1,3,3,2,3],
+  "Mierabolt":["Electric","Fairy",2,3,5,5,3,3],
+  "Eloramancer":["Electric","Fairy",4,4,7,7,5,4],
+  "Raemper":["Electric",null,3,1,3,4,2,4],
+  "Raemurk":["Electric","Dark",3,1,4,5,3,7],
+  "Raidmourn":["Electric","Dark",4,2,6,7,4,8],
+  "Ohmit":["Electric",null,2,2,2,4,3,3],
+  "Odiaumspark":["Electric","Ghost",3,4,2,5,4,4],
+  "Oblimort":["Electric","Ghost",3,5,5,5,5,5],
+  "Lininx":["Electric","Flying",1,3,2,3,2,4],
+  "Yawhirl":["Electric","Flying",2,4,3,4,3,6],
+  "Razorclap":["Electric","Flying",3,4,5,6,4,10],
+  "Halacyeon":["Water",null,2,3,3,5,3,3],
+  "Halarcytide":["Water",null,4,4,5,7,4,3],
+  "Herbrick":["Grass",null,2,2,3,5,3,1],
+  "Holowreed":["Grass","Water",4,3,4,6,3,1],
+  "Heronrush":["Grass","Water",5,4,5,8,5,2],
+  "Yarrow":["Ghost",null,2,2,3,3,2,2],
+  "Mounrier":["Ghost","Flying",5,3,4,4,3,4],
+  "Cognicore":["Psychic",null,3,3,2,5,5,3],
+  "Cortxcrag":["Psychic","Rock",5,5,3,8,7,3],
+  "Emberhawk":["Fire","Fighting",3,3,3,3,3,5],
+  "Jabrecinder":["Fire","Fighting",4,5,4,4,4,6],
+  "Islecoot":["Water","Ground",5,2,3,3,3,4],
+  "Islecraig":["Water","Ground",7,3,6,4,3,4],
+  "Everclove":["Grass",null,3,4,4,4,5,2],
+  "Ashensear":["Fire",null,2,5,3,3,2,4],
+  "Magmasear":["Fire",null,3,6,4,4,3,6],
+  "Clawick":["Fighting",null,4,6,3,1,0,3],
+  "Crownwrath":["Fighting",null,6,8,4,2,2,3],
+  "Cascalm":["Water",null,6,4,3,4,4,4],
+  "Zigjasp":["Rock",null,4,2,4,1,3,1],
+  "Zestjagon":["Rock","Grass",6,3,6,2,3,2],
+  "Zealajagger":["Rock","Grass",8,5,8,3,4,3],
+  "Kilnroar":["Fire",null,3,4,3,5,3,4],
+  "Kilncrawl":["Fire","Bug",4,6,5,7,4,7],
+  "Aelfaroot":["Grass",null,4,3,3,3,3,3],
+  "Nectarune":["Grass","Psychic",5,5,5,5,4,5],
+  "Oreamound":["Ground",null,5,4,5,3,2,2],
+  "Rockemarrow":["Ground",null,7,7,6,4,4,4],
+  "Cognigaze":["Psychic",null,3,3,3,6,6,4],
+  "Jinxsnare":["Dark","Poison",4,3,4,6,4,5],
+  "Jigaforge":["Steel",null,3,5,8,5,6,2],
+  "Jotronic":["Electric","Steel",6,5,6,5,3,5],
+  "Everlash":["Normal","Fire",5,4,5,4,5,6],
+  "Meadwpuff":["Normal","Flying",5,5,2,5,4,6],
+  "Lindorn":["Grass","Dragon",4,4,3,3,2,3],
+  "Yveldran":["Grass","Dragon",6,4,4,4,3,3],
+  "Thorndrake":["Grass","Dragon",7,6,5,6,4,4],
+  "Emerhen":["Fire",null,3,4,2,4,3,3],
+  "Embercrow":["Fire","Flying",3,4,5,4,5,3],
+  "Emberstrix":["Fire","Flying",5,4,5,6,7,5],
+  "Jelicot":["Water",null,4,3,3,3,3,3],
+  "Javelcrest":["Water","Steel",5,4,4,4,4,3],
+  "Jugercoat":["Water","Steel",5,5,6,6,6,4],
+};
+
+const AMFAP_EVOLUTION_FAMILIES = [
+  [["Oddikin",0],["Longleg",1]],
+  [["Hallolisk",0]],
+  [["Ethefen",0],["Hazefang",1]],
+  [["Espefrox",0],["Telefrax",1]],
+  [["Lividirth",0],["Crysfaunt",1]],
+  [["Coaltrix",0],["Coventrix",1]],
+  [["Jorageist",0]],
+  [["Ripkick",0],["Rowdrex",1]],
+  [["Noverin",0],["Neusravar",1]],
+  [["Aquahen",0],["Aquavastrider",1]],
+  [["Coralanth",0]],
+  [["Kalucid",0]],
+  [["Aphyrid",0]],
+  [["Merscry",0],["Aquacrys",1]],
+  [["Bralkin",0]],
+  [["Ashenston",0]],
+  [["Jayestorm",0]],
+  [["Gobjinx",0]],
+  [["Basaltlon",0]],
+  [["Brachmind",0],["Brighmind",1]],
+  [["Ivoroot",0],["Vinetross",1]],
+  [["Hemlpod",0]],
+  [["Molluk",0],["Amblelope",1]],
+  [["Gloamat",0],["Noctara",1],["Astralay",2]],
+  [["Jaeshroud",0]],
+  [["Glisteryn",0]],
+  [["Jarrow",0],["Jetoraven",1]],
+  [["Lachrur",0],["Loamdeer",1]],
+  [["Jabdorn",0]],
+  [["Nibmurl",0],["Nectomaul",1],["Noxsomaster",2]],
+  [["Loomwurm",0],["Lurkwyrm",1],["Lividwyrm",2]],
+  [["Yolkmir",0],["Squamere",1]],
+  [["Jorox",0],["Jugadirge",1]],
+  [["Jaedust",0]],
+  [["Aquagil",0],["Abyssgale",1]],
+  [["Sapheed",0],["Seedsharrow",1]],
+  [["Kryspin",0],["Krypnox",1]],
+  [["Jausbrisk",0]],
+  [["Broibin",0],["Broadmswing",1]],
+  [["Rufflar",0],["Grubfort",1]],
+  [["Ursteel",0],["Jamweld",1]],
+  [["Eerwisp",0],["Echoswraith",1]],
+  [["Unarspike",0],["Starstung",1]],
+  [["Nubmole",0],["Nomadmound",1]],
+  [["Novaburn",0],["Noxablaze",1]],
+  [["Bramlin",0],["Blizbomb",1]],
+  [["Barajelly",0],["Buzzjet",1]],
+  [["Nurkle",0],["Nettleknock",1]],
+  [["Mirachollow",0]],
+  [["Roadmblit",0],["Roadmwing",1]],
+  [["Hemspark",0],["Heatpyre",1]],
+  [["Duskara",0],["Dremhex",1]],
+  [["Corrus",0]],
+  [["Charmbell",0]],
+  [["Muaodrift",0]],
+  [["Murkpool",0],["Mistphant",1]],
+  [["Palpip",0]],
+  [["Jellow",0]],
+  [["Aquilet",0],["Kelplume",1]],
+  [["Kroaywing",0]],
+  [["Nocyl",0],["Abyslure",1]],
+  [["Amaseed",0],["Corsage",1]],
+  [["Nerisol",0]],
+  [["Jaglet",0],["Jabrick",1],["Jawesmauler",2]],
+  [["Jasamound",0],["Jademurk",1],["Jaggmire",2]],
+  [["Amblemoth",0]],
+  [["Drifgil",0],["Undinar",1],["Aqualaria",2]],
+  [["Ivorgale",0],["Levinorn",1],["Eldrake",2]],
+  [["Tinark",0],["Tinhale",1],["Thornarmor",2]],
+  [["Jungrub",0],["Jadenymph",1],["Jadwasp",2]],
+  [["Nimglow",0],["Incantor",1],["Fulgarox",2]],
+  [["Noogle",0],["Enchantra",1],["Beldaura",2]],
+  [["Rillhorn",0],["Deltasilt",1]],
+  [["Everhush",0],["Petalsprout",1]],
+  [["Draskin",0],["Duneslash",1],["Dreadslash",2]],
+  [["Mystcriss",0],["Mierabolt",1],["Eloramancer",2]],
+  [["Raemper",0],["Raemurk",1],["Raidmourn",2]],
+  [["Ohmit",0],["Odiaumspark",1],["Oblimort",2]],
+  [["Lininx",0],["Yawhirl",1],["Razorclap",2]],
+  [["Halacyeon",0],["Halarcytide",1]],
+  [["Herbrick",0],["Holowreed",1],["Heronrush",2]],
+  [["Yarrow",0],["Mounrier",1]],
+  [["Cognicore",0],["Cortxcrag",1]],
+  [["Emberhawk",0],["Jabrecinder",1]],
+  [["Islecoot",0],["Islecraig",1]],
+  [["Everclove",0]],
+  [["Ashensear",0],["Magmasear",1]],
+  [["Clawick",0],["Crownwrath",1]],
+  [["Cascalm",0]],
+  [["Zigjasp",0],["Zestjagon",1],["Zealajagger",2]],
+  [["Kilnroar",0],["Kilncrawl",1]],
+  [["Aelfaroot",0],["Nectarune",1]],
+  [["Oreamound",0],["Rockemarrow",1]],
+  [["Cognigaze",0]],
+  [["Jinxsnare",0]],
+  [["Jigaforge",0]],
+  [["Jotronic",0]],
+  [["Everlash",0]],
+  [["Meadwpuff",0]],
+  [["Lindorn",0],["Yveldran",1],["Thorndrake",2]],
+  [["Emerhen",0],["Embercrow",1],["Emberstrix",2]],
+  [["Jelicot",0],["Javelcrest",1],["Jugercoat",2]],
+];
+
+const AMFAP_NATIONAL_EVOLUTION_DATA = {
+  "Oddikin": [{into:"Longleg", method:"Level 5"}],
+  "Ethefen": [{into:"Hazefang", method:"Friendship"}],
+  "Espefrox": [{into:"Telefrax", method:"Friendship"}],
+  "Lividirth": [{into:"Crysfaunt", method:"Friendship"}],
+  "Coaltrix": [{into:"Coventrix", method:"Friendship"}],
+  "Ripkick": [{into:"Rowdrex", method:"Linking Cord"}],
+  "Noverin": [{into:"Neusravar", method:"Linking Cord"}],
+  "Aquahen": [{into:"Aquavastrider", method:"Level 9"}],
+  "Merscry": [{into:"Aquacrys", method:"Level 6"}],
+  "Brachmind": [{into:"Brighmind", method:"Level 6"}],
+  "Ivoroot": [{into:"Vinetross", method:"Level 7"}],
+  "Molluk": [{into:"Amblelope", method:"Level 5"}],
+  "Gloamat": [{into:"Noctara", method:"Level 7"}],
+  "Noctara": [{into:"Astralay", method:"Moon Stone"}],
+  "Jarrow": [{into:"Jetoraven", method:"Friendship"}],
+  "Lachrur": [{into:"Loamdeer", method:"Level 7"}],
+  "Nibmurl": [{into:"Nectomaul", method:"Level 7"}],
+  "Nectomaul": [{into:"Noxsomaster", method:"Level 11"}],
+  "Loomwurm": [{into:"Lurkwyrm", method:"Level 7"}],
+  "Lurkwyrm": [{into:"Lividwyrm", method:"Level 11"}],
+  "Yolkmir": [{into:"Squamere", method:"Level 8"}],
+  "Jorox": [{into:"Jugadirge", method:"Level 10"}],
+  "Aquagil": [{into:"Abyssgale", method:"Level 6"}],
+  "Sapheed": [{into:"Seedsharrow", method:"Level 4"}],
+  "Kryspin": [{into:"Krypnox", method:"Moon Stone"}],
+  "Broibin": [{into:"Broadmswing", method:"Level 7"}],
+  "Rufflar": [{into:"Grubfort", method:"Level 10"}],
+  "Ursteel": [{into:"Jamweld", method:"Level 6"}],
+  "Eerwisp": [{into:"Echoswraith", method:"Level 8"}],
+  "Unarspike": [{into:"Starstung", method:"Friendship"}],
+  "Nubmole": [{into:"Nomadmound", method:"Level 5"}],
+  "Novaburn": [{into:"Noxablaze", method:"Linking Cord"}],
+  "Bramlin": [{into:"Blizbomb", method:"Linking Cord"}],
+  "Barajelly": [{into:"Buzzjet", method:"Level 9"}],
+  "Nurkle": [{into:"Nettleknock", method:"Level 8"}],
+  "Roadmblit": [{into:"Roadmwing", method:"Level 6"}],
+  "Hemspark": [{into:"Heatpyre", method:"Level 7"}],
+  "Duskara": [{into:"Dremhex", method:"Level 7"}],
+  "Murkpool": [{into:"Mistphant", method:"Linking Cord"}],
+  "Aquilet": [{into:"Kelplume", method:"Level 7"}],
+  "Nocyl": [{into:"Abyslure", method:"Level 7"}],
+  "Amaseed": [{into:"Corsage", method:"Leaf Stone"}],
+  "Jaglet": [{into:"Jabrick", method:"Level 7"}],
+  "Jabrick": [{into:"Jawesmauler", method:"Level 10"}],
+  "Jasamound": [{into:"Jademurk", method:"Level 7"}],
+  "Jademurk": [{into:"Jaggmire", method:"Level 10"}],
+  "Drifgil": [{into:"Undinar", method:"Level 7"}],
+  "Undinar": [{into:"Aqualaria", method:"Linking Cord"}],
+  "Ivorgale": [{into:"Levinorn", method:"Level 8"}],
+  "Levinorn": [{into:"Eldrake", method:"Level 12"}],
+  "Tinark": [{into:"Tinhale", method:"Level 7"}],
+  "Tinhale": [{into:"Thornarmor", method:"Level 11"}],
+  "Jungrub": [{into:"Jadenymph", method:"Level 6"}],
+  "Jadenymph": [{into:"Jadwasp", method:"Level 10"}],
+  "Nimglow": [{into:"Incantor", method:"Level 5"}],
+  "Incantor": [{into:"Fulgarox", method:"Level 9"}],
+  "Noogle": [{into:"Enchantra", method:"Level 4"}],
+  "Enchantra": [{into:"Beldaura", method:"Level 8"}],
+  "Rillhorn": [{into:"Deltasilt", method:"Friendship"}],
+  "Everhush": [{into:"Petalsprout", method:"Level 7"}],
+  "Draskin": [{into:"Duneslash", method:"Level 8"}],
+  "Duneslash": [{into:"Dreadslash", method:"Level 11"}],
+  "Mystcriss": [{into:"Mierabolt", method:"Level 7"}],
+  "Mierabolt": [{into:"Eloramancer", method:"Level 10"}],
+  "Raemper": [{into:"Raemurk", method:"Level 7"}],
+  "Raemurk": [{into:"Raidmourn", method:"Thunder Stone"}],
+  "Ohmit": [{into:"Odiaumspark", method:"Level 7"}],
+  "Odiaumspark": [{into:"Oblimort", method:"Thunder Stone"}],
+  "Lininx": [{into:"Yawhirl", method:"Level 7"}],
+  "Yawhirl": [{into:"Razorclap", method:"Level 10"}],
+  "Halacyeon": [{into:"Halarcytide", method:"Water Stone"}],
+  "Herbrick": [{into:"Holowreed", method:"Level 6"}],
+  "Holowreed": [{into:"Heronrush", method:"Leaf Stone"}],
+  "Yarrow": [{into:"Mounrier", method:"Level 7"}],
+  "Cognicore": [{into:"Cortxcrag", method:"Level 9"}],
+  "Emberhawk": [{into:"Jabrecinder", method:"Fire Stone"}],
+  "Islecoot": [{into:"Islecraig", method:"Water Stone"}],
+  "Ashensear": [{into:"Magmasear", method:"Fire Stone"}],
+  "Clawick": [{into:"Crownwrath", method:"Level 6"}],
+  "Zigjasp": [{into:"Zestjagon", method:"Level 5"}],
+  "Zestjagon": [{into:"Zealajagger", method:"Level 9"}],
+  "Kilnroar": [{into:"Kilncrawl", method:"Level 11"}],
+  "Aelfaroot": [{into:"Nectarune", method:"Level 8"}],
+  "Oreamound": [{into:"Rockemarrow", method:"Level 10"}],
+  "Lindorn": [{into:"Yveldran", method:"Level 5"}],
+  "Yveldran": [{into:"Thorndrake", method:"Level 10"}],
+  "Emerhen": [{into:"Embercrow", method:"Level 5"}],
+  "Embercrow": [{into:"Emberstrix", method:"Level 10"}],
+  "Jelicot": [{into:"Javelcrest", method:"Level 5"}],
+  "Javelcrest": [{into:"Jugercoat", method:"Level 10"}],
+};
+
+const AMFAP_LEGENDARY_DEX = {
+  "Junkarmor":["Steel","Ground",7,8,10,3,6,4],
+  "Mithirlore":["Steel","Fairy",6,5,8,7,8,5],
+  "Karstdrake":["Ground","Dragon",7,8,7,6,6,5],
+  "Jettascorch":["Fire","Dragon",6,6,5,7,6,8],
+  "Zenithorn":["Rock","Dragon",6,7,7,6,7,5],
+  "Javelloy":["Flying","Steel",6,6,8,6,6,6],
+  "Aerocoon":["Bug","Flying",5,7,5,6,6,8],
+  "Duskgnat":["Normal","Bug",7,7,6,5,6,6],
+};
+
+const AMFAP_LEGENDARY_GROUPS = [
+  ["Junkarmor"],
+  ["Mithirlore"],
+  ["Karstdrake"],
+  ["Jettascorch"],
+  ["Zenithorn"],
+  ["Javelloy"],
+  ["Aerocoon"],
+  ["Duskgnat"],
+];
+// ---- AMFAP fixed map grid (generated from the given ASCII map) ----
+const AMFAP_FIXED_TILES = [
+  {x:2,y:0,kind:"dungeon",finalId:"D1"},
+  {x:3,y:0,kind:"route",finalId:"6a"},
+  {x:4,y:0,kind:"route",finalId:"6b"},
+  {x:5,y:0,kind:"route",finalId:"6c"},
+  {x:6,y:0,kind:"town",finalId:"T1",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:16,y:0,kind:"town",finalId:"T2",isCentral:false,isEliteFour:true,hasDungeon:false},
+  {x:0,y:1,kind:"town",finalId:"T3",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:1,y:1,kind:"route",finalId:"4"},
+  {x:2,y:1,kind:"route",finalId:"5a"},
+  {x:6,y:1,kind:"route",finalId:"7a"},
+  {x:7,y:1,kind:"route",finalId:"10"},
+  {x:8,y:1,kind:"dungeon",finalId:"D2"},
+  {x:9,y:1,kind:"route",finalId:"14a"},
+  {x:10,y:1,kind:"route",finalId:"14b"},
+  {x:11,y:1,kind:"town",finalId:"T4",isCentral:false,isEliteFour:false,hasDungeon:true,dungeonFinalId:"D3"},
+  {x:12,y:1,kind:"route",finalId:"23a"},
+  {x:13,y:1,kind:"route",finalId:"23b"},
+  {x:14,y:1,kind:"town",finalId:"T5",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:15,y:1,kind:"route",finalId:"24"},
+  {x:16,y:1,kind:"dungeon",finalId:"D4"},
+  {x:0,y:2,kind:"route",finalId:"3a"},
+  {x:2,y:2,kind:"route",finalId:"5b"},
+  {x:6,y:2,kind:"route",finalId:"7b"},
+  {x:8,y:2,kind:"route",finalId:"11a"},
+  {x:11,y:2,kind:"route",finalId:"15a"},
+  {x:14,y:2,kind:"route",finalId:"22a"},
+  {x:0,y:3,kind:"route",finalId:"3b"},
+  {x:2,y:3,kind:"dungeon",finalId:"D5"},
+  {x:3,y:3,kind:"route",finalId:"9"},
+  {x:4,y:3,kind:"town",finalId:"T6",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:5,y:3,kind:"route",finalId:"8"},
+  {x:6,y:3,kind:"dungeon",finalId:"D6"},
+  {x:8,y:3,kind:"route",finalId:"11b"},
+  {x:11,y:3,kind:"route",finalId:"15b"},
+  {x:14,y:3,kind:"route",finalId:"22b"},
+  {x:0,y:4,kind:"route",finalId:"3c"},
+  {x:4,y:4,kind:"route",finalId:"13a"},
+  {x:8,y:4,kind:"route",finalId:"11c"},
+  {x:11,y:4,kind:"route",finalId:"15c"},
+  {x:14,y:4,kind:"route",finalId:"22c"},
+  {x:0,y:5,kind:"route",finalId:"3d"},
+  {x:4,y:5,kind:"route",finalId:"13b"},
+  {x:8,y:5,kind:"route",finalId:"11d"},
+  {x:11,y:5,kind:"route",finalId:"15d"},
+  {x:14,y:5,kind:"route",finalId:"22d"},
+  {x:0,y:6,kind:"town",finalId:"T7",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:1,y:6,kind:"route",finalId:"2a"},
+  {x:2,y:6,kind:"route",finalId:"2b"},
+  {x:3,y:6,kind:"route",finalId:"2c"},
+  {x:4,y:6,kind:"town",finalId:"T8",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:5,y:6,kind:"route",finalId:"12a"},
+  {x:6,y:6,kind:"dungeon",finalId:"D7"},
+  {x:7,y:6,kind:"route",finalId:"12b"},
+  {x:8,y:6,kind:"town",finalId:"T9",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:9,y:6,kind:"route",finalId:"16a"},
+  {x:10,y:6,kind:"route",finalId:"16b"},
+  {x:11,y:6,kind:"town",finalId:"T10",isCentral:true,isEliteFour:false,hasDungeon:false},
+  {x:12,y:6,kind:"route",finalId:"18a"},
+  {x:13,y:6,kind:"route",finalId:"18b"},
+  {x:14,y:6,kind:"town",finalId:"T11",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:15,y:6,kind:"route",finalId:"21"},
+  {x:16,y:6,kind:"town",finalId:"T12",isCentral:false,isEliteFour:false,hasDungeon:true,dungeonFinalId:"D8"},
+  {x:4,y:7,kind:"route",finalId:"1"},
+  {x:11,y:7,kind:"route",finalId:"17a"},
+  {x:14,y:7,kind:"route",finalId:"19"},
+  {x:4,y:8,kind:"town",finalId:"T13",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:11,y:8,kind:"route",finalId:"17b"},
+  {x:12,y:8,kind:"dungeon",finalId:"D9"},
+  {x:14,y:8,kind:"town",finalId:"T14",isCentral:false,isEliteFour:false,hasDungeon:false},
+  {x:15,y:8,kind:"route",finalId:"20"},
+  {x:16,y:8,kind:"dungeon",finalId:"D10"},
+];
+const AMFAP_FIXED_EDGES = [
+  ["2,0","3,0"],
+  ["2,0","2,1"],
+  ["3,0","4,0"],
+  ["4,0","5,0"],
+  ["5,0","6,0"],
+  ["6,0","6,1"],
+  ["16,0","16,1"],
+  ["0,1","1,1"],
+  ["0,1","0,2"],
+  ["1,1","2,1"],
+  ["2,1","2,2"],
+  ["6,1","7,1"],
+  ["6,1","6,2"],
+  ["7,1","8,1"],
+  ["8,1","9,1"],
+  ["8,1","8,2"],
+  ["9,1","10,1"],
+  ["10,1","11,1"],
+  ["11,1","12,1"],
+  ["11,1","11,2"],
+  ["12,1","13,1"],
+  ["13,1","14,1"],
+  ["14,1","15,1"],
+  ["14,1","14,2"],
+  ["15,1","16,1"],
+  ["0,2","0,3"],
+  ["2,2","2,3"],
+  ["6,2","6,3"],
+  ["8,2","8,3"],
+  ["11,2","11,3"],
+  ["14,2","14,3"],
+  ["0,3","0,4"],
+  ["2,3","3,3"],
+  ["3,3","4,3"],
+  ["4,3","5,3"],
+  ["4,3","4,4"],
+  ["5,3","6,3"],
+  ["8,3","8,4"],
+  ["11,3","11,4"],
+  ["14,3","14,4"],
+  ["0,4","0,5"],
+  ["4,4","4,5"],
+  ["8,4","8,5"],
+  ["11,4","11,5"],
+  ["14,4","14,5"],
+  ["0,5","0,6"],
+  ["4,5","4,6"],
+  ["8,5","8,6"],
+  ["11,5","11,6"],
+  ["14,5","14,6"],
+  ["0,6","1,6"],
+  ["1,6","2,6"],
+  ["2,6","3,6"],
+  ["3,6","4,6"],
+  ["4,6","5,6"],
+  ["4,6","4,7"],
+  ["5,6","6,6"],
+  ["6,6","7,6"],
+  ["7,6","8,6"],
+  ["8,6","9,6"],
+  ["9,6","10,6"],
+  ["10,6","11,6"],
+  ["11,6","12,6"],
+  ["11,6","11,7"],
+  ["12,6","13,6"],
+  ["13,6","14,6"],
+  ["14,6","15,6"],
+  ["14,6","14,7"],
+  ["15,6","16,6"],
+  ["4,7","4,8"],
+  ["11,7","11,8"],
+  ["14,7","14,8"],
+  ["11,8","12,8"],
+  ["14,8","15,8"],
+  ["15,8","16,8"],
+];
+const AMFAP_FIXED_BOUNDS = { minX:0, maxX:16, minY:0, maxY:8 };
+
+// ==== AMFAP fixed custom region (seed "AMFAP##") ====
+// A hand-authored map + a friends/family-themed 200-species roster, wired
+// into the SAME procedural custom-region machinery above rather than
+// duplicating it -- the map topology and species pool are just swapped in
+// for the duration of generation/rendering, the same "swap the global,
+// finally restore" idiom withSeededRandom() uses for Math.random. Every
+// downstream step (wild-table slotting, gym/trainer/Elite Four/Champion
+// construction, dice/type/evolution wiring) is the untouched real code.
+function isAmfapSeed(seed){
+  return /^AMFAP\d{2}$/i.test((seed || '').trim());
+}
+// Swaps NATIONAL_DEX/EVOLUTION_FAMILIES/NATIONAL_EVOLUTION_DATA/LEGENDARY_DEX/
+// LEGENDARY_GROUPS/STARTER_LINE_POOL for their AMFAP_ counterparts for the
+// duration of `fn`, restoring the real ones afterward even if fn throws.
+// _familyByNameCache (familyForSpecies' memo) is reset on both sides so it
+// never mixes species from the two pools.
+function withAmfapDex(fn){
+  const saved = {
+    NATIONAL_DEX, EVOLUTION_FAMILIES, NATIONAL_EVOLUTION_DATA,
+    LEGENDARY_DEX, LEGENDARY_GROUPS, STARTER_LINE_POOL,
+  };
+  NATIONAL_DEX = AMFAP_NATIONAL_DEX;
+  EVOLUTION_FAMILIES = AMFAP_EVOLUTION_FAMILIES;
+  NATIONAL_EVOLUTION_DATA = AMFAP_NATIONAL_EVOLUTION_DATA;
+  LEGENDARY_DEX = AMFAP_LEGENDARY_DEX;
+  LEGENDARY_GROUPS = AMFAP_LEGENDARY_GROUPS;
+  STARTER_LINE_POOL = AMFAP_STARTER_LINE_POOL;
+  _familyByNameCache = null;
+  try {
+    return fn();
+  } finally {
+    NATIONAL_DEX = saved.NATIONAL_DEX;
+    EVOLUTION_FAMILIES = saved.EVOLUTION_FAMILIES;
+    NATIONAL_EVOLUTION_DATA = saved.NATIONAL_EVOLUTION_DATA;
+    LEGENDARY_DEX = saved.LEGENDARY_DEX;
+    LEGENDARY_GROUPS = saved.LEGENDARY_GROUPS;
+    STARTER_LINE_POOL = saved.STARTER_LINE_POOL;
+    _familyByNameCache = null;
+  }
+}
+// Rebuilds the fixed AMFAP_FIXED_TILES/EDGES map data into the same `r`
+// shape generateCustomRegionOnce() produces, so buildCustomRegionOutput(r)
+// (gym-town selection, etc.) runs completely unmodified on it.
+function buildAmfapFixedGridResult(){
+  const grid = new Map();
+  AMFAP_FIXED_TILES.forEach(t => grid.set(t.x + ',' + t.y, Object.assign({}, t)));
+  let totalTowns = 0, totalDungeons = 0;
+  for(const t of grid.values()){
+    if(t.kind === 'dungeon') totalDungeons++;
+    else if(t.kind === 'town'){ totalTowns++; if(t.hasDungeon) totalDungeons++; }
+  }
+  return {
+    grid,
+    edges: AMFAP_FIXED_EDGES.map(e => e.slice()),
+    minX: AMFAP_FIXED_BOUNDS.minX, maxX: AMFAP_FIXED_BOUNDS.maxX,
+    minY: AMFAP_FIXED_BOUNDS.minY, maxY: AMFAP_FIXED_BOUNDS.maxY,
+    totalTowns, totalDungeons, totalRoutes: 24,
+  };
+}
+// Same shape generateCustomRegionData() returns -- must be called inside
+// withAmfapDex() (the two callers below both do).
+function generateAmfapRegion(){
+  const r = buildAmfapFixedGridResult();
+  return populateRegionDex(buildCustomRegionOutput(r));
+}
+
 const REGION_GEN_DIRS = { N:{dx:0,dy:-1}, S:{dx:0,dy:1}, E:{dx:1,dy:0}, W:{dx:-1,dy:0} };
 const REGION_GEN_OPPOSITE = { N:'S', S:'N', E:'W', W:'E' };
 const REGION_GEN_ALL_DIRS = ['N','S','E','W'];
@@ -5831,7 +6478,8 @@ function withSeededRandom(seedStr, fn){
 // reproducible, not just the previewed map/dex/gyms.
 function generateCustomRegionDataFromSeed(seedInput){
   const seed = (seedInput && seedInput.trim()) ? seedInput.trim().toUpperCase() : randomSeedString();
-  const region = withSeededRandom(seed, () => generateCustomRegionData());
+  const amfap = isAmfapSeed(seed);
+  const region = withSeededRandom(seed, () => amfap ? withAmfapDex(generateAmfapRegion) : generateCustomRegionData());
   region.seed = seed;
   return region;
 }
@@ -6009,7 +6657,12 @@ function selectCustomRegionE4Tab(idx){
 function renderCustomRegionMapScreen(){
   if(!customRegion) customRegion = generateCustomRegionDataFromSeed();
   const r = customRegion;
-  return '<div class="card">' +
+  // Every detail helper below (customRegionMapSvgHtml, customRegionSidebarHtml
+  // -> buildCustomRegionEncounterHtml/customRegionGymTeamHtml/E4 tabs, and the
+  // NATIONAL_DEX lookup on the next line) reads NATIONAL_DEX/LEGENDARY_DEX/etc
+  // directly, so an AMFAP-seeded region needs its dex swapped back in for this
+  // whole synchronous render, same as generation did.
+  const buildScreen = () => '<div class="card">' +
     '<div class="card-title">'+(r.label||'Custom Region')+'</div>' +
     '<div class="card-sub">Randomly generated with the region generator -- '+r.totalTowns+' towns, '+r.totalDungeons+' dungeons, '+r.totalRoutes+' routes, '+r.locations.length+' wild encounter tables stocked ('+r.locations.reduce((a,t)=>a+t.table.length,0)+' Pokemon placed, including '+r.locations.reduce((a,t)=>a+(NATIONAL_DEX[t.table[10]]?0:1),0)+' Legendary/Mythical).</div>' +
     '<div class="field-label">Seed: <span class="seed-code">'+r.seed+'</span></div>' +
@@ -6037,6 +6690,7 @@ function renderCustomRegionMapScreen(){
       '<button type="button" class="btn" data-action="backToRegionPick">Back</button>' +
     '</div>' +
   '</div>';
+  return (r.seed && isAmfapSeed(r.seed)) ? withAmfapDex(buildScreen) : buildScreen();
 }
 function generateCustomRegion(){
   customRegion = generateCustomRegionDataFromSeed();
@@ -6895,10 +7549,16 @@ function playCustomRegion(){
   if(!customRegion) customRegion = generateCustomRegionDataFromSeed();
   // Re-seed for this step too (trainer tables, etc. -- see withSeededRandom)
   // so the same shared seed reproduces the exact same playable experience,
-  // not just the previewed map/dex/gyms.
-  const { data, label } = customRegion.seed
-    ? withSeededRandom(customRegion.seed, () => buildPlayableCustomRegionData(customRegion))
+  // not just the previewed map/dex/gyms. An AMFAP seed also needs its dex
+  // swapped back in here -- buildPlayableCustomRegionData reads NATIONAL_DEX/
+  // EVOLUTION_FAMILIES/etc directly too, same as generation did.
+  const amfapReplay = customRegion.seed && isAmfapSeed(customRegion.seed);
+  const buildData = () => amfapReplay
+    ? withAmfapDex(() => buildPlayableCustomRegionData(customRegion))
     : buildPlayableCustomRegionData(customRegion);
+  const { data, label } = customRegion.seed
+    ? withSeededRandom(customRegion.seed, buildData)
+    : buildData();
   try { localStorage.setItem(customRegionDataKey(), JSON.stringify(data)); }
   catch(e){ console.error('Could not save custom region data', e); }
   DATA = data;
